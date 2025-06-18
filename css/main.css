@@ -1,0 +1,86 @@
+:root {
+    --color-bg: #202020;
+    --color-wall-side: black;
+    --color-grid-cell: #333;
+    --color-text: white;
+    --font-size: 1.1rem;
+}
+
+
+
+
+body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-size: var(--font-size);
+    user-select: none;
+    -webkit-user-select: none;
+
+    font-family: sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+
+    min-height: 100vh;
+    height: 100svh;
+    overflow: hidden;
+
+    margin: 0;
+}
+
+body.menu-active {
+    display: block;
+    padding: 0;    
+}
+
+body.game-active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: clamp(10px, 2vmin, 20px);
+}
+
+body.menu-active #game-wrapper {
+    display: none;
+}
+
+
+
+
+
+
+
+
+
+
+.push-button {
+    display: block;
+    margin: 5%;
+    border: none;
+    cursor: pointer;
+    padding: 12px 27px;
+    border-radius: 12px;
+    font-size: var(--font-size);
+    color: var(--color-text);
+    background: var(--push-button-color);
+
+    --push-button-shadow-color: color-mix(in oklab, var(--push-button-color) 80%, black 30%);
+
+    transition:
+      box-shadow 200ms cubic-bezier(.3, .7, .4, 1),
+      transform 200ms cubic-bezier(.3, .7, .4, 1);
+    transform: translateY(-4px);  /* initial */
+    box-shadow: 0 4px 0 var(--push-button-shadow-color); 
+}
+
+.push-button:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 0 var(--push-button-shadow-color);
+}
+
+.push-button:active {
+    transition: box-shadow 30ms, transform 30ms;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 0 var(--push-button-shadow-color);
+}

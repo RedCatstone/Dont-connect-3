@@ -1,0 +1,32 @@
+.menu-active #menus {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    background-color: var(--color-bg);
+    gap: 15px;
+}
+
+#menus h1 {
+    font-size: 7vw;
+    margin-bottom: 40px;
+    color: var(--color-text);
+}
+
+#menus .big-button {
+}
+
+
+
+
+
+#menus .menu {
+    display: none;
+}
+.menu-active #menus .menu.active {
+    display: flex;
+    flex-direction: column;
+}

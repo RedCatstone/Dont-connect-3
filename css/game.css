@@ -1,0 +1,307 @@
+:root {
+    --color-invalid-line: rgba(255, 255, 255, 0.8);
+
+    --tile-red-color: crimson;
+    --tile-blue-color: aquamarine;
+    --tile-yellow-color: gold;
+    --tile-purple-color: mediumslateblue;
+    --tile-white-color: white;
+    --tile-wall-color: dimgray;
+
+    --push-button-color: #696969;
+
+
+    /* set by js */
+    --grid-column-count: 0;
+    --grid-width: 0;
+    --grid-height: 0;
+    --grid-tile-size: calc(var(--grid-width) / var(--grid-column-count));
+
+
+    --grid-tile-shadow: calc(0.03 * var(--grid-tile-size));
+    --grid-block-height: calc(0.2 * var(--grid-tile-size));
+    --grid-border-width: 1vmin;
+}
+
+
+
+
+#game-wrapper {
+    display: none;
+}
+
+.game-active #game-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+
+
+#game-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+#level-timer-info {
+    font-size: 1.2rem;
+    color: #ccc;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#level-timer-info .dot {
+    color: var(--color-grid-cell);
+}
+
+#spots-display {
+    font-size: 50px;
+    font-family: math;
+    margin: 0;
+}
+
+#countdown-display {
+    color: red;
+    font-size: 50px;
+    font-family: math;
+    margin: 0;
+}
+
+
+
+
+#game-grid-sizer {
+    width: 100%;
+
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#game-grid-container {
+    position: relative;
+    display: grid;
+    border: var(--grid-border-width) solid var(--color-grid-cell);
+    padding: var(--grid-border-width);
+
+    grid-template-columns: repeat(var(--grid-column-count), 1fr);
+
+    /* --- SIZING STRATEGY --- */
+    width: var(--grid-width);
+    height: var(--grid-height);
+}
+
+
+
+
+
+.tile {
+    margin: 4%;
+    border-radius: 10%;
+}
+
+
+.tile.grid {
+    background-color: var(--color-grid-cell);
+    box-shadow: var(--grid-tile-shadow) var(--grid-tile-shadow) black;
+
+    transition: translate 0.1s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+#game-grid-container:not(.input-disabled) .tile.grid:hover {
+    background-color: color-mix(in oklab, var(--color-grid-cell) 90%, var(--color-text) 10%);
+    cursor: pointer;
+}
+#game-grid-container.hint-active .tile.grid[data-hint="true"] {
+    translate: 0 calc(-0.05 * var(--grid-tile-size));
+    animation: hint-breathe 1.5s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+@keyframes hint-breathe {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(calc(-0.05 * var(--grid-tile-size)));
+    }
+}
+
+
+
+
+.tile.block {
+    translate: 0px calc(-1 * var(--grid-block-height));
+    background-color: var(--tile-color);
+    box-shadow: 0px calc(var(--grid-block-height) + var(--grid-tile-shadow)) color-mix(in oklab, var(--tile-color) 70%, black 30%);
+}
+.tile-red { --tile-color: var(--tile-red-color); }
+.tile-blue { --tile-color: var(--tile-blue-color);}
+.tile-yellow { --tile-color: var(--tile-yellow-color); }
+.tile-purple { --tile-color: var(--tile-purple-color); }
+.tile-white { --tile-color: var(--tile-white-color); }
+.tile.block.wall {
+    scale: 1.15;
+    --tile-color: var(--tile-wall-color);
+}
+
+
+
+
+#tile-selector {
+    display: flex;
+    gap: 50px;
+    background-color: var(--color-grid-cell);
+    padding: 30px;
+    border-radius: 15px;
+    margin: 10px;
+    flex-shrink: 0;
+}
+#tile-selector .tile.block {
+    cursor: pointer;
+    width: 60px;
+    height: 60px;
+    margin: 0;
+
+    /* override .tile.block stuff */
+    translate: 0px -20px;
+    box-shadow: 0px 20px color-mix(in oklab, var(--tile-color) 70%, black 30%);
+}
+#tile-selector .tile.block.selected {
+    outline: 3px solid white;
+    outline-offset: 5px;
+    border-radius: 5px;
+}
+
+#bottom-controls-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#game-control-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+
+
+
+
+
+
+
+
+
+
+@media (aspect-ratio > 1/1) {
+    #game-wrapper {
+        flex-direction: row !important;
+    }
+
+    #game-grid-sizer {
+        width: auto;
+        height: 100%;
+        max-width: none;
+    }
+
+    #tile-selector {
+        flex-direction: column;
+    }
+
+    #game-control-bar {
+        flex-direction: column;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.invalid-line-indicator {
+    position: absolute;
+    background-color: var(--color-invalid-line);
+    height: calc(var(--grid-tile-size) * 0.2);
+    width: calc(var(--grid-tile-size) * var(--line-length));
+    border-radius: calc(var(--grid-tile-size) * 0.2);
+    translate: calc(var(--grid-tile-size) * 0.4) calc(var(--grid-tile-size) * 0.4);
+    pointer-events: none;
+    transform-origin: 0 50%;
+    z-index: 10;
+
+    /* set by js */
+    --line-length: 0;
+
+    animation: wipeInLine 0.5s cubic-bezier(.3, .7, .4, 1);
+}
+
+@keyframes wipeInLine {
+    0% {
+        clip-path: inset(0 100% 0 0); /* Clip everything but the leftmost edge */
+    }
+    100% {
+        clip-path: inset(0 0 0 0); /* Reveal the whole line */
+    }
+}
+
+
+
+
+
+
+
+
+
+/* --- Particle Styles --- */
+.particle-effect-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.tile-particle-fly-out {
+    position: absolute;
+    top: 50%;
+    left: 50%; /* Start at the center */
+    width: 10%;
+    height: 10%;
+    border-radius: 50%;
+    animation-name: particle-fly-out;
+    animation-timing-function: cubic-bezier(0.1, 0.8, 0.4, 1);
+    animation-fill-mode: forwards;
+}
+
+@keyframes particle-fly-out {
+    70% {
+      opacity: 1;
+    }
+    100% {
+      transform: translate(0, -600%) scale(2);
+      opacity: 0;
+    }
+}
