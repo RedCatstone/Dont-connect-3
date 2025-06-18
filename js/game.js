@@ -90,10 +90,6 @@ export function startLastSpotMode(seed=generateRandomB64String(4)) {
     o.timeLeft = 15;
     o.level = 1;
     o.seed = seed;
-
-
-    o.seed = 'cat';
-    o.timeLeft = 10000;
     startTimer();
     startCountdown();
     initGrid();
