@@ -16,8 +16,14 @@ export function generateGrid(seed) {
     o.height = 2 + Math.round(total/2 - randomSplit);
 
     // available tiles
-    o.availableTiles = ALL_TILE_BLOCKS.slice(0, Math.ceil(Math.sqrt(o.level)));
-    o.availableTiles = shuffleArray(o.availableTiles, rand).filter((x, i) => i === 0 || rand() > 0.5 + i * 0.1);   // always keep first, but randomly filter others
+    let tiles = ALL_TILE_BLOCKS.slice(0, Math.ceil(Math.sqrt(o.level)));
+    shuffleArray(tiles, rand);
+    tiles = tiles.filter((x, i) => i === 0 || rand() > 0.5 + i * 0.1);   // always keep first, but randomly filter others
+    o.availableTiles = [], o.futureAvailableTiles = [];
+    tiles.forEach((tile, i) => {
+        if (i === 0 || rand() > o.lockedTileChance) o.availableTiles.push(tile);
+        else o.futureAvailableTiles.push(tile)
+    })
 
     // bot amount
     o.botAmount = Math.ceil(rand() * Math.log(o.level)) ?? 0;
@@ -43,6 +49,7 @@ function placeTileRandomPattern(tileId, numPatterns, rand) {
     const placementGrid = Array(o.width).fill(null).map(() => Array(o.height).fill(false));
 
     const filteredGenPatterns = genPatterns.filter(pattern => pattern.shape.length <= o.height && pattern.shape[0].length <= o.width);
+    if (filteredGenPatterns.length === 0) return;
 
     for (let i = 0; i < numPatterns; i++) {
         // Pick a random pattern

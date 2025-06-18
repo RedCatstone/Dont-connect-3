@@ -6,6 +6,7 @@
     --tile-yellow-color: gold;
     --tile-purple-color: mediumslateblue;
     --tile-white-color: white;
+    --tile-future-color: gray;
     --tile-wall-color: dimgray;
 
     --push-button-color: #696969;
@@ -13,6 +14,7 @@
 
     /* set by js */
     --grid-column-count: 0;
+    --grid-row-count: 0;
     --grid-width: 0;
     --grid-height: 0;
     --grid-tile-size: calc(var(--grid-width) / var(--grid-column-count));
@@ -105,8 +107,8 @@
 
 
 .tile {
-    margin: 4%;
     border-radius: 10%;
+    margin: 4%;
 }
 
 
@@ -116,13 +118,14 @@
 
     transition: translate 0.1s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
+#game-grid-container.hint-active .tile.grid[data-hint="true"] {
+    translate: 0 calc(-0.2 * var(--grid-tile-size));
+    animation: hint-breathe 1.5s infinite cubic-bezier(0.4, 0, 0.6, 1);
+    background-color: color-mix(in oklab, var(--color-grid-cell) 95%, var(--color-text) 5%);
+}
 #game-grid-container:not(.input-disabled) .tile.grid:hover {
     background-color: color-mix(in oklab, var(--color-grid-cell) 90%, var(--color-text) 10%);
     cursor: pointer;
-}
-#game-grid-container.hint-active .tile.grid[data-hint="true"] {
-    translate: 0 calc(-0.05 * var(--grid-tile-size));
-    animation: hint-breathe 1.5s infinite cubic-bezier(0.4, 0, 0.6, 1);
 }
 
 @keyframes hint-breathe {
@@ -130,7 +133,7 @@
         transform: translateY(0);
     }
     50% {
-        transform: translateY(calc(-0.05 * var(--grid-tile-size)));
+        transform: translateY(calc(-0.2 * var(--grid-tile-size)));
     }
 }
 
@@ -180,6 +183,21 @@
     border-radius: 5px;
 }
 
+#tile-selector .tile.block.future {
+    cursor: auto;
+    --tile-color: var(--tile-future-color);
+}
+#tile-selector .tile.block.future::after {
+    content: '?';
+    position: absolute;
+    font-family: 'Arial Black', Gadget, sans-serif; /* A bold, blocky font */
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 50px;
+    color: rgba(0, 0, 0, 0.5);
+    text-shadow: 2px 2px rgba(255, 255, 255, 0.2);
+}
+
 #bottom-controls-wrapper {
     display: flex;
     flex-direction: column;
@@ -208,9 +226,9 @@
     }
 
     #game-grid-sizer {
-        width: auto;
+        width: unset;
         height: 100%;
-        max-width: none;
+        min-width: 0;
     }
 
     #tile-selector {

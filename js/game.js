@@ -63,12 +63,17 @@ export const o = {
     time: performance.now(),
     timeLeft: 0,
     
-    availableTiles: [TILE_ID.RED, TILE_ID.BLUE, TILE_ID.YELLOW],
+    availableTiles: null,
+    futureAvailableTiles: null,
     selectedAvailableTile: 0,
     botAmount: 0,
+
     botAnimationSpeed: 100,  // ms
     levelSizeGrowFactor: 1.2,
-    chanceHoles: 1,
+    chanceHoles: 0.7,
+    lockedTileChance: 0.5,
+
+    placeRandomTiles,
 }
 window.o = o;
 
@@ -87,7 +92,7 @@ export function startInfiniteMode(seed=generateRandomB64String(4)) {
 
 export function startLastSpotMode(seed=generateRandomB64String(4)) {
     o.mode = MODE.FIND_LAST;
-    o.timeLeft = 15;
+    o.timeLeft = 20;
     o.level = 1;
     o.seed = seed;
     startTimer();
@@ -168,12 +173,16 @@ hintButton.addEventListener('click', () => {
 
 
 homeButton.addEventListener('click', () => {
+    resetAndGoToMainMenu(); 
+});
+
+function resetAndGoToMainMenu() {
     clearInterval(countdownInterval);
     clearInterval(timerInterval);
     countdownDisplay.textContent = '';
     timerDisplay.textContent = '';
-    goToMainMenu(); 
-});
+    goToMainMenu();
+}
 
 
 
@@ -260,6 +269,13 @@ function updateTileSelectorDisplay() {
         selectableTile.dataset.i = i;
         tileSelectorContainer.append(selectableTile);
     });
+
+    o.futureAvailableTiles.forEach((availableTile) => {
+        const selectableTile = document.createElement('div');
+        selectableTile.className = TILE_CLASS_MAP[availableTile];
+        selectableTile.classList.add('future');
+        tileSelectorContainer.append(selectableTile);
+    });
 }
 
 function createGridDisplay() {
@@ -303,9 +319,9 @@ function switchToAvailableTile(index) {
 
 function userPlaceTile(x, y, tileId) {
     if (canPlaceTile(x, y, tileId, true)) {
-        placeTile(x, y, tileId);
+        const { endBots } = placeTile(x, y, tileId);
         // bots
-        placeRandomTiles(o.botAmount);
+        if (!endBots) placeRandomTiles(o.botAmount);
     }
     gameGridContainer.classList.remove('hint-active');
 }
@@ -317,13 +333,18 @@ function placeTile(x, y, tileId, displayAfterDelay, dontPlaceIfLast) {
     if (dontPlaceIfLast && spotsLeft === 0) {
         o.grid[x][y] = TILE_ID.GRID;
         updateSpotsLeftAtSpot(x, y);
-        return true;
+        return { didntPlaceLast: true };
     }
-
-    if (o.spotsLeftCount === 0) gridComplete();
 
     if (!displayAfterDelay) placeTileVisual(x, y, tileId, spotsLeft);
     else setTimeout(() => placeTileVisual(x, y, tileId, Math.max(o.spotsLeftCount, spotsLeft)), displayAfterDelay);
+    
+    if (o.spotsLeftCount === 0) {
+        zeroSpotsLeft();
+        // if color switches don't do more bots.
+        return { endBots: true };
+    }
+    return {};
 }
 function placeTileVisual(x, y, tileId, spotsLeft) {
     const tileElement = getTileElement(x, y);
@@ -332,6 +353,24 @@ function placeTileVisual(x, y, tileId, spotsLeft) {
     playSound('tilePlace');
     spotsLeftDisplay.textContent = spotsLeft;
 }
+
+
+
+function zeroSpotsLeft() {
+    if (o.futureAvailableTiles.length > 0) {
+        o.availableTiles.push(o.futureAvailableTiles.shift());
+        updateTileSelectorDisplay();
+        calculateSpotsLeft();
+
+        if (o.mode === MODE.FIND_LAST) {
+            placeRandomTiles(Infinity, true);
+            startCountdown();
+        }
+    }
+    else gridComplete();
+}
+
+
 
 
 function gridComplete() {
@@ -360,7 +399,7 @@ function gridFail() {
         enableGridInput();
 
         if (o.mode === MODE.INFINITE || o.mode === MODE.FIND_LAST) {
-            goToMainMenu();
+            resetAndGoToMainMenu();
         }
     }, 1000);
 }
@@ -392,8 +431,8 @@ function canPlaceTile(x, y, tileId, drawLine) {
                 // tile is tileId, increase the counter
                 if (tile === tileId) sameTileIdCounter++;
 
-                // tile is outside of grid OR either another color or a wall -> valid
-                else if (tile === undefined || (tile !== TILE_ID.AIR && tile !== TILE_ID.GRID)) {
+                // tile is outside of grid OR another color OR a wall -> valid
+                else if (tile !== TILE_ID.AIR && tile !== TILE_ID.GRID) {
                     sameTileIdCounter = -Infinity;
                     break;
                 }
@@ -438,12 +477,14 @@ function placeRandomTiles(amount, dontPlaceIfLast) {
             const spotsLeftTile = o.spotsLeftGrid[x][y];
             if (spotsLeftTile > 0) {
                 // can place tile
-                placed++;
-                changes = true;
-                const displayAfterDelay = placed * o.botAnimationSpeed / amount;
-                const lastSpot = placeTile(x, y, spotsLeftTile, displayAfterDelay, dontPlaceIfLast);
-                if (dontPlaceIfLast && lastSpot) return;
-                if (placed >= amount) return;
+                const displayAfterDelay = (placed + 1) * o.botAnimationSpeed / amount;
+                const { didntPlaceLast, endBots } = placeTile(x, y, spotsLeftTile, displayAfterDelay, dontPlaceIfLast);
+                if (endBots) return;
+                if (!didntPlaceLast) {
+                    placed++;
+                    changes = true;
+                    if (placed >= amount) return;
+                }
             }
         }
     }
@@ -479,7 +520,7 @@ function calculateSpotsLeft() {
             else o.spotsLeftGrid[x][y] = -1;
         }
     }
-    if (o.spotsLeftCount === 0) gridComplete();
+    if (o.spotsLeftCount === 0) zeroSpotsLeft();
 }
 
 
