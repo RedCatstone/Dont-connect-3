@@ -12,6 +12,13 @@ const levelDisplay = document.querySelector("#level-display");
 const timerDisplay = document.querySelector("#timer-display");
 const countdownDisplay = document.querySelector("#countdown-display");
 const spotsLeftDisplay = document.querySelector("#spots-display");
+const seedDisplay = document.querySelector("#seed-display");
+
+const levelEndScreen = document.querySelector("#level-end-screen");
+const endScreenTitle = document.querySelector("#end-screen-title");
+const endScreenStats = document.querySelector("#end-screen-stats");
+const endScreenButton = document.querySelector("#end-screen-button");
+
 
 
 // Tile Ids
@@ -87,7 +94,7 @@ export function startInfiniteMode(seed=generateRandomB64String(4)) {
     o.level = 1;
     o.seed = seed;
     startTimer();
-    initGrid();
+    startGrid();
 }
 
 export function startLastSpotMode(seed=generateRandomB64String(4)) {
@@ -96,25 +103,30 @@ export function startLastSpotMode(seed=generateRandomB64String(4)) {
     o.level = 1;
     o.seed = seed;
     startTimer();
-    startCountdown();
-    initGrid();
-    placeRandomTiles(Infinity, true);
+    startGrid();
 }
 
 
 
 
 
-function initGrid() {
-    generateGrid(o.seed + o.level);
+function startGrid() {
+    const seed = o.seed + o.level;
+    generateGrid(seed);
 
     calculateSpotsLeft();
     if (o.selectedAvailableTile > o.availableTiles.length - 1) o.selectedAvailableTile = 0;
 
     levelDisplay.textContent = `Level ${o.level}`;
     spotsLeftDisplay.textContent = o.spotsLeftCount;
+    seedDisplay.textContent = seed;
     createGridDisplay();
     updateTileSelectorDisplay();
+
+    if (o.mode === MODE.FIND_LAST) {
+        startCountdown();
+        placeRandomTiles(Infinity, true);
+    }
 }
 
 
@@ -186,30 +198,6 @@ function resetAndGoToMainMenu() {
 
 
 
-window.addEventListener('resize', centerGridCss);
-function centerGridCss() {
-    const { width, height } = gameGridSizerContainer.getBoundingClientRect();
-
-    const containerStyle = getComputedStyle(gameGridContainer);
-    const padBorder = 2 * (parseFloat(containerStyle.padding) + parseFloat(containerStyle.borderWidth));
-
-    const useWidth = width - padBorder;
-    const useHeight = height - padBorder;
-    const aspectRatio = o.width / o.height;
-
-    let targetWidth = useWidth;
-    let targetHeight = targetWidth / aspectRatio;
-    if (targetHeight > useHeight) {
-        targetHeight = useHeight;
-        targetWidth = targetHeight * aspectRatio;
-    }
-
-    document.documentElement.style.setProperty('--grid-width', `${targetWidth}px`);
-    document.documentElement.style.setProperty('--grid-height', `${targetHeight}px`);
-}
-
-
-
 
 
 
@@ -237,9 +225,6 @@ function updateCountdownDisplay() {
         countdownDisplay.textContent = `0.0`;
     }
 }
-
-
-
 
 
 
@@ -280,7 +265,6 @@ function updateTileSelectorDisplay() {
 
 function createGridDisplay() {
     gameGridContainer.innerHTML = '';
-    document.documentElement.style.setProperty('--grid-column-count', o.width);
     const fragment = document.createDocumentFragment();
 
     for (let y = 0; y < o.height; y++) {
@@ -293,7 +277,15 @@ function createGridDisplay() {
         }
     }
     gameGridContainer.append(fragment);
-    setTimeout(() => centerGridCss(), 0);
+    gameGridSizerContainer.style.setProperty('--grid-column-count', o.width);
+    gameGridSizerContainer.style.setProperty('--grid-row-count', o.height);
+    setTimeout(setTileSizeCSS, 0);
+}
+
+
+window.addEventListener('resize', setTileSizeCSS);
+function setTileSizeCSS() {
+    gameGridSizerContainer.style.setProperty('--grid-tile-size', `${gameGridContainer.getBoundingClientRect().height / o.height}px`);
 }
 
 
@@ -309,11 +301,32 @@ function getTileElement(x, y) {
 }
 
 
-function switchToAvailableTile(index) {
-    o.selectedAvailableTile = index;
-    updateTileSelectorDisplay();
-    playSound('tileSwitch');
+function disableGridInput() {
+    o.inputDisabled = true;
+    gameGridContainer.classList.add('input-disabled');
 }
+function enableGridInput() {
+    o.inputDisabled = false;
+    gameGridContainer.classList.remove('input-disabled');
+}
+
+
+function switchToAvailableTile(index) {
+    if (o.selectedAvailableTile !== index) {
+        o.selectedAvailableTile = index;
+        updateTileSelectorDisplay();
+        playSound('tileSwitch');
+    }
+}
+
+
+
+
+
+
+
+
+
 
 
 
@@ -353,58 +366,6 @@ function placeTileVisual(x, y, tileId, spotsLeft) {
     playSound('tilePlace');
     spotsLeftDisplay.textContent = spotsLeft;
 }
-
-
-
-function zeroSpotsLeft() {
-    if (o.futureAvailableTiles.length > 0) {
-        o.availableTiles.push(o.futureAvailableTiles.shift());
-        updateTileSelectorDisplay();
-        calculateSpotsLeft();
-
-        if (o.mode === MODE.FIND_LAST) {
-            placeRandomTiles(Infinity, true);
-            startCountdown();
-        }
-    }
-    else gridComplete();
-}
-
-
-
-
-function gridComplete() {
-    disableGridInput();
-    clearInterval(countdownInterval);
-    setTimeout(() => {
-        enableGridInput();
-
-        if (o.mode === MODE.INFINITE) {
-            o.level++;
-            initGrid();
-        }
-
-        if (o.mode === MODE.FIND_LAST) {
-            o.level++;
-            initGrid();
-            startCountdown();
-            placeRandomTiles(Infinity, true);
-        }
-    }, 1000);
-}
-
-function gridFail() {
-    disableGridInput();
-    setTimeout(() => {
-        enableGridInput();
-
-        if (o.mode === MODE.INFINITE || o.mode === MODE.FIND_LAST) {
-            resetAndGoToMainMenu();
-        }
-    }, 1000);
-}
-
-
 
 
 
@@ -458,9 +419,6 @@ function canPlaceTile(x, y, tileId, drawLine) {
         return false;
     }
 }
-
-
-
 
 
 
@@ -537,14 +495,12 @@ function updateSpotsLeftAtSpot(x, y) {
         o.spotsLeftGrid[x][y] = -1;
         o.spotsLeftCount--;
     }
-    else {
-        for (const availableTile of o.availableTiles) {
-            if (canPlaceTile(x, y, availableTile, false)) {
-                o.spotsLeftGrid[x][y] = availableTile;
-                o.spotsLeftCount++;
-                // getTileElement(x, y).style.backgroundColor = 'red';
-                break;
-            }
+    else for (const availableTile of o.availableTiles) {
+        if (canPlaceTile(x, y, availableTile, false)) {
+            o.spotsLeftGrid[x][y] = availableTile;
+            o.spotsLeftCount++;
+            // getTileElement(x, y).style.backgroundColor = 'red';
+            break;
         }
     }
 
@@ -579,14 +535,53 @@ function updateSpotsLeftAtSpot(x, y) {
 }
 
 
-function disableGridInput() {
-    o.inputDisabled = true;
-    gameGridContainer.classList.add('input-disabled');
+
+
+function zeroSpotsLeft() {
+    if (o.futureAvailableTiles.length > 0) {
+        o.availableTiles.push(o.futureAvailableTiles.shift());
+        updateTileSelectorDisplay();
+        calculateSpotsLeft();
+
+        if (o.mode === MODE.FIND_LAST) {
+            placeRandomTiles(Infinity, true);
+            startCountdown();
+        }
+    }
+    else gridComplete();
 }
-function enableGridInput() {
-    o.inputDisabled = false;
-    gameGridContainer.classList.remove('input-disabled');
+
+
+
+
+function gridComplete() {
+    disableGridInput();
+    clearInterval(countdownInterval);
+    setTimeout(() => {
+        enableGridInput();
+
+        if (o.mode === MODE.INFINITE || o.mode === MODE.FIND_LAST) {
+            o.level++;
+            startGrid();
+        }
+    }, 1000);
 }
+
+function gridFail() {
+    disableGridInput();
+    setTimeout(() => {
+        enableGridInput();
+
+        if (o.mode === MODE.INFINITE || o.mode === MODE.FIND_LAST) {
+            resetAndGoToMainMenu();
+        }
+    }, 1000);
+}
+
+
+
+
+
 
 
 
@@ -603,8 +598,8 @@ function drawInvalidLine(startX, startY, endX, endY) {
 
     const lineElement = document.createElement('div');
     lineElement.className = 'invalid-line-indicator';
-    lineElement.style.rotate = `${angle}deg`;
     lineElement.style.setProperty('--line-length', lineLength);
+    lineElement.style.setProperty('--line-rotation', `${angle}deg`);
     getTileElement(startX, startY).appendChild(lineElement);
 
     disableGridInput();

@@ -1,9 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
 :root {
+    --color-invalid-line: rgba(255, 255, 255, 0.8);
+
+    --tile-red-color: crimson;
+    --tile-blue-color: aquamarine;
+    --tile-yellow-color: gold;
+    --tile-purple-color: mediumslateblue;
+    --tile-white-color: white;
+    --tile-future-color: gray;
+    --tile-wall-color: dimgray;
+
+    --push-button-color: #555;
+
+    --countdown-color: red;
+    --level-timer-color: #ccc;
+
+
     --color-bg: #202020;
-    --color-wall-side: black;
     --color-grid-cell: #333;
     --color-text: white;
     --font-size: 1.1rem;
+
+    --color-accent: #00A395;
 }
 
 
@@ -16,7 +35,7 @@ body {
     user-select: none;
     -webkit-user-select: none;
 
-    font-family: sans-serif;
+    font-family: 'Poppins', sans-serif;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -27,11 +46,30 @@ body {
     overflow: hidden;
 
     margin: 0;
+    position: relative;
+    
+    /* Grid Background */
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: animated-grid 10s linear infinite;
 }
 
+
+@keyframes animated-grid {
+    0% { background-position: 0 0; }
+    100% { background-position: 40px 40px; }
+}
+
+
+
+
 body.menu-active {
-    display: block;
-    padding: 0;    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
 }
 
 body.game-active {
@@ -56,7 +94,6 @@ body.menu-active #game-wrapper {
 
 .push-button {
     display: block;
-    margin: 5%;
     border: none;
     cursor: pointer;
     padding: 12px 27px;
@@ -66,21 +103,52 @@ body.menu-active #game-wrapper {
     background: var(--push-button-color);
 
     --push-button-shadow-color: color-mix(in oklab, var(--push-button-color) 80%, black 30%);
+    --push-button-depth: 6px;
 
     transition:
       box-shadow 200ms cubic-bezier(.3, .7, .4, 1),
       transform 200ms cubic-bezier(.3, .7, .4, 1);
-    transform: translateY(-4px);  /* initial */
-    box-shadow: 0 4px 0 var(--push-button-shadow-color); 
+    transform: translateY(calc(-1 * var(--push-button-depth)));  /* initial */
+    box-shadow: 0 var(--push-button-depth) 0 var(--push-button-shadow-color); 
 }
 
 .push-button:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 0 var(--push-button-shadow-color);
+    transform: translateY(calc(-1.3 * var(--push-button-depth)));
+    box-shadow: 0 calc(1.3 * var(--push-button-depth)) 0 var(--push-button-shadow-color);
 }
 
 .push-button:active {
     transition: box-shadow 30ms, transform 30ms;
-    transform: translateY(-2px);
-    box-shadow: 0 2px 0 var(--push-button-shadow-color);
+    transform: translateY(calc(-0.5 * var(--push-button-depth)));
+    box-shadow: 0 calc(0.5 * var(--push-button-depth)) 0 var(--push-button-shadow-color);
+}
+
+
+.push-button.big {
+    padding-top: 20px;
+    padding-bottom: 20px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    --push-button-depth: 10px;
+}
+
+
+
+.push-button.icon {
+    height: 60px;
+    width: 60px;
+    position: relative;
+}
+
+.push-button.icon::before {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    font-family: 'Arial Black', Gadget, sans-serif;
+    font-size: 45px;
+    color: rgba(0, 0, 0, 0.5);
+    text-shadow: 2px 2px rgba(255, 255, 255, 0.2);
+    line-height: 1;
 }

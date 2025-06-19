@@ -32,6 +32,13 @@ playButtonFindLast.addEventListener('click', () => {
     startLastSpotMode();
 });
 
+document.addEventListener('keydown', (event) => {
+    if (currentMenu && currentMenu !== mainMenu && event.key === 'Escape') switchMenu(mainMenu);
+});
+
+
+
+
 
 
 
@@ -41,15 +48,19 @@ playButtonFindLast.addEventListener('click', () => {
 function goToGame() {
     document.body.classList.remove('menu-active');
     document.body.classList.add('game-active');
+    currentMenu.classList.remove('active');
+    currentMenu = null;
 }
 export function goToMenu() {
     document.body.classList.remove('game-active');
     document.body.classList.add('menu-active');
 }
+
 export function goToMainMenu() {
     goToMenu();
     switchMenu(mainMenu);
 }
+
 
 
 function switchMenu(menu) {
