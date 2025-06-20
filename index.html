@@ -14,16 +14,55 @@
     <div id="menus">
         <div id="menu-main" class="menu">
             <h1>Do NOT connect 3</h1>
-            <button id="play-button" class="push-button big">Play</button>
-            <button id="settings-button" class="push-button">Settings</button>
-            <button id="about-button" class="push-button">About</button>
+            <button id="main-play-button" class="big">Play</button>
+            <button id="main-settings-button">Settings</button>
+            <button id="main-about-button">About</button>
         </div>
 
         <div id="menu-play" class="menu">
             <h1>Select a Mode</h1>
-            <button id="infinite-button" class="push-button">Infinite</button>
-            <button id="find-last-button" class="push-button">Find the Last Spot</button>
-            <button id="idk2-button" class="push-button">Idk2</button>
+            <button id="play-infinite-button">Infinite</button>
+            <button id="play-find-last-button">Find the Last Spot</button>
+            <button id="play-idk2-button">Idk2</button>
+            <button id="play-custom-button">Custom Game</button>
+        </div>
+
+        <div id="menu-custom" class="menu">
+            <h1>Custom Game</h1>
+            <div class="settings-grid">
+                <div class="setting-item big text-group">
+                    <label for="custom-seed-input">Seed</label>
+                    <input type="text" id="custom-seed-input" placeholder="Random or Enter Seed...">
+                </div>
+
+                <!-- Boolean Checkbox Setting -->
+                <div class="setting-item checkbox-group">
+                    <input type="checkbox" id="custom-infinite-check" name="modeInfinite">
+                    <label for="custom-infinite-check">Infinite</label>
+                </div>
+            
+                <!-- Boolean Checkbox Setting -->
+                <div class="setting-item checkbox-group">
+                    <input type="checkbox" id="custom-find-last-check" name="modeFindLast">
+                    <label for="custom-find-last-check">Find Last</label>
+                </div>
+            
+                <!-- Number Input Setting -->
+                <div class="setting-item text-group">
+                    <label for="custom-hints-input">Hints</label>
+                    <input type="number" id="custom-hints-input" name="modeHintCount" value="2" min="0" max="99" placeholder="0">
+                </div>
+            
+                <!-- Number Input Setting -->
+                <div class="setting-item text-group">
+                    <label for="custom-time-input">Countdown Timer</label>
+                    <input type="number" id="custom-time-input" name="modeTimeLeft" value="" min="0", max="999" placeholder="Disabled">
+                </div>
+            </div>
+        
+
+            
+            <button id="custom-play-button">Play</button>
         </div>
     </div>
 
@@ -41,11 +80,13 @@
             </div>
         </div>
         <div id="bottom-controls-wrapper">
-            <button id="home-button" class="push-button icon"></button>
+            <button id="home-button" class="icon"></button>
             <div id="tile-selector">
                 <!-- JS -->
             </div>
-            <button id="hint-button" class="push-button icon"></button>
+            <button id="hint-button" class="icon">
+                <span class="button-counter"></span>
+            </button>
         </div>
 
         <div id="level-end-screen">
@@ -54,7 +95,7 @@
                 <div id="end-screen-stats">
                     <!-- JS -->
                 </div>
-                <button id="end-screen-button" class="push-button"></button>
+                <button id="end-screen-button"></button>
             </div>
         </div>
 

@@ -1,40 +1,122 @@
-import { startInfiniteMode, startLastSpotMode } from './game.js';
+import { o, startMode } from './game.js';
+import { formatSeedLevel, SEED_PREFIX_LENGTH, uncombineSeedLevel } from './generateGrid.js';
 
 
-const menusContainer = document.querySelector("#menus");
+const menuMain = document.getElementById('menu-main');
+const menuPlay = document.getElementById('menu-play');
+const menuCustom = document.getElementById('menu-custom');
 
-const mainMenu = document.getElementById("menu-main");
-const playMenu = document.getElementById("menu-play");
+const mainPlayButton = document.getElementById('main-play-button');
+const mainSettingsButton = document.getElementById('main-settings-button');
+const mainAboutButton = document.getElementById('main-about-button');
 
-const mainButtonPlay = document.getElementById("play-button");
-const mainButtonSettings = document.getElementById("settings-button");
-const mainButtonAbout = document.getElementById("about-button");
+const playInfiniteButton = document.getElementById('play-infinite-button');
+const playFindLastButton = document.getElementById('play-find-last-button');
+const playIdk2Button = document.getElementById('play-idk2-button');
+const playCustomButton = document.getElementById('play-custom-button');
 
-const playButtonInfinite = document.getElementById("infinite-button");
-const playButtonFindLast = document.getElementById("find-last-button");
-const playButtonIdk2 = document.getElementById("idk2-button");
+const customSeedInput = document.getElementById('custom-seed-input');
+const customInfiniteCheck = document.getElementById('custom-infinite-check');
+const customFindLastCheck = document.getElementById('custom-find-last-check');
+const customHintsInput = document.getElementById('custom-hints-input');
+const customTimeInput = document.getElementById('custom-time-input');
+const customPlayButton = document.getElementById('custom-play-button');
 
 let currentMenu = null;
 
+
+
+
 goToMainMenu();
-mainButtonPlay.addEventListener('click', () => {
-    switchMenu(playMenu);
-});
-
-
-playButtonInfinite.addEventListener('click', () => {
-    goToGame();
-    startInfiniteMode();
-});
-
-playButtonFindLast.addEventListener('click', () => {
-    goToGame();
-    startLastSpotMode();
-});
-
 document.addEventListener('keydown', (event) => {
-    if (currentMenu && currentMenu !== mainMenu && event.key === 'Escape') switchMenu(mainMenu);
+    if (currentMenu && currentMenu !== menuMain && event.key === 'Escape') switchMenu(menuMain);
 });
+
+
+
+
+
+
+// --- MAIN MENU ---
+mainPlayButton.addEventListener('click', () => {
+    switchMenu(menuPlay);
+});
+
+
+
+
+// --- PLAY MENU ---
+playInfiniteButton.addEventListener('click', () => {
+    o.modeInfinite = true;
+    o.modeFindLast = false;
+    o.modeHintCount = 2;
+    o.modeTimeLeft = 0;
+    goToGame();
+    startMode();
+});
+playFindLastButton.addEventListener('click', () => {
+    o.modeInfinite = true;
+    o.modeFindLast = true;
+    o.modeHintCount = 2;
+    o.modeTimeLeft = 20;
+    goToGame();
+    startMode();
+});
+playCustomButton.addEventListener('click', () => {
+    switchMenu(menuCustom);
+});
+
+
+
+
+
+// --- CUSTOM GAME MENU ---
+customSeedInput.addEventListener('input', (event) => {
+    const input = event.target;
+    
+    // Remember the original cursor position
+    const originalCursorPos = input.selectionStart;
+    const originalValue = input.value;
+    const formattedValue = formatSeedLevel(originalValue);
+
+    if (originalValue !== formattedValue) {
+        input.value = formattedValue;
+
+        // stable cursor
+        const beforeCursor = originalValue.slice(0, originalCursorPos);
+        const charsRemoved = beforeCursor.length - formatSeedLevel(beforeCursor).length;
+        const newCursorPos = originalCursorPos - charsRemoved;
+        input.setSelectionRange(newCursorPos, newCursorPos);
+    }    
+});
+
+customPlayButton.addEventListener('click', () => {
+    o.modeInfinite = customInfiniteCheck.checked;
+    o.modeFindLast = customFindLastCheck.checked;
+    o.modeHintCount = parseInt(customHintsInput.value);
+    o.modeTimeLeft = parseInt(customTimeInput.value);
+    goToGame();
+    startMode(customSeedInput.value || undefined);
+});
+
+document.addEventListener('input', (event) => {
+    const target = event.target;
+    if (target.type !== 'number' || target.min === '' || target.max === '') return;
+
+    const min = parseInt(target.min);
+    const max = parseInt(target.max);
+    const value = parseInt(target.value);
+
+    if (value > max) target.value = max;
+    if (value < min) target.value = min;
+})
+
+
+
+
+
+
+
 
 
 
@@ -58,7 +140,7 @@ export function goToMenu() {
 
 export function goToMainMenu() {
     goToMenu();
-    switchMenu(mainMenu);
+    switchMenu(menuMain);
 }
 
 

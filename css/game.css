@@ -115,7 +115,7 @@
     box-shadow: var(--grid-tile-shadow) var(--grid-tile-shadow) black;
     transition: translate 0.1s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
-#game-grid-container.hint-active .tile.grid[data-hint="true"] {
+#game-grid-container.hint-active .tile[data-hint="true"] {
     translate: 0 calc(-0.2 * var(--grid-tile-size));
     z-index: 10;
     animation: hint-breathe 1.5s infinite cubic-bezier(0.4, 0, 0.6, 1);
@@ -201,9 +201,8 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 50px;
+    gap: clamp(10px, 6vmin, 50px);
 }
-
 
 
 
@@ -216,13 +215,19 @@
     transform: translate(-50%, -56%);
 }
 
+#hint-button > .button-counter.using-hint {
+    color: gold;
+}
+
+
+
 
 #seed-display {
     font-size: 1.1rem;
-    bottom: 30px;
-    right: 10px;
-    position: absolute;
-    color: color-mix(in oklab, var(--color-bg) 60%, var(--color-text) 40%);
+    bottom: 0px;
+    right: 5px;
+    position: fixed;
+    color: var(--color-seed-text);
 }
 
 

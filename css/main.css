@@ -11,7 +11,7 @@
     --tile-future-color: gray;
     --tile-wall-color: dimgray;
 
-    --push-button-color: #555;
+    --button-color: #555;
 
     --countdown-color: red;
     --level-timer-color: #ccc;
@@ -19,8 +19,10 @@
 
     --color-bg: #202020;
     --color-grid-cell: #333;
-    --color-text: white;
     --font-size: 1.1rem;
+    
+    --color-text: white;
+    --color-seed-text: color-mix(in oklab, var(--color-bg) 60%, var(--color-text) 40%);
 
     --color-accent: #00A395;
 }
@@ -36,10 +38,6 @@ body {
     -webkit-user-select: none;
 
     font-family: 'Poppins', sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-around;
 
     min-height: 100vh;
     height: 100svh;
@@ -52,14 +50,14 @@ body {
     background-image:
         linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
-    background-size: 40px 40px;
+    background-size: 50px 50px;
     animation: animated-grid 10s linear infinite;
 }
 
 
 @keyframes animated-grid {
     0% { background-position: 0 0; }
-    100% { background-position: 40px 40px; }
+    100% { background-position: 50px 50px; }
 }
 
 
@@ -92,7 +90,9 @@ body.menu-active #game-wrapper {
 
 
 
-.push-button {
+
+
+button {
     display: block;
     border: none;
     cursor: pointer;
@@ -100,47 +100,43 @@ body.menu-active #game-wrapper {
     border-radius: 12px;
     font-size: var(--font-size);
     color: var(--color-text);
-    background: var(--push-button-color);
+    background: var(--button-color);
 
-    --push-button-shadow-color: color-mix(in oklab, var(--push-button-color) 80%, black 30%);
-    --push-button-depth: 6px;
+    --button-shadow-color: color-mix(in oklab, var(--button-color) 80%, black 30%);
+    --button-depth: 6px;
 
     transition:
       box-shadow 200ms cubic-bezier(.3, .7, .4, 1),
       transform 200ms cubic-bezier(.3, .7, .4, 1);
-    transform: translateY(calc(-1 * var(--push-button-depth)));  /* initial */
-    box-shadow: 0 var(--push-button-depth) 0 var(--push-button-shadow-color); 
+    transform: translateY(calc(-1 * var(--button-depth)));  /* initial */
+    box-shadow: 0 var(--button-depth) 0 var(--button-shadow-color); 
 }
-
-.push-button:hover {
-    transform: translateY(calc(-1.3 * var(--push-button-depth)));
-    box-shadow: 0 calc(1.3 * var(--push-button-depth)) 0 var(--push-button-shadow-color);
+button:hover {
+    transform: translateY(calc(-1.3 * var(--button-depth)));
+    box-shadow: 0 calc(1.3 * var(--button-depth)) 0 var(--button-shadow-color);
 }
-
-.push-button:active {
+button:active {
     transition: box-shadow 30ms, transform 30ms;
-    transform: translateY(calc(-0.5 * var(--push-button-depth)));
-    box-shadow: 0 calc(0.5 * var(--push-button-depth)) 0 var(--push-button-shadow-color);
+    transform: translateY(calc(-0.5 * var(--button-depth)));
+    box-shadow: 0 calc(0.5 * var(--button-depth)) 0 var(--button-shadow-color);
 }
 
 
-.push-button.big {
+button.big {
     padding-top: 20px;
     padding-bottom: 20px;
     font-size: 1.5rem;
     font-weight: 700;
-    --push-button-depth: 10px;
+    --button-depth: 10px;
 }
 
 
-
-.push-button.icon {
+button.icon {
     height: 60px;
     width: 60px;
     position: relative;
 }
-
-.push-button.icon::before {
+button.icon::before {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -151,4 +147,175 @@ body.menu-active #game-wrapper {
     color: rgba(0, 0, 0, 0.5);
     text-shadow: 2px 2px rgba(255, 255, 255, 0.2);
     line-height: 1;
+}
+
+
+button > .button-counter {
+    position: absolute;
+    bottom: -12%;
+    right: -12%;
+
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Poppins', 'Arial Black', sans-serif;
+    font-weight: 700;
+    color: rgba(0, 0, 0, 0.5);
+    text-shadow: 2px 2px rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    background: inherit;
+    box-shadow: inherit; /* A darker shade of gold */
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    width: 100%;
+    margin: 20px 0;
+}
+.settings-grid .big {
+    grid-column: span 2;
+}
+
+.setting-item {
+    background-color: var(--color-grid-cell);
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.setting-item label {
+    font-weight: 600;
+    color: var(--level-timer-color);
+}
+
+
+
+
+.text-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.text-group label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--level-timer-color);
+    text-align: left;
+    padding-left: 5px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+.text-group input[type="text"], input[type="number"] {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--color-text);
+    text-align: center;
+    letter-spacing: 2px;
+    
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 15px;
+    background-color: var(--color-bg);
+    border: 2px solid var(--color-grid-cell);
+    border-radius: 12px;
+    box-shadow: inset 0 4px 8px rgba(0,0,0,0.4);
+    transition: all 100ms ease-out;
+}
+.text-group input[type="text"]::placeholder, input[type="number"]::placeholder {
+    color: var(--color-seed-text);
+    letter-spacing: normal;
+}
+.text-group input[type="text"]:focus, input[type="number"]:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: inset 0 4px 8px rgba(0,0,0,0.4), 0 0 15px var(--color-accent);
+}
+
+
+.text-group input[type="number"]::-webkit-outer-spin-button,
+.text-group input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.text-group input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+
+
+
+
+
+.checkbox-group {
+    justify-content: flex-start;
+}
+.checkbox-group input[type="checkbox"] {
+    display: none;
+}
+.checkbox-group label::before {
+    content: '';
+    display: inline-block;
+
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    margin-right: 12px;
+    vertical-align: middle;
+
+    background-color: var(--color-bg);
+    border: 2px solid var(--color-grid-cell);
+    box-shadow: inset 0 3px 6px rgba(0,0,0,0.4);
+    transition: all 100ms ease-out;
+}
+.checkbox-group label::after {
+    content: '✔';
+
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--color-accent);
+
+    position: absolute;
+    top: 1px;
+    left: 7px;
+
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 100ms cubic-bezier(.3, .7, .4, 1);
+}
+.checkbox-group input[type="checkbox"]:checked + label::before {
+    border-color: var(--color-accent);
+    box-shadow: inset 0 3px 6px rgba(0,0,0,0.4), 0 0 15px var(--color-accent);
+}
+.checkbox-group input[type="checkbox"]:checked + label::after {
+    opacity: 1;
+    transform: scale(1);
+}
+.checkbox-group label {
+    position: relative;
+    cursor: pointer;
 }

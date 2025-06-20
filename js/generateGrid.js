@@ -3,70 +3,78 @@ import { o, ALL_TILE_BLOCKS, shuffleArray, TILE_ID } from './game.js';
 
 
 
+export const SEED_PREFIX_LENGTH = 4;
 
 
 
-export function generateGrid(seed) {
-    const rand = splitmix32(cyrb128(seed)[0]);
+
+
+export function generateGrid(seedLevel) {
+    const { seed, level } = uncombineSeedLevel(seedLevel);
+    const rand = splitmix32(cyrb128(seedLevel)[0]);
 
     // grid size
-    const total = Math.log(o.level + 1) / Math.log(o.levelSizeGrowFactor);
+    const total = Math.log(level + 1) / Math.log(o.levelSizeGrowFactor);
     const randomSplit = rand() * total/4;
-    o.width = 2 + Math.round(total/4 + randomSplit);
-    o.height = 2 + Math.round(total/2 - randomSplit);
+    const width = 2 + Math.round(total/4 + randomSplit);
+    const height = 2 + Math.round(total/2 - randomSplit);
+    const grid = Array(width).fill(null).map(() => Array(height).fill(TILE_ID.GRID));
 
     // available tiles
-    let tiles = ALL_TILE_BLOCKS.slice(0, Math.ceil(Math.sqrt(o.level)));
+    let tiles = ALL_TILE_BLOCKS.slice(0, Math.ceil(Math.sqrt(level)));
     shuffleArray(tiles, rand);
     tiles = tiles.filter((x, i) => i === 0 || rand() > 0.5 + i * 0.1);   // always keep first, but randomly filter others
-    o.availableTiles = [], o.futureAvailableTiles = [];
+    const availableTiles = [];
+    const futureAvailableTiles = [];
     tiles.forEach((tile, i) => {
-        if (i === 0 || rand() > o.lockedTileChance) o.availableTiles.push(tile);
-        else o.futureAvailableTiles.push(tile)
+        if (i === 0 || rand() > o.lockedTileChance) availableTiles.push(tile);
+        else futureAvailableTiles.push(tile)
     })
 
     // bot amount
-    o.botAmount = Math.ceil(rand() * Math.log(o.level)) ?? 0;
-    // o.botAmount = 10000;
+    const botAmount = Math.ceil(rand() * Math.log(level)) ?? 0;
 
-    o.grid = Array(o.width).fill(null).map(() => Array(o.height).fill(TILE_ID.GRID));
-
-    // holes (perlin noise)
-    if (o.level > 5) {
+    // holes (patterns)
+    if (level > 5) {
         if (rand() < o.chanceHoles) {
-            const numPatterns = Math.floor(rand() * Math.log(o.level)) ?? 0;
-            placeTileRandomPattern(TILE_ID.AIR, numPatterns, rand);
+            const numPatterns = Math.floor(rand() * Math.log(level)) ?? 0;
+            placeTileRandomPattern(TILE_ID.AIR, numPatterns, grid, width, height, rand);
         }
     }
 
-    if (o.level > 10) {
+    // walls todo
+    if (level > 10) {
 
     }
+
+
+    return { grid, width, height, availableTiles, futureAvailableTiles, botAmount };
 }
 
 
-function placeTileRandomPattern(tileId, numPatterns, rand) {
-    const placementGrid = Array(o.width).fill(null).map(() => Array(o.height).fill(false));
+function placeTileRandomPattern(tileId, numPatterns, grid, width, height, rand) {
+    const placementGrid = Array(width).fill(null).map(() => Array(height).fill(false));
 
-    const filteredGenPatterns = genPatterns.filter(pattern => pattern.shape.length <= o.height && pattern.shape[0].length <= o.width);
+    const filteredGenPatterns = genPatterns.filter(pattern => pattern.shape.length <= height && pattern.shape[0].length <= width);
     if (filteredGenPatterns.length === 0) return;
 
     for (let i = 0; i < numPatterns; i++) {
         // Pick a random pattern
         let pattern = filteredGenPatterns[Math.floor(rand() * filteredGenPatterns.length)];
+        let patternShape = pattern.shape;
 
         // rotate randomly
         if (!pattern.noRotate) {
             const rotations = Math.floor(rand() * 4);  // 0 to 3
-            pattern.shape = rotateMatrix(pattern.shape, rotations);
+            patternShape = rotateMatrix(patternShape, rotations);
         }
 
-        let patternHeight = pattern.shape.length;
-        let patternWidth = pattern.shape[0].length;
+        let patternHeight = patternShape.length;
+        let patternWidth = patternShape[0].length;
 
         // scale randomly
-        const maxScaleX = Math.floor(o.width / patternWidth);
-        const maxScaleY = Math.floor(o.height / patternHeight);
+        const maxScaleX = Math.floor(width / patternWidth);
+        const maxScaleY = Math.floor(height / patternHeight);
         const maxScale = Math.min(maxScaleX, maxScaleY);
         if (maxScale < 1) continue; // Skip if even 1x doesn't fit
         const scale = 1 + Math.floor((1 - rand()**2) * maxScale);
@@ -74,14 +82,14 @@ function placeTileRandomPattern(tileId, numPatterns, rand) {
         patternWidth = patternWidth * scale;
 
         // randomly find a valid, non-overlapping position
-        const validXRange = o.width - patternWidth;
-        const validYRange = o.height - patternHeight;
+        const validXRange = width - patternWidth;
+        const validYRange = height - patternHeight;
         for (let posAttempt = 0; posAttempt < 10; posAttempt++) {
             const startX = Math.floor(rand() * (validXRange + 1));
             const startY = Math.floor(rand() * (validYRange + 1));
 
             if (canPlacePatternAt(placementGrid, startX, startY, patternWidth, patternHeight)) {
-                placePattern(o.grid, placementGrid, pattern.shape, startX, startY, scale, tileId);
+                placePattern(grid, placementGrid, patternShape, startX, startY, scale, tileId);
                 break;
             }
         }
@@ -136,6 +144,32 @@ function placePattern(targetGrid, placementGrid, pattern, startX, startY, scale,
     }
 }
 
+
+
+export function combineSeedLevel(seed, level) {
+    return seed.padEnd(SEED_PREFIX_LENGTH, '-') + level;
+}
+
+export function uncombineSeedLevel(seedLevel) {
+    let b64Part = '';
+    let numPart = '';
+
+    for (const char of seedLevel) {
+        if (b64Part.length < SEED_PREFIX_LENGTH) {
+            if (/[A-Za-z0-9_-]/.test(char)) b64Part += char;
+        }
+        else if (/\d/.test(char)) numPart += char;
+    }
+    return {
+        seed: b64Part,
+        level: numPart ? parseInt(numPart) : undefined
+    }
+}
+
+export function formatSeedLevel(seedLevel) {
+    const { seed, level } = uncombineSeedLevel(seedLevel);
+    return seed + (level ?? '');
+}
 
 
 
@@ -195,9 +229,9 @@ export function generateRandomB64String(length) {
   const randomBytes = new Uint8Array(length);
   window.crypto.getRandomValues(randomBytes);
   const base64String = btoa(String.fromCharCode.apply(null, randomBytes));
-  const urlSafeBase64 = base64String
+  return base64String
     .replace(/\+/g, '-') // Replace '+' with '-'
     .replace(/\//g, '_') // Replace '/' with '_'
-    .replace(/=/g, '');  // Remove padding '='
-  return urlSafeBase64.substring(0, length);
+    .replace(/=/g, '')   // Remove padding '='
+    .substring(0, length);
 }

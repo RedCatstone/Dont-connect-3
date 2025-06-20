@@ -37,6 +37,8 @@
 }
 
 
-#play-button { --push-button-color: var(--color-accent); }
-#infinite-button { --push-button-color: #4CAF50; }
-#find-last-button { --push-button-color: #2196F3; }
+#main-play-button { --button-color: var(--color-accent); }
+#play-infinite-button { --button-color: #4CAF50; }
+#play-find-last-button { --button-color: #2196F3; }
+#play-custom-button { --button-color: #cf08bf; }
+#custom-play-button { --button-color: #cf08bf; }
