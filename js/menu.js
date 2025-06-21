@@ -10,12 +10,13 @@ const mainPlayButton = document.getElementById('main-play-button');
 const mainSettingsButton = document.getElementById('main-settings-button');
 const mainAboutButton = document.getElementById('main-about-button');
 
-const playInfiniteButton = document.getElementById('play-infinite-button');
+const playEndlessButton = document.getElementById('play-endless-button');
+const playLivesButton = document.getElementById('play-lives-button');
 const playFindLastButton = document.getElementById('play-find-last-button');
-const playIdk2Button = document.getElementById('play-idk2-button');
 const playCustomButton = document.getElementById('play-custom-button');
 
 const customSeedInput = document.getElementById('custom-seed-input');
+const customLevelInput = document.getElementById('custom-level-input');
 const customInfiniteCheck = document.getElementById('custom-infinite-check');
 const customFindLastCheck = document.getElementById('custom-find-last-check');
 const customHintsInput = document.getElementById('custom-hints-input');
@@ -48,23 +49,36 @@ mainPlayButton.addEventListener('click', () => {
 
 
 // --- PLAY MENU ---
-playInfiniteButton.addEventListener('click', () => {
+playEndlessButton.addEventListener('click', () => {
+    o.level = 1;
     o.modeInfinite = true;
     o.modeFindLast = false;
-    o.modeHintCount = 2;
+    o.modeHintCount = 5;
     o.modeLevelTime = 0;
     o.modeLivesCount = 0;
     o.modeGlobalTimeGain = 0;
     goToGame();
     startMode();
 });
+playLivesButton.addEventListener('click', () => {
+    o.level = 1;
+    o.modeInfinite = true;
+    o.modeFindLast = false;
+    o.modeHintCount = 5;
+    o.modeLevelTime = 0;
+    o.modeLivesCount = 5;
+    o.modeGlobalTimeGain = 0;
+    goToGame();
+    startMode();
+});
 playFindLastButton.addEventListener('click', () => {
+    o.level = 1;
     o.modeInfinite = true;
     o.modeFindLast = true;
     o.modeHintCount = 2;
-    o.modeLevelTime = 20;
+    o.modeLevelTime = 0;
     o.modeLivesCount = 0;
-    o.modeGlobalTimeGain = 0;
+    o.modeGlobalTimeGain = 6;
     goToGame();
     startMode();
 });
@@ -77,29 +91,11 @@ playCustomButton.addEventListener('click', () => {
 
 
 // --- CUSTOM GAME MENU ---
-customSeedInput.addEventListener('input', (event) => {
-    const input = event.target;
-    
-    // Remember the original cursor position
-    const originalCursorPos = input.selectionStart;
-    const originalValue = input.value;
-    const formattedValue = formatSeedLevel(originalValue);
-
-    if (originalValue !== formattedValue) {
-        input.value = formattedValue;
-
-        // stable cursor
-        const beforeCursor = originalValue.slice(0, originalCursorPos);
-        const charsRemoved = beforeCursor.length - formatSeedLevel(beforeCursor).length;
-        const newCursorPos = originalCursorPos - charsRemoved;
-        input.setSelectionRange(newCursorPos, newCursorPos);
-    }    
-});
-
 customPlayButton.addEventListener('click', () => {
+    o.level = parseInt(customLevelInput.value || 1);
     o.modeInfinite = customInfiniteCheck.checked;
     o.modeFindLast = customFindLastCheck.checked;
-    o.modeHintCount = parseInt(customHintsInput.value);
+    o.modeHintCount = parseInt(customHintsInput.value || 0);
     o.modeLivesCount = parseInt(customLivesInput.value);
     o.modeLevelTime = parseInt(customLevelTimeInput.value);
     o.modeGlobalTimeGain = parseInt(customGlobalTimeGainInput.value);
@@ -109,14 +105,30 @@ customPlayButton.addEventListener('click', () => {
 
 document.addEventListener('input', (event) => {
     const target = event.target;
-    if (target.type !== 'number' || target.min === '' || target.max === '') return;
+    if (target.type === 'number' && target && target.max) {
+        const min = parseInt(target.min);
+        const max = parseInt(target.max);
+        const value = parseInt(target.value);
 
-    const min = parseInt(target.min);
-    const max = parseInt(target.max);
-    const value = parseInt(target.value);
+        if (value > max) target.value = max;
+        if (value < min) target.value = min;
+    }
+    if (target.type === 'text' && (target.dataset.allowedChars || target.maxLength)) {
+        const originalValue = target.value;
+        const originalCursorPos = target.selectionStart;
+        const invalidCharsRegex = new RegExp(`[^${target.dataset.allowedChars}]`, 'g');
+        const finalValue = originalValue.replace(invalidCharsRegex, '');
 
-    if (value > max) target.value = max;
-    if (value < min) target.value = min;
+        if (originalValue !== finalValue) {
+            const originalSliceBeforeCursor = originalValue.slice(0, originalCursorPos);
+            const sanitizedSliceBeforeCursor = originalSliceBeforeCursor.replace(invalidCharsRegex, '');
+            const charsRemoved = originalSliceBeforeCursor.length - sanitizedSliceBeforeCursor.length;
+            const newCursorPos = originalCursorPos - charsRemoved;
+
+            target.value = finalValue;
+            target.setSelectionRange(newCursorPos, newCursorPos);
+        }
+    }
 })
 
 

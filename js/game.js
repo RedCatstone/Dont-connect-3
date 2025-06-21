@@ -104,11 +104,9 @@ window.o = o;
 
 
 
-export function startMode(seedLevel=generateRandomB64String(4)) {
+export function startMode(seed=generateRandomB64String(4)) {
     resetDisplaysAndIntervals();
-    const { seed, level } = uncombineSeedLevel(seedLevel);
     o.seed = seed;
-    o.level = level ?? 1;
     o.hintsLeft = o.modeHintCount;
     hintUsesDisplay.textContent = o.hintsLeft;
     startGrid();
@@ -124,8 +122,7 @@ export function startMode(seedLevel=generateRandomB64String(4)) {
 
 
 function startGrid() {
-    const seedLevel = combineSeedLevel(o.seed, o.level);
-    const { grid, width, height, availableTiles, futureAvailableTiles, botAmount } = generateGrid(seedLevel);
+    const { grid, width, height, availableTiles, futureAvailableTiles, botAmount } = generateGrid(combineSeedLevel(o.seed, o.level));
     o.grid = grid;
     o.width = width;
     o.height = height;
@@ -138,7 +135,7 @@ function startGrid() {
     calculateSpotsLeft();
     levelDisplay.textContent = `Level ${o.level}`;
     spotsLeftDisplay.textContent = o.spotsLeftCount;
-    seedDisplay.textContent = seedLevel;
+    seedDisplay.textContent = o.seed;
     createGridDisplay();
     updateTileSelectorDisplay();
     startTimer();
@@ -288,7 +285,8 @@ function updateLevelTimeDisplay() {
 
 let globalTimeInterval = null;
 function startGlobalTimeCountdown() {
-    o.globalTime = performance.now() + o.modeGlobalTimeGain * 1000;
+    o.globalTime = performance.now();
+    o.globalTimeLeft = o.modeGlobalTimeGain;
     clearTimeout(globalTimeInterval);
     globalTimeInterval = setInterval(updateGlobalTimeDisplay, 0);
     updateGlobalTimeDisplay();
