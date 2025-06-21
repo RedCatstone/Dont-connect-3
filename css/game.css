@@ -43,11 +43,43 @@
     margin: 0;
 }
 
-#countdown-display {
+#level-time-display {
     color: var(--countdown-color);
     font-size: 50px;
     font-family: math;
     margin: 0;
+}
+#global-time-display {
+    color: var(--global-time-color);
+    font-size: 50px;
+    font-family: math;
+    margin: 0;
+}
+
+
+#lives-display {
+    display: flex;
+    gap: 8px;
+    margin: 0;
+}
+.heart {
+    font-family: math;
+    font-size: 40px;
+    background: linear-gradient(160deg, #ff4d4d, var(--countdown-color) 80%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    
+    /* Make the heart pop with a subtle drop-shadow */
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+}
+.heart.heart-lost {
+    animation: heart-lost-animation 0.5s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
+}
+@keyframes heart-lost-animation {
+    0% { opacity: 1; transform: scale(1) rotate(0); }
+    30% { transform: scale(1.2) rotate(-5deg); }
+    100% { opacity: 0; transform: translateY(80px) translateX(-20px) rotate(45deg) scale(0); }
 }
 
 

@@ -34,29 +34,29 @@
                     <label for="custom-seed-input">Seed</label>
                     <input type="text" id="custom-seed-input" placeholder="Random or Enter Seed...">
                 </div>
-
-                <!-- Boolean Checkbox Setting -->
                 <div class="setting-item checkbox-group">
-                    <input type="checkbox" id="custom-infinite-check" name="modeInfinite">
+                    <input type="checkbox" id="custom-infinite-check">
                     <label for="custom-infinite-check">Infinite</label>
                 </div>
-            
-                <!-- Boolean Checkbox Setting -->
                 <div class="setting-item checkbox-group">
-                    <input type="checkbox" id="custom-find-last-check" name="modeFindLast">
+                    <input type="checkbox" id="custom-find-last-check">
                     <label for="custom-find-last-check">Find Last</label>
                 </div>
-            
-                <!-- Number Input Setting -->
                 <div class="setting-item text-group">
                     <label for="custom-hints-input">Hints</label>
-                    <input type="number" id="custom-hints-input" name="modeHintCount" value="2" min="0" max="99" placeholder="0">
+                    <input type="number" id="custom-hints-input" value="2" min="0" max="99" placeholder="0">
                 </div>
-            
-                <!-- Number Input Setting -->
                 <div class="setting-item text-group">
-                    <label for="custom-time-input">Countdown Timer</label>
-                    <input type="number" id="custom-time-input" name="modeTimeLeft" value="" min="0", max="999" placeholder="Disabled">
+                    <label for="custom-lives-input">Lives</label>
+                    <input type="number" id="custom-lives-input" value="" min="0" max="15" placeholder="Disabled">
+                </div>
+                <div class="setting-item text-group">
+                    <label for="custom-level-time-input">Level Time Limit</label>
+                    <input type="number" id="custom-level-time-input" value="" min="0", max="999" placeholder="Disabled">
+                </div>
+                <div class="setting-item text-group">
+                    <label for="custom-global-time-gain-input">Global Time Gain</label>
+                    <input type="number" id="custom-global-time-gain-input" value="" min="0", max="999" placeholder="Disabled">
                 </div>
             </div>
         
@@ -72,7 +72,9 @@
                 <span id="level-display">Level 1</span><span class="dot">•</span><span id="timer-display">00:00</span>
             </div>
             <p id="spots-display">0</p>
-            <p id="countdown-display"></p>
+            <p id="level-time-display"></p>
+            <p id="global-time-display"></p>
+            <p id="lives-display"></p>
         </div>
         <div id="game-grid-sizer">
             <div id="game-grid-container">

@@ -1,5 +1,5 @@
 import { o, startMode } from './game.js';
-import { formatSeedLevel, SEED_PREFIX_LENGTH, uncombineSeedLevel } from './generateGrid.js';
+import { formatSeedLevel } from './generateGrid.js';
 
 
 const menuMain = document.getElementById('menu-main');
@@ -19,7 +19,9 @@ const customSeedInput = document.getElementById('custom-seed-input');
 const customInfiniteCheck = document.getElementById('custom-infinite-check');
 const customFindLastCheck = document.getElementById('custom-find-last-check');
 const customHintsInput = document.getElementById('custom-hints-input');
-const customTimeInput = document.getElementById('custom-time-input');
+const customLivesInput = document.getElementById('custom-lives-input');
+const customLevelTimeInput = document.getElementById('custom-level-time-input');
+const customGlobalTimeGainInput = document.getElementById('custom-global-time-gain-input');
 const customPlayButton = document.getElementById('custom-play-button');
 
 let currentMenu = null;
@@ -50,7 +52,9 @@ playInfiniteButton.addEventListener('click', () => {
     o.modeInfinite = true;
     o.modeFindLast = false;
     o.modeHintCount = 2;
-    o.modeTimeLeft = 0;
+    o.modeLevelTime = 0;
+    o.modeLivesCount = 0;
+    o.modeGlobalTimeGain = 0;
     goToGame();
     startMode();
 });
@@ -58,7 +62,9 @@ playFindLastButton.addEventListener('click', () => {
     o.modeInfinite = true;
     o.modeFindLast = true;
     o.modeHintCount = 2;
-    o.modeTimeLeft = 20;
+    o.modeLevelTime = 20;
+    o.modeLivesCount = 0;
+    o.modeGlobalTimeGain = 0;
     goToGame();
     startMode();
 });
@@ -94,7 +100,9 @@ customPlayButton.addEventListener('click', () => {
     o.modeInfinite = customInfiniteCheck.checked;
     o.modeFindLast = customFindLastCheck.checked;
     o.modeHintCount = parseInt(customHintsInput.value);
-    o.modeTimeLeft = parseInt(customTimeInput.value);
+    o.modeLivesCount = parseInt(customLivesInput.value);
+    o.modeLevelTime = parseInt(customLevelTimeInput.value);
+    o.modeGlobalTimeGain = parseInt(customGlobalTimeGainInput.value);
     goToGame();
     startMode(customSeedInput.value || undefined);
 });

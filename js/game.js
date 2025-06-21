@@ -6,13 +6,16 @@ import { goToMainMenu } from './menu.js';
 const gameGridContainer = document.querySelector("#game-grid-container");
 const gameGridSizerContainer = document.querySelector("#game-grid-sizer");
 const tileSelectorContainer = document.querySelector("#tile-selector");
-const hintButton = document.querySelector("#hint-button");
-const hintUsesDisplay = document.querySelector("#hint-button > .button-counter");
 const homeButton = document.querySelector("#home-button");
+const hintButton = document.querySelector("#hint-button");
+
+const hintUsesDisplay = document.querySelector("#hint-button > .button-counter");
 const levelDisplay = document.querySelector("#level-display");
 const timerDisplay = document.querySelector("#timer-display");
-const countdownDisplay = document.querySelector("#countdown-display");
 const spotsLeftDisplay = document.querySelector("#spots-display");
+const levelTimeDisplay = document.querySelector("#level-time-display");
+const globalTimeDisplay = document.querySelector("#global-time-display");
+const livesDisplay = document.querySelector("#lives-display");
 const seedDisplay = document.querySelector("#seed-display");
 
 const levelEndScreen = document.querySelector("#level-end-screen");
@@ -72,18 +75,25 @@ export const o = {
     selectedAvailableTile: 0,
     inputDisabled: false,
     spotsLeftCount: null,
+    levelTime: 0,
+    globalTime: 0,
+    globalTimeLeft: 0,
+    lives: 0,
 
     // mode specifics
     modeInfinite: false,
     modeFindLast: false,
     modeHintCount: 0,
-    modeTimeLeft: 0,
+    modeLevelTime: 0,
+    modeLivesCount: 0,
+    modeGlobalTimeGain: 0,
     
     // settings
     lineLength: 3,
     hintsLeft: 0,
     coloredHints: false,
     botAnimationSpeed: 100,  // ms
+    invalidMoveTimeout: 600,
 
     placeRandomTiles,
 }
@@ -95,12 +105,18 @@ window.o = o;
 
 
 export function startMode(seedLevel=generateRandomB64String(4)) {
+    resetDisplaysAndIntervals();
     const { seed, level } = uncombineSeedLevel(seedLevel);
     o.seed = seed;
     o.level = level ?? 1;
     o.hintsLeft = o.modeHintCount;
     hintUsesDisplay.textContent = o.hintsLeft;
     startGrid();
+    if (o.modeGlobalTimeGain) startGlobalTimeCountdown();
+    if (o.modeLivesCount) {
+        o.lives = o.modeLivesCount;
+        updateLivesDisplay();
+    }
 }
 
 
@@ -127,7 +143,7 @@ function startGrid() {
     updateTileSelectorDisplay();
     startTimer();
 
-    if (o.modeTimeLeft) startCountdown();
+    if (o.modeLevelTime) startLevelTimeCountdown();
     if (o.modeFindLast) placeRandomTiles(Infinity, true);
 }
 
@@ -213,15 +229,18 @@ function clearHint() {
 
 
 homeButton.addEventListener('click', () => {
-    resetAndGoToMainMenu(); 
+    goToMainMenu(); 
 });
 
-function resetAndGoToMainMenu() {
-    clearInterval(countdownInterval);
+function resetDisplaysAndIntervals() {
     clearInterval(timerInterval);
-    countdownDisplay.textContent = '';
     timerDisplay.textContent = '';
-    goToMainMenu();
+    clearInterval(levelTimeInterval);
+    levelTimeDisplay.textContent = '';
+    clearInterval(globalTimeInterval);
+    globalTimeDisplay.textContent = '';
+    o.lives = 0;
+    livesDisplay.textContent = '';
 }
 
 
@@ -232,27 +251,6 @@ function resetAndGoToMainMenu() {
 
 
 
-
-
-let countdownInterval = null;
-function startCountdown() {
-    o.countdown = performance.now();
-    clearTimeout(countdownInterval);
-    countdownInterval = setInterval(updateCountdownDisplay, 0);
-    updateCountdownDisplay();
-}
-
-
-function updateCountdownDisplay() {
-    const time = o.modeTimeLeft - (performance.now() - o.countdown) / 1000;
-    const totalSeconds = (time).toFixed(time < 3 ? 1 : 0);
-    countdownDisplay.textContent = `${totalSeconds}`;
-    if (time < 0) {
-        gridFail();
-        clearInterval(countdownInterval);
-        countdownDisplay.textContent = `0.0`;
-    }
-}
 
 
 
@@ -263,8 +261,6 @@ function startTimer() {
     timerInterval = setInterval(updateTimerDisplay, 1000);
     updateTimerDisplay();
 }
-
-
 function updateTimerDisplay() {
     const time = performance.now() - o.time;
     const totalSeconds = Math.floor(time / 1000);
@@ -272,6 +268,42 @@ function updateTimerDisplay() {
     const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
     timerDisplay.textContent = `${minutes}:${seconds}`;
 }
+
+let levelTimeInterval = null;
+function startLevelTimeCountdown() {
+    o.levelTime = performance.now();
+    clearTimeout(levelTimeInterval);
+    levelTimeInterval = setInterval(updateLevelTimeDisplay, 0);
+    updateLevelTimeDisplay();
+}
+function updateLevelTimeDisplay() {
+    const time = o.modeLevelTime - (performance.now() - o.levelTime) / 1000;
+    const totalSeconds = (time).toFixed(1);
+    levelTimeDisplay.textContent = `${totalSeconds}`;
+    if (time < 0) {
+        gridFail();
+        levelTimeDisplay.textContent = `0.0`;
+    }
+}
+
+let globalTimeInterval = null;
+function startGlobalTimeCountdown() {
+    o.globalTime = performance.now() + o.modeGlobalTimeGain * 1000;
+    clearTimeout(globalTimeInterval);
+    globalTimeInterval = setInterval(updateGlobalTimeDisplay, 0);
+    updateGlobalTimeDisplay();
+}
+function updateGlobalTimeDisplay() {
+    const time = o.globalTimeLeft - (performance.now() - o.globalTime) / 1000;
+    const totalSeconds = (time).toFixed(1);
+    globalTimeDisplay.textContent = `${totalSeconds}`;
+    if (time < 0) {
+        gridFail();
+        globalTimeDisplay.textContent = `0.0`;
+    }
+}
+
+
 
 function updateTileSelectorDisplay() {
     tileSelectorContainer.innerHTML = '';
@@ -290,6 +322,23 @@ function updateTileSelectorDisplay() {
         tileSelectorContainer.append(selectableTile);
     });
 }
+
+function updateLivesDisplay() {
+    livesDisplay.innerHTML = '';
+    for (let i = 0; i < o.lives; i++) {
+        const heart = document.createElement('span');
+        heart.className = 'heart';
+        heart.textContent = '❤';
+        livesDisplay.appendChild(heart);
+    }
+}
+function loseLife() {
+    o.lives--;
+    const lastHeart = livesDisplay.lastChild;
+    lastHeart.classList.add('heart-lost');
+    setTimeout(() => updateLivesDisplay(), o.invalidMoveTimeout);
+}
+
 
 function createGridDisplay() {
     gameGridContainer.innerHTML = '';
@@ -451,7 +500,17 @@ function canPlaceTile(x, y, tileId, drawLine) {
 
     if (valid) return true;
     else {
+        disableGridInput();
         playSound('invalidMove');
+        if (o.lives === 1) {
+            loseLife();
+            gridFail();
+            return false;
+        }
+        else if (o.lives > 1) {
+            loseLife();
+        }
+        setTimeout(() => enableGridInput(), o.invalidMoveTimeout);
         return false;
     }
 }
@@ -580,7 +639,7 @@ function zeroSpotsLeft() {
         calculateSpotsLeft();
         spotsLeftDisplay.textContent = o.spotsLeftCount;
         
-        if (o.modeTimeLeft) startCountdown();
+        if (o.modeLevelTime) startLevelTimeCountdown();
         if (o.modeFindLast) placeRandomTiles(Infinity, true);
     }
     else gridComplete();
@@ -591,26 +650,30 @@ function zeroSpotsLeft() {
 
 function gridComplete() {
     disableGridInput();
-    clearInterval(countdownInterval);
+    clearInterval(levelTimeInterval);
     setTimeout(() => {
         enableGridInput();
 
         if (o.modeInfinite) {
             o.level++;
+            o.globalTimeLeft += o.modeGlobalTimeGain;
             startGrid();
         }
         else {
-            resetAndGoToMainMenu();
+            goToMainMenu();
         }
     }, 1000);
 }
 
 function gridFail() {
     disableGridInput();
+    clearInterval(levelTimeInterval);
+    clearInterval(globalTimeInterval);
+
     setTimeout(() => {
         enableGridInput();
 
-        resetAndGoToMainMenu();
+        goToMainMenu();
     }, 1000);
 }
 
@@ -638,11 +701,7 @@ function drawInvalidLine(startX, startY, endX, endY) {
     lineElement.style.setProperty('--line-rotation', `${angle}deg`);
     getTileElement(startX, startY).appendChild(lineElement);
 
-    disableGridInput();
-    setTimeout(() => {
-        lineElement.remove();
-        enableGridInput();
-    }, 600);
+    setTimeout(() => lineElement.remove(), o.invalidMoveTimeout);
 }
 
 
