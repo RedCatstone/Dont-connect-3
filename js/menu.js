@@ -68,9 +68,9 @@ playLivesButton.addEventListener('click', () => {
     o.level = 1;
     o.modeInfinite = true;
     o.modeFindLast = false;
-    o.modeHintCount = 5;
+    o.modeHintCount = 2;
     o.modeLevelTime = 0;
-    o.modeLivesCount = 5;
+    o.modeLivesCount = 2;
     o.modeGlobalTimeGain = 0;
     o.lineLength = 3;
     goToGame();

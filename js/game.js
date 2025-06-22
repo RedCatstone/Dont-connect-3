@@ -654,6 +654,7 @@ function updateSpotsLeftAtSpot(x, y) {
 
 
 function zeroSpotsLeft() {
+    o.globalTimeLeft += o.modeGlobalTimeGain;
     if (o.futureAvailableTiles.length > 0) {
         o.availableTiles.push(o.futureAvailableTiles.shift());
         updateTileSelectorDisplay();
@@ -677,7 +678,6 @@ function gridComplete() {
         setTimeout(() => {
             o.level++;
             if (o.hintsLeft < 99 && o.level % o.gainHintEveryLevel === 0) hintUsesDisplay.textContent = ++o.hintsLeft;
-            o.globalTimeLeft += o.modeGlobalTimeGain;
             enableGridInput();
             startGrid();
         }, 1000);
