@@ -10,7 +10,7 @@ export const SEED_PREFIX_LENGTH = 4;
 
 
 export function generateGrid(seed, level) {
-    const rand = splitmix32(cyrb128(seed + level)[0]);
+    const rand = splitmix32(cyrb128(level + seed)[0]);
 
     // grid size
     const total = Math.log(level + 1) / Math.log(o.levelSizeGrowFactor);
