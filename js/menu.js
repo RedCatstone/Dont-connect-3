@@ -83,7 +83,7 @@ playFindLastButton.addEventListener('click', () => {
     o.modeHintCount = 2;
     o.modeLevelTime = 0;
     o.modeLivesCount = 0;
-    o.modeGlobalTimeGain = 6;
+    o.modeGlobalTimeGain = 5;
     o.lineLength = 3;
     goToGame();
     startMode();

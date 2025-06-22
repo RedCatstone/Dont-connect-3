@@ -258,6 +258,8 @@ function resetDisplaysAndIntervals() {
     enableGridInput(true);
     hideEndScreen();
     clearHint();
+    hintUsesDisplay.classList.remove('using-hint');
+    hintUsed = false;
 }
 
 
@@ -654,7 +656,6 @@ function updateSpotsLeftAtSpot(x, y) {
 
 
 function zeroSpotsLeft() {
-    o.globalTimeLeft += o.modeGlobalTimeGain;
     if (o.futureAvailableTiles.length > 0) {
         o.availableTiles.push(o.futureAvailableTiles.shift());
         updateTileSelectorDisplay();
@@ -663,6 +664,7 @@ function zeroSpotsLeft() {
         
         if (o.modeLevelTime) startLevelTimeCountdown();
         if (o.modeFindLast) placeRandomTiles(Infinity, true);
+        if (o.spotsLeftCount > 0) o.globalTimeLeft += o.modeGlobalTimeGain * o.availableTiles.length;
     }
     else gridComplete();
 }
@@ -677,6 +679,7 @@ function gridComplete() {
     if (o.modeInfinite) {
         setTimeout(() => {
             o.level++;
+            o.globalTimeLeft += o.modeGlobalTimeGain;
             if (o.hintsLeft < 99 && o.level % o.gainHintEveryLevel === 0) hintUsesDisplay.textContent = ++o.hintsLeft;
             enableGridInput();
             startGrid();
