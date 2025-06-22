@@ -692,7 +692,7 @@ function gridFail() {
     clearInterval(levelTimeInterval);
     clearInterval(globalTimeInterval);
 
-    setTimeout(() => showEndScreen('lose'), 0);
+    setTimeout(() => showEndScreen('lose'), 600);
 }
 
 

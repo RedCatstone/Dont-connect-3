@@ -297,7 +297,7 @@
 
 
 #level-end-screen {
-    position: absolute;
+    position: fixed;
     bottom: 0;
     left: 2vmin;
     right: 2vmin;
@@ -307,11 +307,8 @@
     padding: 40px;
     border-radius: 20px;
     translate: 0 calc(100% - 70px);
-    
-    opacity: 0;
-    pointer-events: none;
 
-    display: flex;
+    display: none;
     flex-direction: column;
     align-items: center;
     gap: 15px;
@@ -321,6 +318,7 @@
     color: var(--color-text);
 }
 #level-end-screen.visible {
+    display: flex;
     opacity: 1;
     pointer-events: auto;
 }
