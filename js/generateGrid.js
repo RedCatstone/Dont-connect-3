@@ -9,9 +9,8 @@ export const SEED_PREFIX_LENGTH = 4;
 
 
 
-export function generateGrid(seedLevel) {
-    const { seed, level } = uncombineSeedLevel(seedLevel);
-    const rand = splitmix32(cyrb128(seedLevel)[0]);
+export function generateGrid(seed, level) {
+    const rand = splitmix32(cyrb128(seed + level)[0]);
 
     // grid size
     const total = Math.log(level + 1) / Math.log(o.levelSizeGrowFactor);
@@ -142,33 +141,6 @@ function placePattern(targetGrid, placementGrid, pattern, startX, startY, scale,
             }
         }
     }
-}
-
-
-
-export function combineSeedLevel(seed, level) {
-    return seed.padEnd(SEED_PREFIX_LENGTH, '-') + level;
-}
-
-export function uncombineSeedLevel(seedLevel) {
-    let b64Part = '';
-    let numPart = '';
-
-    for (const char of seedLevel) {
-        if (b64Part.length < SEED_PREFIX_LENGTH) {
-            if (/[A-Za-z0-9_-]/.test(char)) b64Part += char;
-        }
-        else if (/\d/.test(char)) numPart += char;
-    }
-    return {
-        seed: b64Part,
-        level: numPart ? parseInt(numPart) : undefined
-    }
-}
-
-export function formatSeedLevel(seedLevel) {
-    const { seed, level } = uncombineSeedLevel(seedLevel);
-    return seed + (level ?? '');
 }
 
 

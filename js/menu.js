@@ -1,5 +1,4 @@
 import { o, startMode } from './game.js';
-import { formatSeedLevel } from './generateGrid.js';
 
 
 const menuMain = document.getElementById('menu-main');
@@ -23,6 +22,7 @@ const customHintsInput = document.getElementById('custom-hints-input');
 const customLivesInput = document.getElementById('custom-lives-input');
 const customLevelTimeInput = document.getElementById('custom-level-time-input');
 const customGlobalTimeGainInput = document.getElementById('custom-global-time-gain-input');
+const customLineLengthInput = document.getElementById('custom-line-length-input');
 const customPlayButton = document.getElementById('custom-play-button');
 
 let currentMenu = null;
@@ -34,6 +34,9 @@ goToMainMenu();
 document.addEventListener('keydown', (event) => {
     if (currentMenu && currentMenu !== menuMain && event.key === 'Escape') switchMenu(menuMain);
 });
+document.addEventListener('click', (event) => {
+    if (event.target.type === 'submit') playSound('tileSwitch');
+}, true);
 
 
 
@@ -57,6 +60,7 @@ playEndlessButton.addEventListener('click', () => {
     o.modeLevelTime = 0;
     o.modeLivesCount = 0;
     o.modeGlobalTimeGain = 0;
+    o.lineLength = 3;
     goToGame();
     startMode();
 });
@@ -68,6 +72,7 @@ playLivesButton.addEventListener('click', () => {
     o.modeLevelTime = 0;
     o.modeLivesCount = 5;
     o.modeGlobalTimeGain = 0;
+    o.lineLength = 3;
     goToGame();
     startMode();
 });
@@ -79,6 +84,7 @@ playFindLastButton.addEventListener('click', () => {
     o.modeLevelTime = 0;
     o.modeLivesCount = 0;
     o.modeGlobalTimeGain = 6;
+    o.lineLength = 3;
     goToGame();
     startMode();
 });
@@ -99,6 +105,7 @@ customPlayButton.addEventListener('click', () => {
     o.modeLivesCount = parseInt(customLivesInput.value);
     o.modeLevelTime = parseInt(customLevelTimeInput.value);
     o.modeGlobalTimeGain = parseInt(customGlobalTimeGainInput.value);
+    o.lineLength = parseInt(customLineLengthInput?.value || 3);
     goToGame();
     startMode(customSeedInput.value || undefined);
 });
@@ -129,7 +136,7 @@ document.addEventListener('input', (event) => {
             target.setSelectionRange(newCursorPos, newCursorPos);
         }
     }
-})
+});
 
 
 
@@ -171,4 +178,71 @@ function switchMenu(menu) {
         menu.classList.add('active');
         currentMenu = menu;
     }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const sounds = {};
+loadSound('tilePlace', 'sounds/pOp.wav');
+loadSound('invalidMove', 'sounds/error.wav');
+loadSound('tileSwitch', 'sounds/switchTile.wav');
+
+function loadSound(name, path) {
+    sounds[name] = new Audio(path);
+    sounds[name].preload = 'auto';
+}
+export function playSound(name) {
+    sounds[name].currentTime = 0;
+    sounds[name].play().catch(error => console.error(`Error playing sound "${name}":`, error));
+}
+
+
+
+
+
+
+const STORAGE_KEY = 'dontConnect3_stats';
+export const STATS = {
+    highestLevel: 0,
+    gamesPlayed: 0,
+
+    ...getStats(),
+}
+o.STATS = STATS;
+
+function getStats() {
+    try {
+        const rawStats = localStorage.getItem(STORAGE_KEY);
+        return rawStats ? JSON.parse(rawStats) : {};
+    } catch (error) {
+        console.error("Failed to parse stats from localStorage:", error);
+        return {};
+    }
+}
+function saveStats() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(STATS));
+    } catch (error) {
+        console.error("Failed to save stats to localStorage:", error);
+    }
+}
+
+export function updateStat(key, newValue) {
+    STATS[key] = newValue;
+    saveStats();
 }

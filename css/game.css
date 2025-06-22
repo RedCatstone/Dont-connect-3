@@ -8,7 +8,9 @@
     align-items: center;
     width: 100%;
     height: 100%;
-    margin-bottom: 30px;
+    padding-top: 20px;
+    padding-bottom: 30px;
+    overflow: hidden;
 }
 
 
@@ -69,12 +71,10 @@
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    
-    /* Make the heart pop with a subtle drop-shadow */
     text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
 }
 .heart.heart-lost {
-    animation: heart-lost-animation 0.5s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
+    animation: heart-lost-animation 500ms cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
 }
 @keyframes heart-lost-animation {
     0% { opacity: 1; transform: scale(1) rotate(0); }
@@ -157,6 +157,13 @@
     background-color: color-mix(in oklab, var(--color-grid-cell) 90%, var(--color-text) 10%);
     cursor: pointer;
 }
+/* disable for touchscreens becase it looks weird */
+@media (hover: none) or (pointer: coarse) {
+    #game-grid-container:not(.input-disabled) .tile.grid:hover {
+        background-color: var(--color-grid-cell); /* Revert to the default color */
+        cursor: default; /* Revert cursor */
+    }
+}
 
 @keyframes hint-breathe {
     0%, 100% {
@@ -171,12 +178,26 @@
 
 
 .tile.block {
-    translate: 0px calc(-1 * var(--grid-block-height));
-    background-color: var(--tile-color);
-    box-shadow: 0px calc(var(--grid-block-height) + var(--grid-tile-shadow)) color-mix(in oklab, var(--tile-color) 70%, black 30%);
-
+    position: relative;
+    background-color: color-mix(in oklab, var(--tile-color) 70%, black 30%);
     z-index: 5;
+    filter: drop-shadow(0px var(--grid-tile-shadow) 2px rgba(0, 0, 0, 0.4));
 }
+.tile.block::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    background: var(--tile-color);
+    border-radius: inherit;
+    transform: translateY(calc(-1 * var(--grid-block-height)));
+}
+
+
+
 .tile-red { --tile-color: var(--tile-red-color); }
 .tile-blue { --tile-color: var(--tile-blue-color);}
 .tile-yellow { --tile-color: var(--tile-yellow-color); }
@@ -201,12 +222,11 @@
     width: 60px;
     height: 60px;
     margin: 0;
-
-    /* override .tile.block stuff */
-    translate: 0px -20px;
-    box-shadow: 0px 20px color-mix(in oklab, var(--tile-color) 70%, black 30%);
 }
-#tile-selector .tile.block.selected {
+#tile-selector .tile.block::before {
+    transform: translateY(-20px);
+}
+#tile-selector .tile.block.selected::before {
     outline: 3px solid white;
     outline-offset: 5px;
     border-radius: 5px;
@@ -221,7 +241,7 @@
     position: absolute;
     font-family: 'Arial Black', Gadget, sans-serif; /* A bold, blocky font */
     top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -80%);
     font-size: 50px;
     color: rgba(0, 0, 0, 0.5);
     text-shadow: 2px 2px rgba(255, 255, 255, 0.2);
@@ -250,6 +270,9 @@
 #hint-button > .button-counter.using-hint {
     color: gold;
 }
+#hint-button > .button-counter.no-hints {
+    color: red;
+}
 
 
 
@@ -260,7 +283,135 @@
     right: 5px;
     position: fixed;
     color: var(--color-seed-text);
+    z-index: 101;
 }
+
+
+
+
+
+
+
+
+
+
+
+#level-end-screen {
+    position: absolute;
+    bottom: 0;
+    left: 2vmin;
+    right: 2vmin;
+    z-index: 100;
+    
+    background: color-mix(in oklab, var(--color-grid-cell) 95%, black 5%);
+    padding: 40px;
+    border-radius: 20px;
+    translate: 0 calc(100% - 70px);
+    
+    opacity: 0;
+    pointer-events: none;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+    transition: translate var(--animation-speed) cubic-bezier(.3, .7, .4, 1);
+    color: var(--color-text);
+}
+#level-end-screen.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+#level-end-screen.moveup {
+    translate: 0 0;
+}
+
+
+#end-hide-button {
+    position: absolute;
+    top: -10px;
+    width: 100px;
+    height: 40px;
+}
+#end-hide-button::after {
+    content: '^';
+    display: inline-block; 
+    font-size: 2.5rem;
+    translate: 0px -8px;
+    transform-origin: 50% 34%;
+    transition: rotate var(--animation-speed) ease-in-out;
+}
+#level-end-screen.moveup #end-hide-button::after {
+    rotate: 180deg;
+}
+
+#end-screen-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 0;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+#end-screen-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 10px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--color-text);
+    padding: 10px 15px;
+    background-color: var(--color-bg);
+    border: 2px solid var(--color-grid-cell);
+    border-radius: 12px;
+    box-shadow: inset 0 4px 8px rgba(0,0,0,0.4);
+}
+.stat-item > .stat-key {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--level-timer-color);
+}
+.stat-item > .stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    font-family: math;
+}
+#end-home-button { --button-color: #622188; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -334,7 +485,7 @@
     --line-length: 0;
     --line-rotation: 0deg;
 
-    animation: wipeInLine 0.5s cubic-bezier(.3, .7, .4, 1);
+    animation: wipeInLine 500ms cubic-bezier(.3, .7, .4, 1);
 }
 
 @keyframes wipeInLine {
@@ -367,11 +518,12 @@
 
 .tile-particle-fly-out {
     position: absolute;
-    top: 50%;
+    top: 25%;
     left: 50%;
     width: 10%;
     height: 10%;
     border-radius: 50%;
+    background-color: var(--tile-color);
     animation-name: particle-fly-out;
     animation-timing-function: cubic-bezier(0.1, 0.8, 0.4, 1);
     animation-fill-mode: forwards;

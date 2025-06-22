@@ -1,6 +1,5 @@
-import { playSound } from './main.js';
-import { combineSeedLevel, generateGrid, generateRandomB64String, uncombineSeedLevel } from './generateGrid.js';
-import { goToMainMenu } from './menu.js';
+import { generateGrid, generateRandomB64String } from './generateGrid.js';
+import { goToMainMenu, playSound, STATS } from './menu.js';
 
 
 const gameGridContainer = document.querySelector("#game-grid-container");
@@ -21,7 +20,9 @@ const seedDisplay = document.querySelector("#seed-display");
 const levelEndScreen = document.querySelector("#level-end-screen");
 const endScreenTitle = document.querySelector("#end-screen-title");
 const endScreenStats = document.querySelector("#end-screen-stats");
-const endScreenButton = document.querySelector("#end-screen-button");
+const endScreenButtons = document.querySelector("#end-screen-buttons");
+const endHideButton = document.querySelector("#end-hide-button");
+const endHomeButton = document.querySelector("#end-home-button");
 
 
 
@@ -60,7 +61,7 @@ export const o = {
     height: null,
     availableTiles: null,
     futureAvailableTiles: null,
-    botAmount: 0,
+    botAmount: null,
     spotsLeftGrid: null,
 
     // generation settings
@@ -70,15 +71,19 @@ export const o = {
 
     // variables
     seed: null,
-    level: 1,
+    level: null,
     time: performance.now(),
     selectedAvailableTile: 0,
     inputDisabled: false,
     spotsLeftCount: null,
-    levelTime: 0,
-    globalTime: 0,
-    globalTimeLeft: 0,
+    globalTimeLeft: null,
     lives: 0,
+    endScreen: false,
+    blocksPlaced: null,
+    invalidClicks: null,
+    hintsUsed: 0,
+
+    STATS: null,
 
     // mode specifics
     modeInfinite: false,
@@ -90,8 +95,8 @@ export const o = {
     
     // settings
     lineLength: 3,
+    gainHintEveryLevel: 10,
     hintsLeft: 0,
-    coloredHints: false,
     botAnimationSpeed: 100,  // ms
     invalidMoveTimeout: 600,
 
@@ -104,17 +109,22 @@ window.o = o;
 
 
 
+
 export function startMode(seed=generateRandomB64String(4)) {
     resetDisplaysAndIntervals();
     o.seed = seed;
     o.hintsLeft = o.modeHintCount;
     hintUsesDisplay.textContent = o.hintsLeft;
-    startGrid();
     if (o.modeGlobalTimeGain) startGlobalTimeCountdown();
     if (o.modeLivesCount) {
         o.lives = o.modeLivesCount;
         updateLivesDisplay();
     }
+    o.blocksPlaced = 0;
+    o.invalidClicks = 0;
+    o.hintsUsed = 0;
+    startGrid();
+    startTimer();
 }
 
 
@@ -122,7 +132,7 @@ export function startMode(seed=generateRandomB64String(4)) {
 
 
 function startGrid() {
-    const { grid, width, height, availableTiles, futureAvailableTiles, botAmount } = generateGrid(combineSeedLevel(o.seed, o.level));
+    const { grid, width, height, availableTiles, futureAvailableTiles, botAmount } = generateGrid(o.seed, o.level);
     o.grid = grid;
     o.width = width;
     o.height = height;
@@ -138,7 +148,6 @@ function startGrid() {
     seedDisplay.textContent = o.seed;
     createGridDisplay();
     updateTileSelectorDisplay();
-    startTimer();
 
     if (o.modeLevelTime) startLevelTimeCountdown();
     if (o.modeFindLast) placeRandomTiles(Infinity, true);
@@ -188,18 +197,24 @@ document.addEventListener('keydown', (event) => {
 
 let hintTimeout = null;
 let hintUsed = false;
-hintButton.addEventListener('click', () => {
-    if (o.hintsLeft <= 0) return;
-
+hintButton.addEventListener('click', (event) => {
+    if (o.hintsLeft > 0) showHint(1500);
+    else {
+        hintUsesDisplay.classList.add('no-hints');
+        setTimeout(() => hintUsesDisplay.classList.remove('no-hints'), 600);
+    }
+}, true);
+    
+function showHint(timeout, colored=false) {
     hintUsed = true;
     gameGridContainer.classList.add('hint-active');
-    hintUsesDisplay.classList.add('using-hint');
+    if (timeout) hintUsesDisplay.classList.add('using-hint');
     for (let y = 0; y < o.height; y++) {
         for (let x = 0; x < o.width; x++) {
             const tileElement = getTileElement(x, y);
             if (o.spotsLeftGrid[x][y] > 0) {
                 tileElement.dataset.hint = true;
-                if (o.coloredHints) {
+                if (colored) {
                     tileElement.style.backgroundColor = 'color-mix(in oklab, var(--color-grid-cell) 70%, var(--tile-color) 30%)';
                     tileElement.classList.add(TILE_CLASS_MAP[o.spotsLeftGrid[x][y]].split(' ')[2]);
                 }
@@ -207,8 +222,8 @@ hintButton.addEventListener('click', () => {
         }
     }
     clearTimeout(hintTimeout);
-    hintTimeout = setTimeout(clearHint, 1500);
-});
+    if (timeout) hintTimeout = setTimeout(clearHint, timeout);
+}
 function clearHint() {
     clearTimeout(hintTimeout);
     gameGridContainer.classList.remove('hint-active');
@@ -216,18 +231,20 @@ function clearHint() {
         for (let x = 0; x < o.width; x++) {
             const tileElement = getTileElement(x, y);
             delete tileElement.dataset.hint;
-            if (o.coloredHints) {
+            // if (o.coloredHints) {
                 tileElement.style.backgroundColor = '';
                 if (tileElement.className.includes(TILE_CLASS_MAP[TILE_ID.GRID])) tileElement.className = TILE_CLASS_MAP[TILE_ID.GRID];
-            }
+            // }
         }
     }
 }
 
 
-homeButton.addEventListener('click', () => {
-    goToMainMenu(); 
-});
+homeButton.addEventListener('click', () => goToMainMenu());
+endHomeButton.addEventListener('click', () => goToMainMenu());
+endHideButton.addEventListener('click', () => levelEndScreen.classList.toggle('moveup'));
+
+
 
 function resetDisplaysAndIntervals() {
     clearInterval(timerInterval);
@@ -238,6 +255,9 @@ function resetDisplaysAndIntervals() {
     globalTimeDisplay.textContent = '';
     o.lives = 0;
     livesDisplay.textContent = '';
+    enableGridInput(true);
+    hideEndScreen();
+    clearHint();
 }
 
 
@@ -260,21 +280,25 @@ function startTimer() {
 }
 function updateTimerDisplay() {
     const time = performance.now() - o.time;
-    const totalSeconds = Math.floor(time / 1000);
-    const seconds = (totalSeconds % 60).toString().padStart(2, '0');
-    const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
-    timerDisplay.textContent = `${minutes}:${seconds}`;
+    timerDisplay.textContent = formatMinuteSeconds(time, 0);
+}
+function formatMinuteSeconds(time, fixed) {
+    const minutes = Math.floor(time / 60_000).toString().padStart(2, '0');
+    const seconds = (time / 1000 % 60).toFixed(fixed).padStart(2, '0');
+    const [integerPart, decimalPart] = seconds.split('.');
+    return `${minutes}:${integerPart.padStart(2, '0')}${decimalPart ? `.${decimalPart}` : ''}`;
 }
 
+let levelTime = null;
 let levelTimeInterval = null;
 function startLevelTimeCountdown() {
-    o.levelTime = performance.now();
+    levelTime = performance.now();
     clearTimeout(levelTimeInterval);
     levelTimeInterval = setInterval(updateLevelTimeDisplay, 0);
     updateLevelTimeDisplay();
 }
 function updateLevelTimeDisplay() {
-    const time = o.modeLevelTime - (performance.now() - o.levelTime) / 1000;
+    const time = o.modeLevelTime - (performance.now() - levelTime) / 1000;
     const totalSeconds = (time).toFixed(1);
     levelTimeDisplay.textContent = `${totalSeconds}`;
     if (time < 0) {
@@ -283,16 +307,17 @@ function updateLevelTimeDisplay() {
     }
 }
 
+let globalTime = null;
 let globalTimeInterval = null;
 function startGlobalTimeCountdown() {
-    o.globalTime = performance.now();
+    globalTime = performance.now();
     o.globalTimeLeft = o.modeGlobalTimeGain;
     clearTimeout(globalTimeInterval);
     globalTimeInterval = setInterval(updateGlobalTimeDisplay, 0);
     updateGlobalTimeDisplay();
 }
 function updateGlobalTimeDisplay() {
-    const time = o.globalTimeLeft - (performance.now() - o.globalTime) / 1000;
+    const time = o.globalTimeLeft - (performance.now() - globalTime) / 1000;
     const totalSeconds = (time).toFixed(1);
     globalTimeDisplay.textContent = `${totalSeconds}`;
     if (time < 0) {
@@ -335,6 +360,7 @@ function loseLife() {
     const lastHeart = livesDisplay.lastChild;
     lastHeart.classList.add('heart-lost');
     setTimeout(() => updateLivesDisplay(), o.invalidMoveTimeout);
+    if (o.lives === 0) gridFail();
 }
 
 
@@ -380,9 +406,11 @@ function disableGridInput() {
     o.inputDisabled = true;
     gameGridContainer.classList.add('input-disabled');
 }
-function enableGridInput() {
-    o.inputDisabled = false;
-    gameGridContainer.classList.remove('input-disabled');
+function enableGridInput(force) {
+    if (force || (!o.endScreen)) {
+        o.inputDisabled = false;
+        gameGridContainer.classList.remove('input-disabled');
+    }
 }
 
 
@@ -411,10 +439,11 @@ function userPlaceTile(x, y, tileId) {
         // bots
         if (!endBots) placeRandomTiles(o.botAmount);
 
+        o.blocksPlaced++;
         if (hintUsed) {
             hintUsed = false;
-            o.hintsLeft--;
-            hintUsesDisplay.textContent = o.hintsLeft;
+            hintUsesDisplay.textContent = --o.hintsLeft;
+            o.hintsUsed++;
             clearHint();
             hintUsesDisplay.classList.remove('using-hint');
         }
@@ -500,14 +529,8 @@ function canPlaceTile(x, y, tileId, drawLine) {
     else {
         disableGridInput();
         playSound('invalidMove');
-        if (o.lives === 1) {
-            loseLife();
-            gridFail();
-            return false;
-        }
-        else if (o.lives > 1) {
-            loseLife();
-        }
+        o.invalidClicks++;
+        if (o.lives > 0) loseLife();
         setTimeout(() => enableGridInput(), o.invalidMoveTimeout);
         return false;
     }
@@ -649,18 +672,19 @@ function zeroSpotsLeft() {
 function gridComplete() {
     disableGridInput();
     clearInterval(levelTimeInterval);
-    setTimeout(() => {
-        enableGridInput();
-
-        if (o.modeInfinite) {
+    
+    if (o.modeInfinite) {
+        setTimeout(() => {
             o.level++;
+            if (o.hintsLeft < 99 && o.level % o.gainHintEveryLevel === 0) hintUsesDisplay.textContent = ++o.hintsLeft;
             o.globalTimeLeft += o.modeGlobalTimeGain;
+            enableGridInput();
             startGrid();
-        }
-        else {
-            goToMainMenu();
-        }
-    }, 1000);
+        }, 1000);
+    }
+    else {
+        setTimeout(() => showEndScreen('win'), 0);
+    }
 }
 
 function gridFail() {
@@ -668,12 +692,82 @@ function gridFail() {
     clearInterval(levelTimeInterval);
     clearInterval(globalTimeInterval);
 
-    setTimeout(() => {
-        enableGridInput();
-
-        goToMainMenu();
-    }, 1000);
+    setTimeout(() => showEndScreen('lose'), 0);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+function showEndScreen(status) {
+    o.endScreen = true;
+    clearInterval(timerInterval);
+    clearInterval(levelTimeInterval);
+    clearInterval(globalTimeInterval);
+    endScreenTitle.textContent = `You ${status}!`;
+    endScreenStats.innerHTML = '';
+
+    const stats = {
+        'Level': o.level,
+        'Time': formatMinuteSeconds(performance.now() - o.time, 2),
+        'Blocks Placed': o.blocksPlaced,
+        'Invalid Clicks': o.invalidClicks,
+        'Hints Used': o.hintsUsed,
+        'Seed': o.seed,
+    };
+    
+    for (const [key, value] of Object.entries(stats)) {
+        const statItem = document.createElement('div');
+        statItem.className = 'stat-item';
+        const statKey = document.createElement('span');
+        statKey.className = 'stat-key';
+        statKey.textContent = key;
+        const statValue = document.createElement('span');
+        statValue.className = 'stat-value';
+        statValue.textContent = value;
+        statItem.append(statKey, statValue);
+        endScreenStats.appendChild(statItem);
+    }
+
+    levelEndScreen.classList.add('visible');
+    setTimeout(() => levelEndScreen.classList.add('moveup'), 10);
+
+
+    // show tiles
+    showHint(0, true);
+}
+
+function hideEndScreen() {
+    o.endScreen = false;
+    levelEndScreen.classList.remove('visible');
+    levelEndScreen.classList.remove('moveup');
+}
+
+
+
+
+
+
+
+
+
+function compareAndSaveHighestStats() {
+    
+}
+
+
+
+
+
+
 
 
 
@@ -715,13 +809,14 @@ function createBlockPlaceParticles(tileElement) {
     const particleWrapper = document.createElement('div');
     particleWrapper.className = 'particle-effect-wrapper';
 
-    if (particleWrappers >= 50) return;
-
-    const numParticles = particleWrappers < 10 ? 10 + Math.floor(Math.random() * 5) : 5; // 10 to 14 particles
+    let numParticles;
+    if (particleWrappers > 30) return;
+    else if (particleWrappers > 10) numParticles = 5;
+    else if (particleWrappers > 5) numParticles = 10;
+    else numParticles = 14;
     for (let i = 0; i < numParticles; i++) {
         const particle = document.createElement('div');
         particle.className = 'tile-particle-fly-out';
-        setTimeout(() => particle.style.backgroundColor = getComputedStyle(tileElement).backgroundColor, 0);
 
         // Randomize
         const endRotation = Math.random() * 360;
