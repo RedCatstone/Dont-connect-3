@@ -3,17 +3,13 @@ import { o, ALL_TILE_BLOCKS, shuffleArray, TILE_ID } from './game.js';
 
 
 
-export const SEED_PREFIX_LENGTH = 4;
-
-
-
 
 
 export function generateGrid(seed, level) {
-    const rand = splitmix32(cyrb128(level + seed)[0]);
+    const rand = splitmix32(cyrb128(seed + level + seed)[0]);
 
     // grid size
-    const total = Math.log(level + 1) / Math.log(o.levelSizeGrowFactor);
+    const total = (Math.log(level + 1) * o.levelSizeMultiplier);
     const randomSplit = rand() * total/4;
     const width = 2 + Math.round(total/4 + randomSplit);
     const height = 2 + Math.round(total/2 - randomSplit);
@@ -26,12 +22,12 @@ export function generateGrid(seed, level) {
     const availableTiles = [];
     const futureAvailableTiles = [];
     tiles.forEach((tile, i) => {
-        if (i === 0 || rand() > o.lockedTileChance) availableTiles.push(tile);
+        if (i === 0 || rand() > o.chanceLockedTile) availableTiles.push(tile);
         else futureAvailableTiles.push(tile)
-    })
+    });
 
     // bot amount
-    const botAmount = Math.ceil(rand() * Math.log(level)) ?? 0;
+    const botAmount = Math.ceil(rand() * Math.log(level) * o.botAmountMultiplier);
 
     // holes (patterns)
     if (level > 5) {

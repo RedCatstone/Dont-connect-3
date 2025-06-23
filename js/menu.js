@@ -10,7 +10,7 @@ const mainSettingsButton = document.getElementById('main-settings-button');
 const mainAboutButton = document.getElementById('main-about-button');
 
 const playEndlessButton = document.getElementById('play-endless-button');
-const playLivesButton = document.getElementById('play-lives-button');
+const playHardcoreButton = document.getElementById('play-hardcore-button');
 const playFindLastButton = document.getElementById('play-find-last-button');
 const playCustomButton = document.getElementById('play-custom-button');
 
@@ -20,10 +20,13 @@ const customInfiniteCheck = document.getElementById('custom-infinite-check');
 const customFindLastCheck = document.getElementById('custom-find-last-check');
 const customHintsInput = document.getElementById('custom-hints-input');
 const customLivesInput = document.getElementById('custom-lives-input');
-const customLevelTimeInput = document.getElementById('custom-level-time-input');
 const customGlobalTimeGainInput = document.getElementById('custom-global-time-gain-input');
-const customLineLengthInput = document.getElementById('custom-line-length-input');
+const customBotMultiplierInput = document.getElementById('custom-bot-multiplier-input');
 const customPlayButton = document.getElementById('custom-play-button');
+
+// not in the menu
+const customLineLengthInput = document.getElementById('custom-line-length-input');
+const customLevelTimeInput = document.getElementById('custom-level-time-input');
 
 let currentMenu = null;
 
@@ -53,43 +56,33 @@ mainPlayButton.addEventListener('click', () => {
 
 // --- PLAY MENU ---
 playEndlessButton.addEventListener('click', () => {
-    o.level = 1;
-    o.modeInfinite = true;
-    o.modeFindLast = false;
-    o.modeHintCount = 5;
-    o.modeLevelTime = 0;
-    o.modeLivesCount = 0;
-    o.modeGlobalTimeGain = 0;
-    o.lineLength = 3;
     goToGame();
-    startMode();
+    startMode({
+        modeInfinite: true,
+        mode: "endless",
+    });
 });
-playLivesButton.addEventListener('click', () => {
-    o.level = 1;
-    o.modeInfinite = true;
-    o.modeFindLast = false;
-    o.modeHintCount = 2;
-    o.modeLevelTime = 0;
-    o.modeLivesCount = 2;
-    o.modeGlobalTimeGain = 0;
-    o.lineLength = 3;
+playHardcoreButton.addEventListener('click', () => {
     goToGame();
-    startMode();
+    startMode({
+        modeInfinite: true,
+        modeLivesCount: 1,
+        mode: "hardcore",
+    });
 });
 playFindLastButton.addEventListener('click', () => {
-    o.level = 1;
-    o.modeInfinite = true;
-    o.modeFindLast = true;
-    o.modeHintCount = 2;
-    o.modeLevelTime = 0;
-    o.modeLivesCount = 0;
-    o.modeGlobalTimeGain = 5;
-    o.lineLength = 3;
     goToGame();
-    startMode();
+    startMode({
+        modeInfinite: true,
+        modeFindLast: true,
+        modeHintCount: 0,
+        modeGlobalTimeGain: 4,
+        mode: "findlast",
+    });
 });
 playCustomButton.addEventListener('click', () => {
     switchMenu(menuCustom);
+    customSeedInput.maxLength = o.defaultSeedLength;
 });
 
 
@@ -98,17 +91,35 @@ playCustomButton.addEventListener('click', () => {
 
 // --- CUSTOM GAME MENU ---
 customPlayButton.addEventListener('click', () => {
-    o.level = parseInt(customLevelInput.value || 1);
-    o.modeInfinite = customInfiniteCheck.checked;
-    o.modeFindLast = customFindLastCheck.checked;
-    o.modeHintCount = parseInt(customHintsInput.value || 0);
-    o.modeLivesCount = parseInt(customLivesInput.value);
-    o.modeLevelTime = parseInt(customLevelTimeInput.value);
-    o.modeGlobalTimeGain = parseInt(customGlobalTimeGainInput.value);
-    o.lineLength = parseInt(customLineLengthInput?.value || 3);
     goToGame();
-    startMode(customSeedInput.value || undefined);
+    const rawSettings = {
+        seed: customSeedInput.value || undefined,
+        level: getNumber(customLevelInput.value),
+        modeInfinite: customInfiniteCheck.checked,
+        modeFindLast: customFindLastCheck.checked,
+        modeHintCount: getNumber(customHintsInput.value),
+        modeLivesCount: getNumber(customLivesInput.value),
+        modeGlobalTimeGain: getNumber(customGlobalTimeGainInput.value),
+        botAmountMultiplier: getNumber(customBotMultiplierInput.value),
+        
+        // not in the menu
+        modeLevelTime: getNumber(customLineLengthInput?.value),
+        lineLength: getNumber(customLevelTimeInput?.value),
+        mode: "custom",
+    };
+
+    const cleanSettings = Object.fromEntries(
+        Object.entries(rawSettings).filter(([_, value]) => value !== undefined)
+    );
+    startMode(cleanSettings);
 });
+
+function getNumber(input) {
+    const result = parseInt(input, 10);
+    return Number.isNaN(result) ? undefined : result;
+}
+
+
 
 document.addEventListener('input', (event) => {
     const target = event.target;
@@ -217,12 +228,7 @@ export function playSound(name) {
 
 
 const STORAGE_KEY = 'dontConnect3_stats';
-export const STATS = {
-    highestLevel: 0,
-    gamesPlayed: 0,
-
-    ...getStats(),
-}
+export const STATS = getStats();
 o.STATS = STATS;
 
 function getStats() {
@@ -234,15 +240,10 @@ function getStats() {
         return {};
     }
 }
-function saveStats() {
+export function saveStats() {
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(STATS));
     } catch (error) {
         console.error("Failed to save stats to localStorage:", error);
     }
-}
-
-export function updateStat(key, newValue) {
-    STATS[key] = newValue;
-    saveStats();
 }

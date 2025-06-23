@@ -1,5 +1,5 @@
 import { generateGrid, generateRandomB64String } from './generateGrid.js';
-import { goToMainMenu, playSound, STATS } from './menu.js';
+import { goToMainMenu, playSound, saveStats, STATS } from './menu.js';
 
 
 const gameGridContainer = document.querySelector("#game-grid-container");
@@ -23,6 +23,7 @@ const endScreenStats = document.querySelector("#end-screen-stats");
 const endScreenButtons = document.querySelector("#end-screen-buttons");
 const endHideButton = document.querySelector("#end-hide-button");
 const endHomeButton = document.querySelector("#end-home-button");
+const endRetryButton = document.querySelector("#end-retry-button");
 
 
 
@@ -65,11 +66,13 @@ export const o = {
     spotsLeftGrid: null,
 
     // generation settings
-    levelSizeGrowFactor: 1.2,
+    levelSizeMultiplier: 6,
+    botAmountMultiplier: 1,
     chanceHoles: 0.7,
-    lockedTileChance: 0.5,
+    chanceLockedTile: 0.5,
 
     // variables
+    mode: null,
     seed: null,
     level: null,
     time: performance.now(),
@@ -99,6 +102,7 @@ export const o = {
     hintsLeft: 0,
     botAnimationSpeed: 100,  // ms
     invalidMoveTimeout: 600,
+    defaultSeedLength: 3,
 
     placeRandomTiles,
 }
@@ -109,17 +113,32 @@ window.o = o;
 
 
 
+let modeSettings = null;
+export function startMode(customSettings) {
+    modeSettings = customSettings;
 
-export function startMode(seed=generateRandomB64String(4)) {
+    const defaultSettings = {
+        mode: "void",
+        seed: generateRandomB64String(o.defaultSeedLength),
+        level: 1,
+        modeInfinite: false,
+        modeFindLast: false,
+        modeHintCount: 2,
+        modeLivesCount: 0,
+        modeGlobalTimeGain: 0,
+        botAmountMultiplier: 1,
+        modeLevelTime: 0,
+        lineLength: 3,
+    };
+
+    Object.assign(o, defaultSettings, customSettings);
+
     resetDisplaysAndIntervals();
-    o.seed = seed;
     o.hintsLeft = o.modeHintCount;
     hintUsesDisplay.textContent = o.hintsLeft;
     if (o.modeGlobalTimeGain) startGlobalTimeCountdown();
-    if (o.modeLivesCount) {
-        o.lives = o.modeLivesCount;
-        updateLivesDisplay();
-    }
+    o.lives = o.modeLivesCount;
+    if (o.lives) updateLivesDisplay();
     o.blocksPlaced = 0;
     o.invalidClicks = 0;
     o.hintsUsed = 0;
@@ -240,9 +259,16 @@ function clearHint() {
 }
 
 
-homeButton.addEventListener('click', () => goToMainMenu());
+homeButton.addEventListener('click', () => {
+    if (!o.endScreen) showEndScreen("quit", 0);
+    goToMainMenu();
+});
 endHomeButton.addEventListener('click', () => goToMainMenu());
 endHideButton.addEventListener('click', () => levelEndScreen.classList.toggle('moveup'));
+endRetryButton.addEventListener('click', () => {
+    resetDisplaysAndIntervals();
+    startMode(modeSettings);
+});
 
 
 
@@ -664,7 +690,10 @@ function zeroSpotsLeft() {
         
         if (o.modeLevelTime) startLevelTimeCountdown();
         if (o.modeFindLast) placeRandomTiles(Infinity, true);
-        if (o.spotsLeftCount > 0) o.globalTimeLeft += o.modeGlobalTimeGain * o.availableTiles.length;
+        if (o.spotsLeftCount > 0) {
+            const factor = o.availableTiles.length / 2 + 0.5;   // 1->1  2->1.5  3->2  4->2.5  5->3
+            o.globalTimeLeft += o.modeGlobalTimeGain * factor;
+        }
     }
     else gridComplete();
 }
@@ -686,7 +715,7 @@ function gridComplete() {
         }, 1000);
     }
     else {
-        setTimeout(() => showEndScreen('win'), 0);
+        showEndScreen('win', 0);
     }
 }
 
@@ -695,7 +724,7 @@ function gridFail() {
     clearInterval(levelTimeInterval);
     clearInterval(globalTimeInterval);
 
-    setTimeout(() => showEndScreen('lose'), 600);
+    showEndScreen('lose', 600);
 }
 
 
@@ -710,42 +739,71 @@ function gridFail() {
 
 
 
-function showEndScreen(status) {
-    o.endScreen = true;
+function showEndScreen(status, timeout) {
+    updateTimerDisplay();
     clearInterval(timerInterval);
     clearInterval(levelTimeInterval);
     clearInterval(globalTimeInterval);
-    endScreenTitle.textContent = `You ${status}!`;
-    endScreenStats.innerHTML = '';
+    o.endScreen = true;
 
-    const stats = {
+    const endStats = {
         'Level': o.level,
-        'Time': formatMinuteSeconds(performance.now() - o.time, 2),
+        'Time': Math.round(performance.now() - o.time),
         'Blocks Placed': o.blocksPlaced,
-        'Invalid Clicks': o.invalidClicks,
+        'Wrong Clicks': o.invalidClicks,
         'Hints Used': o.hintsUsed,
         'Seed': o.seed,
     };
-    
-    for (const [key, value] of Object.entries(stats)) {
-        const statItem = document.createElement('div');
-        statItem.className = 'stat-item';
-        const statKey = document.createElement('span');
-        statKey.className = 'stat-key';
-        statKey.textContent = key;
-        const statValue = document.createElement('span');
-        statValue.className = 'stat-value';
-        statValue.textContent = value;
-        statItem.append(statKey, statValue);
-        endScreenStats.appendChild(statItem);
+
+    // --- STATS ---
+    let newRecord = false;
+    if (!STATS[o.mode]) STATS[o.mode] = { played: 0 };
+    STATS[o.mode].played++;
+    if (endStats.Level > (STATS[o.mode].best?.Level ?? 0) && o.mode !== "custom") {
+        // new pb!
+        STATS[o.mode].best = endStats;
+        newRecord = true;
     }
 
-    levelEndScreen.classList.add('visible');
-    setTimeout(() => levelEndScreen.classList.add('moveup'), 10);
+    if (status !== "lose" && o.mode !== "findlast") {
+        // can continue run
+        STATS[o.mode].continue = endStats;
+    }
+    saveStats();
 
 
-    // show tiles
-    showHint(0, true);
+    // --- Actually display the end screen ---
+    setTimeout(() => {
+        endScreenTitle.textContent = `You ${status}!`;
+        endScreenStats.innerHTML = '';
+
+
+        for (let [key, value] of Object.entries(endStats)) {
+            const statItem = document.createElement('div');
+            statItem.className = 'stat-item';
+
+            if (key === 'Level' && newRecord) statItem.classList.add('new-record');
+            if (key === 'Time') value = formatMinuteSeconds(value, 2);
+            if (key === 'Continue') continue;
+
+
+            const statKey = document.createElement('span');
+            statKey.className = 'stat-key';
+            statKey.textContent = key;
+            const statValue = document.createElement('span');
+            statValue.className = 'stat-value';
+            statValue.textContent = value;
+            statItem.append(statKey, statValue);
+            endScreenStats.appendChild(statItem);
+        }
+
+
+        levelEndScreen.classList.add('visible');
+        setTimeout(() => levelEndScreen.classList.add('moveup'), 30);
+
+
+        showHint(0, true);
+    }, timeout);
 }
 
 function hideEndScreen() {
@@ -755,16 +813,6 @@ function hideEndScreen() {
 }
 
 
-
-
-
-
-
-
-
-function compareAndSaveHighestStats() {
-    
-}
 
 
 

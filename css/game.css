@@ -148,7 +148,7 @@
     transition: translate 0.1s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 #game-grid-container.hint-active .tile[data-hint="true"] {
-    translate: 0 calc(-0.2 * var(--grid-tile-size));
+    translate: 0 calc(-0.1 * var(--grid-tile-size));
     z-index: 10;
     animation: hint-breathe 1.5s infinite cubic-bezier(0.4, 0, 0.6, 1);
     background-color: color-mix(in oklab, var(--color-grid-cell) 95%, var(--color-text) 5%);
@@ -178,7 +178,6 @@
 
 
 .tile.block {
-    position: relative;
     background-color: color-mix(in oklab, var(--tile-color) 70%, black 30%);
     z-index: 5;
     filter: drop-shadow(0px var(--grid-tile-shadow) 2px rgba(0, 0, 0, 0.4));
@@ -203,7 +202,7 @@
 .tile-yellow { --tile-color: var(--tile-yellow-color); }
 .tile-purple { --tile-color: var(--tile-purple-color); }
 .tile-white { --tile-color: var(--tile-white-color); }
-.tile.block.wall { --tile-color: var(--tile-wall-color); }
+.tile-wall { --tile-color: var(--tile-wall-color); }
 
 
 
@@ -311,7 +310,6 @@
     display: none;
     flex-direction: column;
     align-items: center;
-    gap: 15px;
     
     box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
     transition: translate var(--animation-speed) cubic-bezier(.3, .7, .4, 1);
@@ -387,7 +385,30 @@
     font-weight: 700;
     font-family: math;
 }
+
+.stat-item.new-record {
+    border-color: var(--color-new-record);
+    box-shadow: 0 0 15px -2px color-mix(in oklab, var(--color-new-record) 80%, transparent);
+}
+.stat-item.new-record > .stat-key {
+    color: color-mix(in oklab, var(--color-new-record) 70%, white);
+}
+.stat-item.new-record > .stat-value {
+    color: white;
+    text-shadow: 0 0 8px var(--color-new-record);
+}
+
+
+#end-screen-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+}
+
+
+
 #end-home-button { --button-color: #622188; }
+#end-retry-button { --button-color: #622188; }
 
 
 

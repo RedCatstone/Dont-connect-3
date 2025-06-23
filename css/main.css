@@ -24,6 +24,7 @@
     
     --color-text: white;
     --color-seed-text: color-mix(in oklab, var(--color-bg) 60%, var(--color-text) 40%);
+    --color-new-record: gold;
 
     --color-accent: #00A395;
 
@@ -377,7 +378,7 @@ button > .button-counter {
 
 #main-play-button { --button-color: var(--color-accent); }
 #play-endless-button { --button-color: #4CAF50; }
-#play-lives-button { --button-color: #b9302b; }
+#play-hardcore-button { --button-color: #b9302b; }
 #play-find-last-button { --button-color: #2196F3; }
 #play-custom-button { --button-color: #cf08bf; }
 #custom-play-button { --button-color: #cf08bf; }
