@@ -35,7 +35,7 @@
     min-width: 5ch;
 }
 
-#level-timer-info .dot {
+.dot {
     color: var(--color-grid-cell);
 }
 
@@ -284,6 +284,7 @@
     color: var(--color-seed-text);
     z-index: 101;
 }
+
 
 
 

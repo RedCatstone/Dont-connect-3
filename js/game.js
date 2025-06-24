@@ -121,6 +121,7 @@ export function startMode(customSettings) {
         mode: "void",
         seed: generateRandomB64String(o.defaultSeedLength),
         level: 1,
+        time: 0,
         modeInfinite: false,
         modeFindLast: false,
         modeHintCount: 2,
@@ -129,20 +130,21 @@ export function startMode(customSettings) {
         botAmountMultiplier: 1,
         modeLevelTime: 0,
         lineLength: 3,
+        blocksPlaced: 0,
+        invalidClicks: 0,
+        hintsUsed: 0,
+        hintsLeft: customSettings.modeHintCount ?? 2,
+        lives: customSettings.modeLivesCount ?? 0,
     };
 
     Object.assign(o, defaultSettings, customSettings);
 
     resetDisplaysAndIntervals();
-    o.hintsLeft = o.modeHintCount;
     hintUsesDisplay.textContent = o.hintsLeft;
-    if (o.modeGlobalTimeGain) startGlobalTimeCountdown();
-    o.lives = o.modeLivesCount;
     if (o.lives) updateLivesDisplay();
-    o.blocksPlaced = 0;
-    o.invalidClicks = 0;
-    o.hintsUsed = 0;
+    o.globalTimeLeft = 0;
     startGrid();
+    if (o.modeGlobalTimeGain) startGlobalTimeCountdown();
     startTimer();
 }
 
@@ -170,6 +172,7 @@ function startGrid() {
 
     if (o.modeLevelTime) startLevelTimeCountdown();
     if (o.modeFindLast) placeRandomTiles(Infinity, true);
+    incrementGlobalTimeLeft();
 }
 
 
@@ -215,12 +218,14 @@ document.addEventListener('keydown', (event) => {
 
 
 let hintTimeout = null;
+let noHintTimeout = null;
 let hintUsed = false;
-hintButton.addEventListener('click', (event) => {
+hintButton.addEventListener('click', () => {
     if (o.hintsLeft > 0) showHint(1500);
     else {
         hintUsesDisplay.classList.add('no-hints');
-        setTimeout(() => hintUsesDisplay.classList.remove('no-hints'), 600);
+        clearTimeout(noHintTimeout);
+        noHintTimeout = setTimeout(() => hintUsesDisplay.classList.remove('no-hints'), 600);
     }
 }, true);
     
@@ -246,6 +251,7 @@ function showHint(timeout, colored=false) {
 function clearHint() {
     clearTimeout(hintTimeout);
     gameGridContainer.classList.remove('hint-active');
+    hintUsesDisplay.classList.remove('using-hint');
     for (let y = 0; y < o.height; y++) {
         for (let x = 0; x < o.width; x++) {
             const tileElement = getTileElement(x, y);
@@ -261,9 +267,13 @@ function clearHint() {
 
 homeButton.addEventListener('click', () => {
     if (!o.endScreen) showEndScreen("quit", 0);
+    resetDisplaysAndIntervals();
     goToMainMenu();
 });
-endHomeButton.addEventListener('click', () => goToMainMenu());
+endHomeButton.addEventListener('click', () => {
+    resetDisplaysAndIntervals();
+    goToMainMenu();
+});
 endHideButton.addEventListener('click', () => levelEndScreen.classList.toggle('moveup'));
 endRetryButton.addEventListener('click', () => {
     resetDisplaysAndIntervals();
@@ -279,13 +289,12 @@ function resetDisplaysAndIntervals() {
     levelTimeDisplay.textContent = '';
     clearInterval(globalTimeInterval);
     globalTimeDisplay.textContent = '';
-    o.lives = 0;
     livesDisplay.textContent = '';
     enableGridInput(true);
     hideEndScreen();
     clearHint();
-    hintUsesDisplay.classList.remove('using-hint');
     hintUsed = false;
+    clearTimeout(gridCompleteTimeout);
 }
 
 
@@ -301,7 +310,7 @@ function resetDisplaysAndIntervals() {
 
 let timerInterval = null;
 function startTimer() {
-    o.time = performance.now();
+    o.time = performance.now() - o.time;
     clearTimeout(timerInterval);
     timerInterval = setInterval(updateTimerDisplay, 1000);
     updateTimerDisplay();
@@ -339,7 +348,6 @@ let globalTime = null;
 let globalTimeInterval = null;
 function startGlobalTimeCountdown() {
     globalTime = performance.now();
-    o.globalTimeLeft = o.modeGlobalTimeGain;
     clearTimeout(globalTimeInterval);
     globalTimeInterval = setInterval(updateGlobalTimeDisplay, 0);
     updateGlobalTimeDisplay();
@@ -352,6 +360,10 @@ function updateGlobalTimeDisplay() {
         gridFail();
         globalTimeDisplay.textContent = `0.0`;
     }
+}
+function incrementGlobalTimeLeft() {
+    const factor = o.availableTiles.length / 2 + 0.5;   // 1->1  2->1.5  3->2  4->2.5  5->3
+    o.globalTimeLeft += o.modeGlobalTimeGain * factor;
 }
 
 
@@ -473,7 +485,6 @@ function userPlaceTile(x, y, tileId) {
             hintUsesDisplay.textContent = --o.hintsLeft;
             o.hintsUsed++;
             clearHint();
-            hintUsesDisplay.classList.remove('using-hint');
         }
     }
     gameGridContainer.classList.remove('hint-active');
@@ -690,10 +701,7 @@ function zeroSpotsLeft() {
         
         if (o.modeLevelTime) startLevelTimeCountdown();
         if (o.modeFindLast) placeRandomTiles(Infinity, true);
-        if (o.spotsLeftCount > 0) {
-            const factor = o.availableTiles.length / 2 + 0.5;   // 1->1  2->1.5  3->2  4->2.5  5->3
-            o.globalTimeLeft += o.modeGlobalTimeGain * factor;
-        }
+        if (o.spotsLeftCount > 0) incrementGlobalTimeLeft();
     }
     else gridComplete();
 }
@@ -701,14 +709,14 @@ function zeroSpotsLeft() {
 
 
 
+let gridCompleteTimeout = null;
 function gridComplete() {
     disableGridInput();
     clearInterval(levelTimeInterval);
     
     if (o.modeInfinite) {
-        setTimeout(() => {
+        gridCompleteTimeout = setTimeout(() => {
             o.level++;
-            o.globalTimeLeft += o.modeGlobalTimeGain;
             if (o.hintsLeft < 99 && o.level % o.gainHintEveryLevel === 0) hintUsesDisplay.textContent = ++o.hintsLeft;
             enableGridInput();
             startGrid();
@@ -747,28 +755,35 @@ function showEndScreen(status, timeout) {
     o.endScreen = true;
 
     const endStats = {
-        'Level': o.level,
-        'Time': Math.round(performance.now() - o.time),
-        'Blocks Placed': o.blocksPlaced,
-        'Wrong Clicks': o.invalidClicks,
-        'Hints Used': o.hintsUsed,
-        'Seed': o.seed,
+        level: o.level,
+        time: Math.round(performance.now() - o.time),
+        blocksPlaced: o.blocksPlaced,
+        invalidClicks: o.invalidClicks,
+        hintsUsed: o.hintsUsed,
+        seed: o.seed,
     };
-
+    
     // --- STATS ---
     let newRecord = false;
-    if (!STATS[o.mode]) STATS[o.mode] = { played: 0 };
-    STATS[o.mode].played++;
-    if (endStats.Level > (STATS[o.mode].best?.Level ?? 0) && o.mode !== "custom") {
+    if (!STATS[o.mode]) STATS[o.mode] = {};
+    STATS[o.mode].played = (STATS[o.mode].played || 0) + 1;
+
+    if (endStats.level > (STATS[o.mode].best?.level ?? 0) && o.mode !== "custom") {
         // new pb!
         STATS[o.mode].best = endStats;
         newRecord = true;
     }
 
-    if (status !== "lose" && o.mode !== "findlast") {
-        // can continue run
-        STATS[o.mode].continue = endStats;
+    // check if we can continue
+    if (status === "quit" && o.modeInfinite && (!o.modeFindLast || !(o.modeGlobalTimeGain || o.modeLevelTime))) {
+        let toSave = {};
+        if (o.mode === "custom") Object.assign(toSave, modeSettings);
+        Object.assign(toSave, endStats);
+        toSave.hintsLeft = o.hintsLeft;
+        if (o.modeLivesCount > 1) toSave.lives = o.lives;
+        STATS[o.mode].continue = toSave;
     }
+    else delete STATS[o.mode].continue;
     saveStats();
 
 
@@ -782,14 +797,13 @@ function showEndScreen(status, timeout) {
             const statItem = document.createElement('div');
             statItem.className = 'stat-item';
 
-            if (key === 'Level' && newRecord) statItem.classList.add('new-record');
-            if (key === 'Time') value = formatMinuteSeconds(value, 2);
-            if (key === 'Continue') continue;
+            if (key === 'level' && newRecord) statItem.classList.add('new-record');
+            if (key === 'time') value = formatMinuteSeconds(value, 2);
 
 
             const statKey = document.createElement('span');
             statKey.className = 'stat-key';
-            statKey.textContent = key;
+            statKey.textContent = camelToTitleCase(key);
             const statValue = document.createElement('span');
             statValue.className = 'stat-value';
             statValue.textContent = value;
@@ -812,6 +826,10 @@ function hideEndScreen() {
     levelEndScreen.classList.remove('moveup');
 }
 
+
+function camelToTitleCase(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1).replace(/([A-Z])/g, ' $1');
+}
 
 
 

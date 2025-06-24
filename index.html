@@ -18,12 +18,69 @@
             <button id="main-about-button">About</button>
         </div>
 
-        <div id="menu-play" class="menu">
+        <div id="menu-mode" class="menu">
             <h1>Select a Mode</h1>
-            <button id="play-endless-button">Endless</button>
-            <button id="play-hardcore-button">Hardcore</button>
-            <button id="play-find-last-button">Find Last Spot</button>
-            <button id="play-custom-button">Custom Game</button>
+                
+            <div class="mode-selection-grid">
+                <!-- Endless Mode Card -->
+                <div class="mode-card" id="mode-card-endless">
+                    <div class="mode-title-stats">
+                        <span class="mode-title">Endless</span>
+                        <div class="mode-stats" data-mode="endless">
+                            <span class="mode-best-stat"></span>
+                            <span class="mode-played-stat"></span>
+                        </div>
+                    </div>
+                    <div class="mode-buttons">
+                        <button class="mode-continue-button" data-mode="endless">Continue</button>
+                        <button class="mode-play-button" data-mode="endless">▶</button>
+                    </div>
+                </div>
+            
+                <!-- Hardcore Mode Card -->
+                <div class="mode-card" id="mode-card-hardcore">
+                    <div class="mode-title-stats">
+                        <span class="mode-title">Hardcore</span>
+                        <div class="mode-stats" data-mode="hardcore">
+                            <span class="mode-best-stat"></span>
+                            <span class="mode-played-stat"></span>
+                        </div>
+                    </div>
+                    <div class="mode-buttons">
+                        <button class="mode-continue-button" data-mode="hardcore">Continue</button>
+                        <button class="mode-play-button" data-mode="hardcore">▶</button>
+                    </div>
+                </div>
+            
+                <!-- Find Last Spot Mode Card -->
+                <div class="mode-card" id="mode-card-findlast">
+                    <div class="mode-title-stats">
+                        <span class="mode-title">Find Last</span>
+                        <div class="mode-stats" data-mode="findlast">
+                            <span class="mode-best-stat"></span>
+                            <span class="mode-played-stat"></span>
+                        </div>
+                    </div>
+                    <div class="mode-buttons">
+                        <button class="mode-continue-button" data-mode="findlast">Continue</button>
+                        <button class="mode-play-button" data-mode="findlast">▶</button>
+                    </div>
+                </div>
+
+                <div class="mode-card" id="mode-card-custom">
+                    <div class="mode-title-stats">
+                        <span class="mode-title">Custom</span>
+                        <div class="mode-stats" data-mode="custom">
+                            <span class="mode-best-stat"></span>
+                            <span class="mode-played-stat"></span>
+                        </div>
+                    </div>
+                    <div class="mode-buttons">
+                        <button class="mode-continue-button" data-mode="custom">Continue</button>
+                        <button class="mode-play-button" data-mode="custom">▶</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="menu-custom" class="menu">
@@ -43,8 +100,8 @@
                     <input type="checkbox" id="custom-infinite-check">
                     Infinite
                 </label>
-                <label class="setting-item checkbox-group" for="custom-find-last-check">
-                    <input type="checkbox" id="custom-find-last-check">
+                <label class="setting-item checkbox-group" for="custom-findlast-check">
+                    <input type="checkbox" id="custom-findlast-check">
                     Find Last
                 </label>
                 <div class="setting-item text-group">

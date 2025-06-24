@@ -2,22 +2,21 @@ import { o, startMode } from './game.js';
 
 
 const menuMain = document.getElementById('menu-main');
-const menuPlay = document.getElementById('menu-play');
+const menuPlay = document.getElementById('menu-mode');
 const menuCustom = document.getElementById('menu-custom');
 
 const mainPlayButton = document.getElementById('main-play-button');
 const mainSettingsButton = document.getElementById('main-settings-button');
 const mainAboutButton = document.getElementById('main-about-button');
 
-const playEndlessButton = document.getElementById('play-endless-button');
-const playHardcoreButton = document.getElementById('play-hardcore-button');
-const playFindLastButton = document.getElementById('play-find-last-button');
-const playCustomButton = document.getElementById('play-custom-button');
+const modePlayButtons = document.querySelectorAll('.mode-play-button');
+const modeContinueButtons = document.querySelectorAll('.mode-continue-button');
+const modeStatDisplays = document.querySelectorAll('.mode-stats');
 
 const customSeedInput = document.getElementById('custom-seed-input');
 const customLevelInput = document.getElementById('custom-level-input');
 const customInfiniteCheck = document.getElementById('custom-infinite-check');
-const customFindLastCheck = document.getElementById('custom-find-last-check');
+const customFindLastCheck = document.getElementById('custom-findlast-check');
 const customHintsInput = document.getElementById('custom-hints-input');
 const customLivesInput = document.getElementById('custom-lives-input');
 const customGlobalTimeGainInput = document.getElementById('custom-global-time-gain-input');
@@ -48,42 +47,63 @@ document.addEventListener('click', (event) => {
 
 // --- MAIN MENU ---
 mainPlayButton.addEventListener('click', () => {
+    updatePlayMenuStats();
     switchMenu(menuPlay);
 });
 
 
 
 
-// --- PLAY MENU ---
-playEndlessButton.addEventListener('click', () => {
-    goToGame();
-    startMode({
-        modeInfinite: true,
-        mode: "endless",
+
+
+
+// --- MODE MENU ---
+modePlayButtons.forEach(button => button.addEventListener('click', () => {
+    const mode = button.dataset.mode;
+    if (mode === "custom") switchMenu(menuCustom);
+    else handlePlay(mode);
+}));
+
+modeContinueButtons.forEach(button => button.addEventListener('click', () => {
+    const mode = button.dataset.mode;
+    handlePlay(mode, true);
+}));
+
+
+function updatePlayMenuStats() {
+    modeStatDisplays.forEach(modeStats => {
+        const mode = modeStats.dataset.mode;
+        const bestStatDiv = modeStats.querySelector('.mode-best-stat');
+        if (bestStatDiv) bestStatDiv.textContent = STATS[mode]?.best?.level || '';
+        const playedStatDiv = modeStats.querySelector('.mode-played-stat');
+        if (playedStatDiv) playedStatDiv.textContent = STATS[mode]?.played || '';
     });
-});
-playHardcoreButton.addEventListener('click', () => {
-    goToGame();
-    startMode({
-        modeInfinite: true,
-        modeLivesCount: 1,
-        mode: "hardcore",
+
+    modeContinueButtons.forEach(button => {
+        const mode = button.dataset.mode;
+        button.style.display = STATS[mode]?.continue ? 'block' : 'none';
     });
-});
-playFindLastButton.addEventListener('click', () => {
+}
+
+
+
+function handlePlay(mode, shouldContinue) {
+    let modeSettings = {};
+    if (mode === 'endless') modeSettings = { modeInfinite: true };
+    if (mode === 'hardcore') modeSettings = { modeInfinite: true, modeLivesCount: 1 };
+    if (mode === 'findlast') modeSettings = { modeInfinite: true, modeFindLast: true, modeHintCount: 0, modeGlobalTimeGain: 4 };
+    modeSettings.mode = mode;
+
+    if (shouldContinue) Object.assign(modeSettings, STATS[mode].continue);
+
     goToGame();
-    startMode({
-        modeInfinite: true,
-        modeFindLast: true,
-        modeHintCount: 0,
-        modeGlobalTimeGain: 4,
-        mode: "findlast",
-    });
-});
-playCustomButton.addEventListener('click', () => {
-    switchMenu(menuCustom);
-    customSeedInput.maxLength = o.defaultSeedLength;
-});
+    startMode(modeSettings);
+}
+
+
+
+
+
 
 
 

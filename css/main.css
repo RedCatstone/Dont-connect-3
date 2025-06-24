@@ -29,6 +29,9 @@
     --color-accent: #00A395;
 
     --animation-speed: 400ms;
+
+
+    --icon-font: 'Arial Black', Gadget, sans-serif;
 }
 
 
@@ -149,7 +152,7 @@ button.icon::before {
     left: 50%;
     transform: translate(-50%, -50%);
 
-    font-family: 'Arial Black', Gadget, sans-serif;
+    font-family: var(--icon-font);
     font-size: 45px;
     color: rgba(0, 0, 0, 0.5);
     text-shadow: 2px 2px rgba(255, 255, 255, 0.2);
@@ -377,8 +380,83 @@ button > .button-counter {
 
 
 #main-play-button { --button-color: var(--color-accent); }
-#play-endless-button { --button-color: #4CAF50; }
-#play-hardcore-button { --button-color: #b9302b; }
-#play-find-last-button { --button-color: #2196F3; }
-#play-custom-button { --button-color: #cf08bf; }
+#mode-card-endless { --button-color: #4CAF50; }
+#mode-card-hardcore { --button-color: #b9302b; }
+#mode-card-findlast { --button-color: #2196F3; }
+#mode-card-custom { --button-color: #cf08bf; }
 #custom-play-button { --button-color: #cf08bf; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.mode-selection-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+.mode-card {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    background-color: var(--color-grid-cell);
+    padding: 15px 20px;
+    border-radius: 12px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+}
+.mode-title-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+}
+.mode-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+.mode-stats {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--level-timer-color);
+}
+.mode-stats > :not(:empty):not(:last-child)::after {
+    content: '•';
+    font-weight: 900;
+    margin-left: 8px;
+    margin-right: 4px;
+}
+
+
+.mode-best-stat:not(:empty)::before {
+    content: 'Best: ';
+}
+.mode-played-stat:not(:empty)::before {
+    content: 'Played: ';
+}
+
+
+
+.mode-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.mode-continue-button {
+    --button-color: #6c757d;
+    padding: 10px 15px;
+    display: none;
+}
