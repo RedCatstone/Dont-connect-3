@@ -41,7 +41,7 @@ export const TILE_ID = {
 
 // Map tile IDs to CSS classes
 const TILE_CLASS_MAP = {
-    [TILE_ID.WALL]: 'tile block wall',
+    [TILE_ID.WALL]: 'tile block tile-wall',
     [TILE_ID.AIR]: 'tile air',
     [TILE_ID.GRID]: 'tile grid',
     [TILE_ID.RED]: 'tile block tile-red',
@@ -68,7 +68,8 @@ export const o = {
     // generation settings
     levelSizeMultiplier: 6,
     botAmountMultiplier: 1,
-    chanceHoles: 0.7,
+    chanceHoles: 0.75,
+    chanceHoleInvert: 0.5,
     chanceLockedTile: 0.5,
 
     // variables
@@ -171,9 +172,7 @@ function startGrid() {
     updateTileSelectorDisplay();
 
     if (o.modeLevelTime) startLevelTimeCountdown();
-    console.time()
     if (o.modeFindLast) placeRandomTiles(Infinity, true);
-    console.timeEnd()
     incrementGlobalTimeLeft();
 }
 
@@ -260,16 +259,14 @@ function clearHint() {
     }
 }
 
-
-homeButton.addEventListener('click', () => {
-    if (!o.endScreen) showEndScreen("quit", 0);
+window.addEventListener('unload', () => {
+    if (!o.endScreen && body.classList.contains('game-active')) showEndScreen('quit', 0);
+});
+[homeButton, endHomeButton].forEach(x => x.addEventListener('click', () => {
+    if (!o.endScreen) showEndScreen('quit', 0);
     resetDisplaysAndIntervals();
     goToMainMenu();
-});
-endHomeButton.addEventListener('click', () => {
-    resetDisplaysAndIntervals();
-    goToMainMenu();
-});
+}));
 endHideButton.addEventListener('click', () => levelEndScreen.classList.toggle('moveup'));
 endRetryButton.addEventListener('click', () => {
     resetDisplaysAndIntervals();

@@ -27,7 +27,7 @@ const customPlayButton = document.getElementById('custom-play-button');
 const customLineLengthInput = document.getElementById('custom-line-length-input');
 const customLevelTimeInput = document.getElementById('custom-level-time-input');
 
-let currentMenu = null;
+export let currentMenu = null;
 
 
 

@@ -32,7 +32,7 @@ export function generateGrid(seed, level) {
     // holes (patterns)
     if (level > 5) {
         if (rand() < o.chanceHoles) {
-            const numPatterns = Math.floor(rand() * Math.log(level)) ?? 0;
+            const numPatterns = Math.ceil(rand() * Math.log(level)) ?? 0;
             placeTileRandomPattern(TILE_ID.AIR, numPatterns, grid, width, height, rand);
         }
     }
@@ -47,29 +47,45 @@ export function generateGrid(seed, level) {
 }
 
 
-function placeTileRandomPattern(tileId, numPatterns, grid, width, height, rand) {
-    const placementGrid = Array(width).fill(null).map(() => Array(height).fill(false));
+function placeTileRandomPattern(tileId, numPatterns, grid, gridWidth, gridHeight, rand) {
+    const placementGrid = Array(gridWidth).fill(null).map(() => Array(gridHeight).fill(false));
 
-    const filteredGenPatterns = genPatterns.filter(pattern => pattern.shape.length <= height && pattern.shape[0].length <= width);
+    const filteredGenPatterns = genPatterns.filter(pattern => pattern.shape.length <= gridHeight && pattern.shape[0].length <= gridWidth);
     if (filteredGenPatterns.length === 0) return;
 
     for (let i = 0; i < numPatterns; i++) {
         // Pick a random pattern
         let pattern = filteredGenPatterns[Math.floor(rand() * filteredGenPatterns.length)];
         let patternShape = pattern.shape;
-
-        // rotate randomly
-        if (!pattern.noRotate) {
-            const rotations = Math.floor(rand() * 4);  // 0 to 3
-            patternShape = rotateMatrix(patternShape, rotations);
-        }
-
+        
         let patternHeight = patternShape.length;
         let patternWidth = patternShape[0].length;
 
+        // rotate randomly
+        if (!pattern.noRotate) {
+            let rotations;
+            if (patternHeight < gridWidth || patternWidth < gridHeight) {
+                rotations = Math.round(rand()) * 2;  // 0 2
+            }
+            else rotations = Math.floor(rand() * 4);  // 0 1 2 3
+            patternShape = rotateMatrix(patternShape, rotations);
+            
+            if (rotations === 1 || rotations === 3) {
+                [patternHeight, patternWidth] = [patternWidth, patternHeight];
+            }
+        }
+
+        let paddingTileId;
+
+        // invert randomly
+        if (rand() < o.chanceHoleInvert) {
+            patternShape = invertMatrix(patternShape);
+            paddingTileId = TILE_ID.AIR;
+        }
+
         // scale randomly
-        const maxScaleX = Math.floor(width / patternWidth);
-        const maxScaleY = Math.floor(height / patternHeight);
+        const maxScaleX = Math.floor(gridWidth / patternWidth);
+        const maxScaleY = Math.floor(gridHeight / patternHeight);
         const maxScale = Math.min(maxScaleX, maxScaleY);
         if (maxScale < 1) continue; // Skip if even 1x doesn't fit
         const scale = 1 + Math.floor((1 - rand()**2) * maxScale);
@@ -77,14 +93,15 @@ function placeTileRandomPattern(tileId, numPatterns, grid, width, height, rand) 
         patternWidth = patternWidth * scale;
 
         // randomly find a valid, non-overlapping position
-        const validXRange = width - patternWidth;
-        const validYRange = height - patternHeight;
+        const validXRange = gridWidth - patternWidth;
+        const validYRange = gridHeight - patternHeight;
         for (let posAttempt = 0; posAttempt < 10; posAttempt++) {
             const startX = Math.floor(rand() * (validXRange + 1));
             const startY = Math.floor(rand() * (validYRange + 1));
 
             if (canPlacePatternAt(placementGrid, startX, startY, patternWidth, patternHeight)) {
-                placePattern(grid, placementGrid, patternShape, startX, startY, scale, tileId);
+                console.log(pattern.name);
+                placePattern(grid, placementGrid, patternShape, startX, startY, scale, tileId, paddingTileId);
                 break;
             }
         }
@@ -106,6 +123,18 @@ function rotateMatrix(matrix, rotations=0) {
     return matrix;
 }
 
+function invertMatrix(matrix) {
+    const rows = matrix.length;
+    const cols = matrix[0].length;
+    const newMatrix = Array(rows).fill(1).map(() => Array(cols).fill(1));
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            newMatrix[r][c] = 1 - matrix[r][c];
+        }
+    }
+    return newMatrix;
+}
+
 
 function canPlacePatternAt(placementGrid, startX, startY, width, height) {
     for (let y = 0; y < height; y++) {
@@ -117,21 +146,37 @@ function canPlacePatternAt(placementGrid, startX, startY, width, height) {
     }
     return true;
 }
-function placePattern(targetGrid, placementGrid, pattern, startX, startY, scale, tileId) {
-    const baseHeight = pattern.length;
-    const baseWidth = pattern[0].length;
 
-    for (let by = 0; by < baseHeight; by++) {
-        for (let bx = 0; bx < baseWidth; bx++) {
-            if (pattern[by][bx] === 1) {
+function placePattern(targetGrid, placementGrid, pattern, startX, startY, scale, tileId, paddingTileId) {
+    const patternHeight = pattern.length;
+    const patternWidth = pattern[0].length;
+
+    const placePatternTile = (x, y, id) => {
+        if (targetGrid[x]?.[y] !== undefined) {
+            targetGrid[x][y] = id;
+            placementGrid[x][y] = true;
+        }
+    };
+    // padding
+    if (paddingTileId !== undefined) {
+        for (let x = startX - 1; x <= startX + scale*patternWidth; x++) {
+            placePatternTile(x, startY - 1, paddingTileId);
+            placePatternTile(x, startY + scale*patternHeight, paddingTileId);
+        }
+        for (let y = startY; y < startY + scale*patternHeight; y++) {
+            placePatternTile(startX - 1, y, paddingTileId);
+            placePatternTile(startX + scale*patternWidth, y, paddingTileId);
+        }
+    }
+    // normal pattern
+    for (let py = 0; py < patternHeight; py++) {
+        for (let px = 0; px < patternWidth; px++) {
+            if (pattern[py][px] === 1) {
                 for (let sy = 0; sy < scale; sy++) {
                     for (let sx = 0; sx < scale; sx++) {
-                        const gridX = startX + bx * scale + sx;
-                        const gridY = startY + by * scale + sy;
-                        if (targetGrid[gridX]?.[gridY] !== undefined) {
-                           targetGrid[gridX][gridY] = tileId;
-                           placementGrid[gridX][gridY] = true;
-                        }
+                        const gridX = startX + px * scale + sx;
+                        const gridY = startY + py * scale + sy;
+                        placePatternTile(gridX, gridY, tileId);
                     }
                 }
             }
