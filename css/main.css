@@ -46,15 +46,15 @@ body {
     touch-action: none;
     outline: none;
     margin: 0;
-
+    height: 100svh;
+    
     font-family: 'Poppins', sans-serif;
 
-    min-height: 100vh;
-    height: 100svh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
 
-    margin: 0;
-    position: relative;
-    
     /* Grid Background */
     background-image:
         linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
@@ -70,22 +70,6 @@ body {
     100% { background-position: 50px 50px; }
 }
 
-
-
-
-body.menu-active {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-}
-
-body.game-active {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: clamp(10px, 2vmin, 20px);
-}
 
 body.menu-active #game-wrapper {
     display: none;
