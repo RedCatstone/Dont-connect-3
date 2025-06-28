@@ -146,6 +146,7 @@
     background-color: var(--color-grid-cell);
     box-shadow: var(--grid-tile-shadow) var(--grid-tile-shadow) black;
     transition: translate 0.1s cubic-bezier(0.25, 0.1, 0.25, 1);
+    will-change: transform;
 }
 #game-grid-container.hint-active .tile[data-hint="true"] {
     translate: 0 calc(-0.1 * var(--grid-tile-size));
@@ -192,7 +193,7 @@
     
     background: var(--tile-color);
     border-radius: inherit;
-    transform: translateY(calc(-1 * var(--grid-block-height)));
+    transform: translateY(-30%);
 }
 
 
@@ -207,28 +208,40 @@
 
 
 
-#tile-selector {
+#bottom-controls-wrapper {
+    display: grid;
+    justify-items: center;
+    grid-template-areas: "selector" "buttons";
+
+    --block-size: clamp(30px, 13vmin, 60px);
+}
+#bottom-buttons-wrapper {
+    grid-area: buttons;
     display: flex;
-    gap: 50px;
+    gap: 30px;
+}
+
+#tile-selector {
+    grid-area: selector;
+    display: flex;
+    width: fit-content;
+    gap: calc(0.7 * var(--block-size));
     background-color: var(--color-grid-cell);
-    padding: 30px;
-    border-radius: 15px;
-    margin: 10px;
-    flex-shrink: 0;
+    padding: calc(0.5 * var(--block-size));
+    border-radius: calc(0.25 * var(--block-size));
+    margin: 20px;
+
 }
 #tile-selector .tile.block {
     cursor: pointer;
-    width: 60px;
-    height: 60px;
+    width: var(--block-size);
+    height: var(--block-size);
     margin: 0;
-}
-#tile-selector .tile.block::before {
-    transform: translateY(-20px);
 }
 #tile-selector .tile.block.selected::before {
     outline: 3px solid white;
-    outline-offset: 5px;
-    border-radius: 5px;
+    outline-offset: calc(0.1 * var(--block-size));
+    border-radius: calc(0.1 * var(--block-size));
 }
 
 #tile-selector .tile.block.future {
@@ -240,19 +253,10 @@
     position: absolute;
     font-family: 'Arial Black', Gadget, sans-serif; /* A bold, blocky font */
     top: 50%; left: 50%;
-    transform: translate(-50%, -80%);
-    font-size: 50px;
+    transform: translate(-50%, -73%);
+    font-size: var(--block-size);
     color: rgba(0, 0, 0, 0.5);
     text-shadow: 2px 2px rgba(255, 255, 255, 0.2);
-}
-
-
-
-#bottom-controls-wrapper {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: clamp(10px, 6vmin, 50px);
 }
 
 
@@ -457,10 +461,17 @@
         height: 100%;
     }
 
-    #tile-selector,
-    #bottom-controls-wrapper {
+    #tile-selector {
         flex-direction: column;
     }
+
+    #bottom-controls-wrapper {
+        grid-template-areas: "home" "selector" "hint";
+    }
+
+    #bottom-buttons-wrapper { display: contents; }
+    #home-button { grid-area: home; }
+    #hint-button { grid-area: hint; }
 
     #lives-display {
         grid-auto-flow: unset;

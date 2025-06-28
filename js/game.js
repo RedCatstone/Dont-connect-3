@@ -124,7 +124,7 @@ export function startMode(customSettings) {
         time: 0,
         modeInfinite: false,
         modeFindLast: false,
-        modeHintCount: 2,
+        modeHintCount: 0,
         modeLivesCount: 0,
         modeGlobalTimeGain: 0,
         botAmountMultiplier: 1,
@@ -133,14 +133,13 @@ export function startMode(customSettings) {
         blocksPlaced: 0,
         invalidClicks: 0,
         hintsUsed: 0,
-        hintsLeft: customSettings.modeHintCount ?? 2,
+        hintsLeft: customSettings.modeHintCount ?? 0,
         lives: customSettings.modeLivesCount ?? 0,
     };
 
     Object.assign(o, defaultSettings, customSettings);
 
     resetDisplaysAndIntervals();
-    hintUsesDisplay.textContent = o.hintsLeft;
     if (o.lives) updateLivesDisplay();
     o.globalTimeLeft = 0;
     startGrid();
@@ -167,11 +166,14 @@ function startGrid() {
     levelDisplay.textContent = `Level ${o.level}`;
     spotsLeftDisplay.textContent = o.spotsLeftCount;
     seedDisplay.textContent = o.seed;
+    hintUsesDisplay.textContent = o.hintsLeft;
     createGridDisplay();
     updateTileSelectorDisplay();
 
     if (o.modeLevelTime) startLevelTimeCountdown();
+    console.time()
     if (o.modeFindLast) placeRandomTiles(Infinity, true);
+    console.timeEnd()
     incrementGlobalTimeLeft();
 }
 
@@ -231,36 +233,30 @@ hintButton.addEventListener('click', () => {
     
 function showHint(timeout, colored=false) {
     hintUsed = true;
-    gameGridContainer.classList.add('hint-active');
     if (timeout) hintUsesDisplay.classList.add('using-hint');
-    for (let y = 0; y < o.height; y++) {
-        for (let x = 0; x < o.width; x++) {
-            const tileElement = getTileElement(x, y);
-            if (o.spotsLeftGrid[x][y] > 0) {
-                tileElement.dataset.hint = true;
-                if (colored) {
-                    tileElement.style.backgroundColor = 'color-mix(in oklab, var(--color-grid-cell) 70%, var(--tile-color) 30%)';
-                    tileElement.classList.add(TILE_CLASS_MAP[o.spotsLeftGrid[x][y]].split(' ')[2]);
-                }
+    for (const tileElement of gameGridContainer.children) {
+        const canPlaceSpot = o.spotsLeftGrid[tileElement.dataset.x][tileElement.dataset.y];
+        if (canPlaceSpot !== SPOTS_LEFT_ID.INITIAL && canPlaceSpot !== SPOTS_LEFT_ID.IMPOSSIBLE) {
+            tileElement.dataset.hint = true;
+            if (colored) {
+                tileElement.style.backgroundColor = 'color-mix(in oklab, var(--color-grid-cell) 70%, var(--tile-color) 30%)';
+                tileElement.classList.add(TILE_CLASS_MAP[canPlaceSpot].split(' ')[2]);
             }
         }
     }
+    gameGridContainer.classList.add('hint-active');
     clearTimeout(hintTimeout);
     if (timeout) hintTimeout = setTimeout(clearHint, timeout);
 }
 function clearHint() {
     clearTimeout(hintTimeout);
     gameGridContainer.classList.remove('hint-active');
-    hintUsesDisplay.classList.remove('using-hint');
-    for (let y = 0; y < o.height; y++) {
-        for (let x = 0; x < o.width; x++) {
-            const tileElement = getTileElement(x, y);
-            delete tileElement.dataset.hint;
-            // if (o.coloredHints) {
-                tileElement.style.backgroundColor = '';
-                if (tileElement.className.includes(TILE_CLASS_MAP[TILE_ID.GRID])) tileElement.className = TILE_CLASS_MAP[TILE_ID.GRID];
-            // }
-        }
+    for (const tileElement of gameGridContainer.children) {
+        delete tileElement.dataset.hint;
+        // if (o.coloredHints) {
+            tileElement.style.backgroundColor = '';
+            if (tileElement.className.includes(TILE_CLASS_MAP[TILE_ID.GRID])) tileElement.className = TILE_CLASS_MAP[TILE_ID.GRID];
+        // }
     }
 }
 
@@ -293,6 +289,7 @@ function resetDisplaysAndIntervals() {
     enableGridInput(true);
     hideEndScreen();
     clearHint();
+    hintUsesDisplay.classList.remove('using-hint');
     hintUsed = false;
     clearTimeout(gridCompleteTimeout);
 }
@@ -420,7 +417,7 @@ function createGridDisplay() {
     gameGridContainer.append(fragment);
     gameGridSizerContainer.style.setProperty('--grid-column-count', o.width);
     gameGridSizerContainer.style.setProperty('--grid-row-count', o.height);
-    setTimeout(setTileSizeCSS, 0);
+    requestAnimationFrame(setTileSizeCSS);
 }
 
 
@@ -485,6 +482,7 @@ function userPlaceTile(x, y, tileId) {
             hintUsesDisplay.textContent = --o.hintsLeft;
             o.hintsUsed++;
             clearHint();
+            hintUsesDisplay.classList.remove('using-hint');
         }
     }
     gameGridContainer.classList.remove('hint-active');
@@ -615,8 +613,14 @@ export function shuffleArray(array, rand=Math.random) {
 
 
 
+const SPOTS_LEFT_ID = {
+    INITIAL: 0,
+    IMPOSSIBLE: -1,
+}
+
+
 function calculateSpotsLeft() {
-    o.spotsLeftGrid = Array(o.width).fill(null).map(() => Array(o.height).fill(0));
+    o.spotsLeftGrid = Array(o.width).fill(null).map(() => Array(o.height).fill(SPOTS_LEFT_ID.INITIAL));
     o.spotsLeftCount = 0;
     for (let x = 0; x < o.width; x++) {
         for (let y = 0; y < o.height; y++) {
@@ -630,7 +634,7 @@ function calculateSpotsLeft() {
                     }
                 }
             }
-            else o.spotsLeftGrid[x][y] = -1;
+            else o.spotsLeftGrid[x][y] = SPOTS_LEFT_ID.IMPOSSIBLE;
         }
     }
     if (o.spotsLeftCount === 0) zeroSpotsLeft();
@@ -647,14 +651,13 @@ function updateSpotsLeftAtSpot(x, y) {
 
     // mark as completely unplacable
     if (o.grid[x][y] !== TILE_ID.GRID) {
-        o.spotsLeftGrid[x][y] = -1;
+        o.spotsLeftGrid[x][y] = SPOTS_LEFT_ID.IMPOSSIBLE;
         o.spotsLeftCount--;
     }
     else for (const availableTile of o.availableTiles) {
         if (canPlaceTile(x, y, availableTile, false)) {
             o.spotsLeftGrid[x][y] = availableTile;
             o.spotsLeftCount++;
-            // getTileElement(x, y).style.backgroundColor = 'red';
             break;
         }
     }
@@ -667,12 +670,12 @@ function updateSpotsLeftAtSpot(x, y) {
             const checkX = x + i * dx;
             const checkY = y + i * dy;
             const previousCanPlace = o.spotsLeftGrid[checkX]?.[checkY];
-            if (previousCanPlace === undefined || previousCanPlace === -1) continue;
+            if (previousCanPlace === undefined || previousCanPlace === SPOTS_LEFT_ID.IMPOSSIBLE) continue;
             let canPlace = false;
 
             for (const availableTile of o.availableTiles) {
                 if (canPlaceTile(checkX, checkY, availableTile, false)) {
-                    if (previousCanPlace === 0) {
+                    if (previousCanPlace === SPOTS_LEFT_ID.INITIAL) {
                         // if it was previously marked as unplacable
                         o.spotsLeftCount++;
                     }
@@ -681,8 +684,8 @@ function updateSpotsLeftAtSpot(x, y) {
                     break;
                 }
             }
-            if (!canPlace && previousCanPlace !== 0) {
-                o.spotsLeftGrid[checkX][checkY] = 0;
+            if (!canPlace && previousCanPlace !== SPOTS_LEFT_ID.INITIAL) {
+                o.spotsLeftGrid[checkX][checkY] = SPOTS_LEFT_ID.INITIAL;
                 o.spotsLeftCount--;
             }
         }

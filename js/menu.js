@@ -89,9 +89,9 @@ function updatePlayMenuStats() {
 
 function handlePlay(mode, shouldContinue) {
     let modeSettings = {};
-    if (mode === 'endless') modeSettings = { modeInfinite: true };
+    if (mode === 'endless') modeSettings = { modeInfinite: true, modeHintCount: 2 };
     if (mode === 'hardcore') modeSettings = { modeInfinite: true, modeLivesCount: 1 };
-    if (mode === 'findlast') modeSettings = { modeInfinite: true, modeFindLast: true, modeHintCount: 0, modeGlobalTimeGain: 4 };
+    if (mode === 'findlast') modeSettings = { modeInfinite: true, modeFindLast: true, modeGlobalTimeGain: 4 };
     modeSettings.mode = mode;
 
     if (shouldContinue) Object.assign(modeSettings, STATS[mode].continue);

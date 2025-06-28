@@ -89,7 +89,7 @@
                 <div class="setting-item big">
                     <div class="text-group">
                         <label for="custom-seed-input">Seed</label>
-                        <input type="text" id="custom-seed-input" data-allowed-chars="A-Za-z0-9_-" maxlength="4" placeholder="Random">
+                        <input type="text" id="custom-seed-input" data-allowed-chars="A-Za-z0-9_-" maxlength="3" placeholder="Random">
                     </div>
                     <div class="text-group">
                         <label for="custom-level-input">Level</label>
@@ -154,11 +154,13 @@
             </div>
         </div>
         <div id="bottom-controls-wrapper">
-            <button id="home-button" class="icon"></button>
             <div id="tile-selector">
                 <!-- JS -->
             </div>
-            <button id="hint-button" class="icon"><span class="button-counter"></span></button>
+            <div id="bottom-buttons-wrapper">
+                <button id="home-button" class="icon"></button>
+                <button id="hint-button" class="icon"><span class="button-counter"></span></button>
+            </div>
         </div>
 
         <div id="level-end-screen">
