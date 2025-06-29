@@ -69,9 +69,14 @@ export const o = {
     // generation settings
     levelSizeMultiplier: 6,
     botAmountMultiplier: 1,
-    chanceHoles: 0.75,
-    chanceHoleInvert: 0.5,
+    //hole gen
+    chanceHoles: 0.5,
+    chanceHoleInvert: 0.3,
     chanceLockedTile: 0.5,
+    // wall gen
+    chanceDrunkWalls: 0.4,
+    drunkRespawnChance: 0.02,
+    drunkStepMultiplier: 3,
 
     // variables
     mode: null,
@@ -154,13 +159,11 @@ export function startMode(customSettings) {
 
 
 function startGrid() {
-    const { grid, gridWidth, gridHeight, availableTiles, futureAvailableTiles, botAmount } = generateGrid(o.seed, o.level);
-    o.grid = grid;
-    o.gridWidth = gridWidth;
-    o.gridHeight = gridHeight;
-    o.availableTiles = availableTiles;
-    o.futureAvailableTiles = futureAvailableTiles;
-    o.botAmount = botAmount;
+    // { grid, gridWidth, gridHeight, availableTiles, futureAvailableTiles, botAmount }
+    console.time();
+    const generatedGrid = generateGrid(o.seed, o.level);
+    console.timeEnd();
+    Object.assign(o, generatedGrid);
 
     o.selectedAvailableTile = 0;
 

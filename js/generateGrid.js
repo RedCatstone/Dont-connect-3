@@ -11,9 +11,9 @@ export function generateGrid(seed, level) {
     // grid size
     const total = (Math.log(level + 1) * o.levelSizeMultiplier);
     const randomSplit = rand() * total/4;
-    const gridWidth = 2 + Math.round(total/4 + randomSplit);
-    const gridHeight = 2 + Math.round(total/2 - randomSplit);
-    const grid = Array(gridWidth).fill(null).map(() => Array(gridHeight).fill(TILE_ID.GRID));
+    let gridWidth = 2 + Math.round(total/4 + randomSplit);
+    let gridHeight = 2 + Math.round(total/2 - randomSplit);
+    let grid = Array(gridWidth).fill(null).map(() => Array(gridHeight).fill(TILE_ID.GRID));
 
     // available tiles
     let tiles = ALL_TILE_BLOCKS.slice(0, Math.ceil(Math.sqrt(level)));
@@ -28,28 +28,49 @@ export function generateGrid(seed, level) {
 
     // bot amount
     const botAmount = Math.ceil(rand() * Math.log(level) * o.botAmountMultiplier);
-    
-    // walls todo
-    if (level > 5) {
-        
+
+    // walls
+    if (level > 5 && rand() < o.chanceDrunkWalls) {
+        grid = generateDrunkenWalkWalls(gridWidth, gridHeight, rand);
+        const { newGrid, newWidth, newHeight } = resizeGridToFit(grid);
+        grid = newGrid;
+        gridWidth = newWidth;
+        gridHeight = newHeight;
+        replaceSmallAreaTiles(grid, 2, TILE_ID.WALL, TILE_ID.GRID);
     }
     
     // holes (patterns)
-    if (level > 12) {
-        if (rand() < o.chanceHoles) {
-            const placementGrid = Array(gridWidth).fill(null).map(() => Array(gridHeight).fill(false));
-            const numPatterns = Math.ceil(rand() * Math.log(level)) ?? 0;
-            placeTileRandomPattern(TILE_ID.AIR, numPatterns, grid, gridWidth, gridHeight, placementGrid, rand);
-        }
+    if (level > 15 && rand() < o.chanceHoles) {
+        const numPatterns = Math.ceil(rand() * Math.log(level)) ?? 0;
+        placeRandomHolePatterns(numPatterns, grid, rand);
     }
+
 
     return { grid, gridWidth, gridHeight, availableTiles, futureAvailableTiles, botAmount };
 }
 
 
-function placeTileRandomPattern(tileId, numPatterns, grid, gridWidth, gridHeight, placementGrid, rand) {
-    const filteredGenPatterns = genPatterns.filter(pattern => pattern.shape.length <= gridHeight && pattern.shape[0].length <= gridWidth);
+
+
+
+
+
+
+
+
+function placeRandomHolePatterns(numPatterns, grid, rand) {
+    const gridWidth = grid.length;
+    const gridHeight = grid[0].length;
+
+    const filteredGenPatterns = genPatterns.filter(pattern => {
+        const patternHeight = pattern.shape.length;
+        const patternWidth = pattern.shape[0].length;
+        // if it fits with/without rotations
+        return (patternHeight <= gridHeight && patternWidth <= gridWidth) || (!pattern.noRotate && patternWidth <= gridHeight && patternHeight <= gridWidth);
+    });
     if (filteredGenPatterns.length === 0) return;
+    
+    const placementGrid = Array(gridWidth).fill(null).map(() => Array(gridHeight).fill(false));
 
     for (let i = 0; i < numPatterns; i++) {
         // Pick a random pattern
@@ -61,24 +82,19 @@ function placeTileRandomPattern(tileId, numPatterns, grid, gridWidth, gridHeight
 
         // rotate randomly
         if (!pattern.noRotate) {
+            const fitsAsIs = patternHeight <= gridHeight && patternWidth <= gridWidth;
+            const fitsRotated = patternHeight <= gridWidth && patternWidth <= gridHeight;
+
             let rotations;
-            if (patternHeight < gridWidth || patternWidth < gridHeight) {
-                rotations = Math.round(rand()) * 2;  // 0 2
-            }
-            else rotations = Math.floor(rand() * 4);  // 0 1 2 3
+            if (fitsAsIs && fitsRotated) rotations = Math.floor(rand() * 4); // 0, 1, 2, or 3
+            else if (fitsAsIs) rotations = Math.round(rand()) * 2; // 0 or 2
+            else if (fitsRotated) rotations = Math.round(rand()) * 2 + 1; // 1 or 3
+            else throw new Error("huh? how this possbiel with the roation and stuff?");
             patternShape = rotateMatrix(patternShape, rotations);
             
             if (rotations === 1 || rotations === 3) {
                 [patternHeight, patternWidth] = [patternWidth, patternHeight];
             }
-        }
-
-        let paddingTileId;
-
-        // invert randomly
-        if (rand() < o.chanceHoleInvert) {
-            patternShape = invertMatrix(patternShape);
-            paddingTileId = TILE_ID.AIR;
         }
 
         // scale randomly
@@ -87,8 +103,11 @@ function placeTileRandomPattern(tileId, numPatterns, grid, gridWidth, gridHeight
         const maxScale = Math.min(maxScaleX, maxScaleY);
         if (maxScale < 1) continue; // Skip if even 1x doesn't fit
         const scale = 1 + Math.floor((1 - rand()**2) * maxScale);
-        patternHeight = patternHeight * scale;
-        patternWidth = patternWidth * scale;
+        patternHeight *= scale;
+        patternWidth *= scale;
+
+        // invert randomly
+        let invert = rand() < o.chanceHoleInvert;
 
         // randomly find a valid, non-overlapping position
         const validXRange = gridWidth - patternWidth;
@@ -98,8 +117,9 @@ function placeTileRandomPattern(tileId, numPatterns, grid, gridWidth, gridHeight
             const startY = Math.floor(rand() * (validYRange + 1));
 
             if (canPlacePatternAt(placementGrid, startX, startY, patternWidth, patternHeight)) {
-                console.log(pattern.name);
-                placePattern(grid, placementGrid, patternShape, startX, startY, scale, tileId, paddingTileId);
+                const placeTiles = [TILE_ID.AIR, TILE_ID.GRID];
+                if (invert) placeTiles.reverse();
+                placePattern(grid, placementGrid, patternShape, startX, startY, scale, ...placeTiles);
                 break;
             }
         }
@@ -121,18 +141,6 @@ function rotateMatrix(matrix, rotations=0) {
     return matrix;
 }
 
-function invertMatrix(matrix) {
-    const rows = matrix.length;
-    const cols = matrix[0].length;
-    const newMatrix = Array(rows).fill(1).map(() => Array(cols).fill(1));
-    for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-            newMatrix[r][c] = 1 - matrix[r][c];
-        }
-    }
-    return newMatrix;
-}
-
 
 function canPlacePatternAt(placementGrid, startX, startY, width, height) {
     for (let y = 0; y < height; y++) {
@@ -145,42 +153,166 @@ function canPlacePatternAt(placementGrid, startX, startY, width, height) {
     return true;
 }
 
-function placePattern(targetGrid, placementGrid, pattern, startX, startY, scale, tileId, paddingTileId) {
+
+
+
+function placePattern(grid, placementGrid, pattern, startX, startY, scale, mainTile, paddingTile) {
     const patternHeight = pattern.length;
     const patternWidth = pattern[0].length;
 
-    const placePatternTile = (x, y, id) => {
-        if (targetGrid[x]?.[y] !== undefined) {
-            targetGrid[x][y] = id;
+    const placePatternTile = (x, y, id, overwriteWalls) => {
+        if (grid[x]?.[y] !== undefined && (overwriteWalls || grid[x][y] !== TILE_ID.WALL)) {
+            grid[x][y] = id;
             placementGrid[x][y] = true;
         }
     };
+
+
+    let coordsToPlaceTile1 = [];
+
     // padding
-    if (paddingTileId !== undefined) {
-        for (let x = startX - 1; x <= startX + scale*patternWidth; x++) {
-            placePatternTile(x, startY - 1, paddingTileId);
-            placePatternTile(x, startY + scale*patternHeight, paddingTileId);
-        }
-        for (let y = startY; y < startY + scale*patternHeight; y++) {
-            placePatternTile(startX - 1, y, paddingTileId);
-            placePatternTile(startX + scale*patternWidth, y, paddingTileId);
-        }
-    }
-    // normal pattern
     for (let py = 0; py < patternHeight; py++) {
         for (let px = 0; px < patternWidth; px++) {
-            if (pattern[py][px] === 1) {
+            const patternNum = pattern[py][px];
+            if (patternNum === 1) {
                 for (let sy = 0; sy < scale; sy++) {
                     for (let sx = 0; sx < scale; sx++) {
                         const gridX = startX + px * scale + sx;
                         const gridY = startY + py * scale + sy;
-                        placePatternTile(gridX, gridY, tileId);
+                        coordsToPlaceTile1.push([gridX, gridY]);
+
+                        placePatternTile(gridX+1, gridY, paddingTile);
+                        placePatternTile(gridX-1, gridY, paddingTile);
+                        placePatternTile(gridX, gridY+1, paddingTile);
+                        placePatternTile(gridX, gridY-1, paddingTile);
+
+                        placePatternTile(gridX+1, gridY+1, paddingTile);
+                        placePatternTile(gridX-1, gridY+1, paddingTile);
+                        placePatternTile(gridX+1, gridY-1, paddingTile);
+                        placePatternTile(gridX-1, gridY-1, paddingTile);
                     }
                 }
             }
         }
     }
+    // actually place the pattern
+    for (const [x, y] of coordsToPlaceTile1) {
+        placePatternTile(x, y, mainTile, true);
+    }
 }
+
+
+
+
+
+
+function generateDrunkenWalkWalls(gridWidth, gridHeight, rand) {
+    const grid = Array(gridWidth).fill(0).map(() => Array(gridHeight).fill(TILE_ID.WALL));
+
+    const totalSteps = Math.floor((gridWidth * gridHeight) * o.drunkStepMultiplier);
+    let stepsTaken = 0;
+
+    let centerX = Math.floor(gridWidth / 2);
+    let centerY = Math.floor(gridWidth / 2);
+    
+    // start in the center
+    let [walkerX, walkerY] = [centerX, centerY];
+
+    while (stepsTaken < totalSteps) {
+        grid[walkerX][walkerY] = TILE_ID.GRID;
+
+        const direction = Math.floor(rand() * 4);
+        if (direction === 0 && walkerX > 0) walkerX--;
+        else if (direction === 1 && walkerX < gridWidth - 1) walkerX++;
+        else if (direction === 2 && walkerY > 0) walkerY--;
+        else if (direction === 3 && walkerY < gridHeight - 1) walkerY++;
+
+        // walker dies :((
+        if (rand() < o.drunkRespawnChance) [walkerX, walkerY] = [centerX, centerY]
+        
+        stepsTaken++;
+    }
+
+    return grid;
+}
+
+
+
+
+function resizeGridToFit(grid) {
+    const gridWidth = grid.length;
+    const gridHeight = grid[0].length;
+
+    let minX = gridWidth;
+    let maxX = 0;
+    let minY = gridHeight;
+    let maxY = 0;
+
+    for (let y = 0; y < gridHeight; y++) {
+        for (let x = 0; x < gridWidth; x++) {
+            if (grid[x][y] !== TILE_ID.WALL) {
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+            }
+        }
+    }
+    const newWidth = maxX - minX + 1;
+    const newHeight = maxY - minY + 1;
+    const newGrid = Array(newWidth).fill(null).map(() => Array(newHeight));
+
+    for (let nx = 0; nx < newWidth; nx++) {
+        for (let ny = 0; ny < newHeight; ny++) {
+            newGrid[nx][ny] = grid[nx + minX][ny + minY];
+        }
+    }
+    return { newGrid, newWidth, newHeight };
+}
+
+
+function replaceSmallAreaTiles(grid, threashold, targetTileId, replaceTileId) {
+    const gridWidth = grid.length;
+    const gridHeight = grid[0].length;
+    const visited = Array(gridWidth).fill(null).map(() => Array(gridHeight).fill(false));
+
+    for (let x = 0; x < gridWidth; x++) {
+        for (let y = 0; y < gridHeight; y++) {
+            if (visited[x][y] || grid[x][y] !== targetTileId) continue;
+            // new island :o
+
+            const curIslandCoords = [];
+            const queue = [[x, y]];
+            visited[x][y] = true;
+
+            while (queue.length > 0) {
+                const current = queue.shift();
+                const [curX, curY] = current;
+                curIslandCoords.push(current);
+
+                // check all 4 neighbors
+                for (const neighbor of [[curX+1, curY], [curX-1, curY], [curX, curY+1], [curX, curY-1]]) {
+                    const [nx, ny] = neighbor;
+                    if (nx >= 0 && nx < gridWidth && ny >= 0 && ny < gridHeight &&
+                        !visited[nx][ny] && grid[nx][ny] === targetTileId) {
+                        
+                        visited[nx][ny] = true;
+                        queue.push(neighbor);
+                    }
+                }
+            }
+            if (curIslandCoords.length <= threashold) {
+                // smol island :o
+                for (const [curX, curY] of curIslandCoords) {
+                    grid[curX][curY] = replaceTileId;
+                }
+            }
+        }
+    }
+}
+
+
+
 
 
 
