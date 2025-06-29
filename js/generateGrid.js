@@ -6,14 +6,14 @@ import { o, ALL_TILE_BLOCKS, shuffleArray, TILE_ID } from './game.js';
 
 
 export function generateGrid(seed, level) {
-    const rand = splitmix32(cyrb128(seed + level + seed)[0]);
+    const rand = sfc32(...cyrb128(seed + level + seed));
 
     // grid size
     const total = (Math.log(level + 1) * o.levelSizeMultiplier);
     const randomSplit = rand() * total/4;
-    const width = 2 + Math.round(total/4 + randomSplit);
-    const height = 2 + Math.round(total/2 - randomSplit);
-    const grid = Array(width).fill(null).map(() => Array(height).fill(TILE_ID.GRID));
+    const gridWidth = 2 + Math.round(total/4 + randomSplit);
+    const gridHeight = 2 + Math.round(total/2 - randomSplit);
+    const grid = Array(gridWidth).fill(null).map(() => Array(gridHeight).fill(TILE_ID.GRID));
 
     // available tiles
     let tiles = ALL_TILE_BLOCKS.slice(0, Math.ceil(Math.sqrt(level)));
@@ -28,28 +28,26 @@ export function generateGrid(seed, level) {
 
     // bot amount
     const botAmount = Math.ceil(rand() * Math.log(level) * o.botAmountMultiplier);
-
-    // holes (patterns)
+    
+    // walls todo
     if (level > 5) {
+        
+    }
+    
+    // holes (patterns)
+    if (level > 12) {
         if (rand() < o.chanceHoles) {
+            const placementGrid = Array(gridWidth).fill(null).map(() => Array(gridHeight).fill(false));
             const numPatterns = Math.ceil(rand() * Math.log(level)) ?? 0;
-            placeTileRandomPattern(TILE_ID.AIR, numPatterns, grid, width, height, rand);
+            placeTileRandomPattern(TILE_ID.AIR, numPatterns, grid, gridWidth, gridHeight, placementGrid, rand);
         }
     }
 
-    // walls todo
-    if (level > 10) {
-
-    }
-
-
-    return { grid, width, height, availableTiles, futureAvailableTiles, botAmount };
+    return { grid, gridWidth, gridHeight, availableTiles, futureAvailableTiles, botAmount };
 }
 
 
-function placeTileRandomPattern(tileId, numPatterns, grid, gridWidth, gridHeight, rand) {
-    const placementGrid = Array(gridWidth).fill(null).map(() => Array(gridHeight).fill(false));
-
+function placeTileRandomPattern(tileId, numPatterns, grid, gridWidth, gridHeight, placementGrid, rand) {
     const filteredGenPatterns = genPatterns.filter(pattern => pattern.shape.length <= gridHeight && pattern.shape[0].length <= gridWidth);
     if (filteredGenPatterns.length === 0) return;
 
@@ -217,18 +215,16 @@ function cyrb128(str) {
     h1 ^= (h2 ^ h3 ^ h4), h2 ^= h1, h3 ^= h1, h4 ^= h1;
     return [h1>>>0, h2>>>0, h3>>>0, h4>>>0];
 }
-
-
-
-function splitmix32(a) {
+function sfc32(a, b, c, d) {
     return function() {
-        a |= 0;
-        a = a + 0x9e3779b9 | 0;
-        let t = a ^ a >>> 16;
-        t = Math.imul(t, 0x21f0aaad);
-        t = t ^ t >>> 15;
-        t = Math.imul(t, 0x735a2d97);
-        return ((t = t ^ t >>> 15) >>> 0) / 4294967296;
+        a |= 0; b |= 0; c |= 0; d |= 0;
+        let t = (a + b | 0) + d | 0;
+        d = d + 1 | 0;
+        a = b ^ b >>> 9;
+        b = c + (c << 3) | 0;
+        c = (c << 21 | c >>> 11);
+        c = c + t | 0;
+        return (t >>> 0) / 4294967296;
     }
 }
 
@@ -243,8 +239,7 @@ export function generateRandomB64String(length) {
   window.crypto.getRandomValues(randomBytes);
   const base64String = btoa(String.fromCharCode.apply(null, randomBytes));
   return base64String
-    .replace(/\+/g, '-') // Replace '+' with '-'
-    .replace(/\//g, '_') // Replace '/' with '_'
-    .replace(/=/g, '')   // Remove padding '='
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
     .substring(0, length);
 }

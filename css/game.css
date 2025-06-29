@@ -94,6 +94,7 @@
     min-width: 0;
     max-width: 100%;
     
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -105,6 +106,8 @@
 
     --grid-tile-shadow: calc(0.03 * var(--grid-tile-size));
     --grid-block-height: calc(0.2 * var(--grid-tile-size));
+
+    margin: 20px;
 }
 
 #game-grid-container {
@@ -112,19 +115,33 @@
     aspect-ratio: var(--grid-column-count) / var(--grid-row-count);
     width: 100%;
     height: auto;
-    min-height: 0;
-    max-height: 100%;
-    min-width: 0;
-    max-width: 100%;
 
     display: grid;
 
-    border: 1vmin solid var(--color-grid-cell);
-    padding: 1vmin;
+    /* border: 1vmin solid var(--color-grid-cell); */
+    /* padding: 1vmin; */
 
     grid-template-columns: repeat(var(--grid-column-count), 1fr);
 
     background-color: rgb(from var(--color-bg) r g b / 0.5);
+}
+
+
+#game-grid-border-svg {
+    position: absolute;
+    aspect-ratio: var(--grid-column-count) / var(--grid-row-count);
+    width: 100%;
+    height: auto;
+    pointer-events: none;
+    overflow: visible;
+}
+
+#game-grid-border-path {
+    fill: none;
+    stroke: var(--color-border);
+    stroke-width: calc(0.1 * var(--grid-tile-size));
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 
@@ -203,6 +220,17 @@
 .tile-purple { --tile-color: var(--tile-purple-color); }
 .tile-white { --tile-color: var(--tile-white-color); }
 .tile-wall { --tile-color: var(--tile-wall-color); }
+
+
+
+
+.tile.wall {
+    filter: drop-shadow(0px 0px 1px black);
+}
+
+
+
+
 
 
 
@@ -468,6 +496,10 @@
         height: auto;
     }
     #game-grid-container {
+        width: auto;
+        height: 100%;
+    }
+    #game-grid-border-svg {
         width: auto;
         height: 100%;
     }

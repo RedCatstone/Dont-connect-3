@@ -4,6 +4,7 @@ import { goToMainMenu, playSound, saveStats, STATS } from './menu.js';
 
 const gameGridContainer = document.querySelector("#game-grid-container");
 const gameGridSizerContainer = document.querySelector("#game-grid-sizer");
+const gameGridBorderSvg = document.querySelector("#game-grid-border-svg");
 const tileSelectorContainer = document.querySelector("#tile-selector");
 const homeButton = document.querySelector("#home-button");
 const hintButton = document.querySelector("#hint-button");
@@ -29,9 +30,9 @@ const endRetryButton = document.querySelector("#end-retry-button");
 
 // Tile Ids
 export const TILE_ID = {
-    WALL: 0,
-    GRID: 1,
-    AIR: 2,
+    WALL: 1,
+    GRID: 2,
+    AIR: 3,
     RED: 5,
     BLUE: 6,
     YELLOW: 7,
@@ -41,7 +42,7 @@ export const TILE_ID = {
 
 // Map tile IDs to CSS classes
 const TILE_CLASS_MAP = {
-    [TILE_ID.WALL]: 'tile block tile-wall',
+    [TILE_ID.WALL]: 'tile wall',
     [TILE_ID.AIR]: 'tile air',
     [TILE_ID.GRID]: 'tile grid',
     [TILE_ID.RED]: 'tile block tile-red',
@@ -58,8 +59,8 @@ export const ALL_TILE_BLOCKS = [TILE_ID.RED, TILE_ID.BLUE, TILE_ID.YELLOW, TILE_
 export const o = {
     // grid generated
     grid: null,
-    width: null,
-    height: null,
+    gridWidth: null,
+    gridHeight: null,
     availableTiles: null,
     futureAvailableTiles: null,
     botAmount: null,
@@ -153,10 +154,10 @@ export function startMode(customSettings) {
 
 
 function startGrid() {
-    const { grid, width, height, availableTiles, futureAvailableTiles, botAmount } = generateGrid(o.seed, o.level);
+    const { grid, gridWidth, gridHeight, availableTiles, futureAvailableTiles, botAmount } = generateGrid(o.seed, o.level);
     o.grid = grid;
-    o.width = width;
-    o.height = height;
+    o.gridWidth = gridWidth;
+    o.gridHeight = gridHeight;
     o.availableTiles = availableTiles;
     o.futureAvailableTiles = futureAvailableTiles;
     o.botAmount = botAmount;
@@ -402,8 +403,8 @@ function createGridDisplay() {
     gameGridContainer.innerHTML = '';
     const fragment = document.createDocumentFragment();
 
-    for (let y = 0; y < o.height; y++) {
-        for (let x = 0; x < o.width; x++) {
+    for (let y = 0; y < o.gridHeight; y++) {
+        for (let x = 0; x < o.gridWidth; x++) {
             const gridCell = document.createElement('div');
             gridCell.className = TILE_CLASS_MAP[o.grid[x][y]];
             gridCell.dataset.x = x;
@@ -412,16 +413,66 @@ function createGridDisplay() {
         }
     }
     gameGridContainer.append(fragment);
-    gameGridSizerContainer.style.setProperty('--grid-column-count', o.width);
-    gameGridSizerContainer.style.setProperty('--grid-row-count', o.height);
-    requestAnimationFrame(setTileSizeCSS);
+    gameGridSizerContainer.style.setProperty('--grid-column-count', o.gridWidth);
+    gameGridSizerContainer.style.setProperty('--grid-row-count', o.gridHeight);
+    requestAnimationFrame(drawCustomGridBorder);
 }
 
 
-window.addEventListener('resize', setTileSizeCSS);
-function setTileSizeCSS() {
-    gameGridSizerContainer.style.setProperty('--grid-tile-size', `${gameGridContainer.getBoundingClientRect().height / o.height}px`);
+window.addEventListener('resize', drawCustomGridBorder);
+
+
+
+
+
+
+function drawCustomGridBorder() {
+    gameGridBorderSvg.innerHTML = '';
+
+    const tileSize = gameGridContainer.clientHeight / o.gridHeight;
+    gameGridSizerContainer.style.setProperty('--grid-tile-size', `${tileSize}px`);
+
+    const overlap = tileSize / 10;
+    let pathData = '';
+
+    const isWall = (x, y) => (o.grid[x]?.[y] ?? TILE_ID.WALL) === TILE_ID.WALL;
+
+    for (let y = 0; y < o.gridHeight; y++) {
+        for (let x = 0; x < o.gridWidth; x++) {
+            if (isWall(x, y)) continue;
+
+            // top and bottom
+            for (const dy of [-1, 1]) {
+                if (isWall(x, y + dy)) {
+                    const startX = x * tileSize - overlap * (isWall(x - 1, y + dy) ? 1 : -1);
+                    const endX = (x + 1) * tileSize + overlap * (isWall(x + 1, y + dy) ? 1 : -1);
+                    const lineY = (y + (dy === 1)) * tileSize + overlap * dy;
+                    pathData += `M ${startX} ${lineY} L ${endX} ${lineY} `;
+                }
+            }
+            // left and right
+            for (const dx of [-1, 1]) {
+                if (isWall(x + dx, y)) {
+                    const startY = y * tileSize - overlap * (isWall(x + dx, y - 1) ? 1 : -1);
+                    const endY = (y + 1) * tileSize + overlap * (isWall(x + dx, y + 1) ? 1 : -1);
+                    const lineX = (x + (dx === 1)) * tileSize + overlap * dx;
+                    pathData += `M ${lineX} ${startY} L ${lineX} ${endY} `;
+                }
+            }
+        }
+    }
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('id', 'game-grid-border-path');
+    path.setAttribute('d', pathData);
+    gameGridBorderSvg.appendChild(path);
 }
+
+
+
+
+
+
 
 
 
@@ -574,7 +625,7 @@ function canPlaceTile(x, y, tileId, drawLine) {
 
 function placeRandomTiles(amount, dontPlaceIfLast) {
     if (!amount) return;
-    const allXYPairs = Array.from({ length: o.width }).flatMap((_, x) => Array.from({ length: o.height }, (__, y) => [x, y]));
+    const allXYPairs = Array.from({ length: o.gridWidth }).flatMap((_, x) => Array.from({ length: o.gridHeight }, (__, y) => [x, y]));
     const randomXY = shuffleArray(allXYPairs);
 
     let placed = 0;
@@ -617,10 +668,10 @@ const SPOTS_LEFT_ID = {
 
 
 function calculateSpotsLeft() {
-    o.spotsLeftGrid = Array(o.width).fill(null).map(() => Array(o.height).fill(SPOTS_LEFT_ID.INITIAL));
+    o.spotsLeftGrid = Array(o.gridWidth).fill(null).map(() => Array(o.gridHeight).fill(SPOTS_LEFT_ID.INITIAL));
     o.spotsLeftCount = 0;
-    for (let x = 0; x < o.width; x++) {
-        for (let y = 0; y < o.height; y++) {
+    for (let x = 0; x < o.gridWidth; x++) {
+        for (let y = 0; y < o.gridHeight; y++) {
             const tile = o.grid[x][y];
             if (tile === TILE_ID.GRID) {
                 for (const availableTile of o.availableTiles) {
