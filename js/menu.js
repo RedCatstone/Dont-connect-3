@@ -13,6 +13,7 @@ const modePlayButtons = document.querySelectorAll('.mode-play-button');
 const modeContinueButtons = document.querySelectorAll('.mode-continue-button');
 const modeStatDisplays = document.querySelectorAll('.mode-stats');
 
+const customSettingsGrid = document.querySelector("#menu-custom > .settings-grid");
 const customSeedInput = document.getElementById('custom-seed-input');
 const customLevelInput = document.getElementById('custom-level-input');
 const customInfiniteCheck = document.getElementById('custom-infinite-check');
@@ -36,8 +37,17 @@ goToMainMenu();
 document.addEventListener('keydown', (event) => {
     if (currentMenu && currentMenu !== menuMain && event.key === 'Escape') switchMenu(menuMain);
 });
+
+let advancedModeCounter = 0;
+let advancedModeLastClickTimeout = 0;
 document.addEventListener('click', (event) => {
     if (event.target.type === 'submit') playSound('tileSwitch');
+    if (event.target.id === 'menu-custom' || event.target.parentElement.id === 'menu-custom') {
+        // advanced mode after 5 clicks
+        clearTimeout(advancedModeLastClickTimeout);
+        advancedModeLastClickTimeout = setTimeout(() => advancedModeCounter = 0, 500);
+        if (++advancedModeCounter === 5) customSettingsGrid.classList.add('advanced-mode');
+    }
 }, true);
 
 
@@ -60,7 +70,13 @@ mainPlayButton.addEventListener('click', () => {
 // --- MODE MENU ---
 modePlayButtons.forEach(button => button.addEventListener('click', () => {
     const mode = button.dataset.mode;
-    if (mode === "custom") switchMenu(menuCustom);
+    if (mode === "custom") {
+        switchMenu(menuCustom);
+        customSettingsGrid.classList.remove('advanced-mode');
+        customLineLengthInput.value = '';
+        customLevelTimeInput.value = '';
+        customSeedInput.maxLength = o.defaultSeedLength;
+    }
     else handlePlay(mode);
 }));
 
@@ -123,8 +139,8 @@ customPlayButton.addEventListener('click', () => {
         botAmountMultiplier: getNumber(customBotMultiplierInput.value),
         
         // not in the menu
-        modeLevelTime: getNumber(customLineLengthInput?.value),
-        lineLength: getNumber(customLevelTimeInput?.value),
+        modeLevelTime: getNumber(customLevelTimeInput?.value),
+        lineLength: getNumber(customLineLengthInput?.value),
         mode: "custom",
     };
 
