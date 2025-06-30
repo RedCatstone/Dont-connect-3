@@ -388,16 +388,26 @@ function updateTileSelectorDisplay() {
 
 function updateLivesDisplay() {
     livesDisplay.innerHTML = '';
-    for (let i = 0; i < o.lives; i++) {
+    const numHearts = o.lives;
+    const heartsPerRow = 3;
+    const fragment = document.createDocumentFragment();
+
+    for (let i = 0; i < numHearts; i++) {
+        if (i % heartsPerRow === 0) {
+            const heartRow = document.createElement('div');
+            heartRow.className = 'heart-row';
+            fragment.appendChild(heartRow);
+        }
         const heart = document.createElement('span');
         heart.className = 'heart';
         heart.textContent = '❤';
-        livesDisplay.appendChild(heart);
+        fragment.lastChild.appendChild(heart);
     }
+    livesDisplay.appendChild(fragment);
 }
 function loseLife() {
     o.lives--;
-    const lastHeart = livesDisplay.lastChild;
+    const lastHeart = livesDisplay.lastChild.lastChild;
     lastHeart.classList.add('heart-lost');
     setTimeout(() => updateLivesDisplay(), o.invalidMoveTimeout);
     if (o.lives === 0) gridFail();
