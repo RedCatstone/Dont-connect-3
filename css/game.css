@@ -60,8 +60,9 @@
 
 
 #lives-display {
-    display: grid;
-    grid-auto-flow: column;
+    display: flex;
+    justify-content: center;
+    gap: 4px;
     margin: 0;
 }
 .heart {
@@ -512,13 +513,6 @@
 
     #tile-selector {
         flex-direction: column;
-    }
-
-    
-
-    #lives-display {
-        grid-auto-flow: unset;
-        grid-template-columns: 1fr 1fr 1fr;
     }
 }
 

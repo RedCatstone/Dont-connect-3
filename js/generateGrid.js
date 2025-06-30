@@ -30,7 +30,7 @@ export function generateGrid(seed, level) {
     const botAmount = Math.ceil(rand() * Math.log(level) * o.botAmountMultiplier);
 
     // walls
-    if (level > 5 && rand() < o.chanceDrunkWalls) {
+    if (level > 4 && rand() < o.chanceDrunkWalls) {
         grid = generateDrunkenWalkWalls(gridWidth, gridHeight, rand);
         const { newGrid, newWidth, newHeight } = resizeGridToFit(grid);
         grid = newGrid;
@@ -40,7 +40,7 @@ export function generateGrid(seed, level) {
     }
     
     // holes (patterns)
-    if (level > 15 && rand() < o.chanceHoles) {
+    if (level > 9 && rand() < o.chanceHoles) {
         const numPatterns = Math.ceil(rand() * Math.log(level)) ?? 0;
         placeRandomHolePatterns(numPatterns, grid, rand);
     }

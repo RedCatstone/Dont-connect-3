@@ -139,6 +139,7 @@ function updatePlayMenuStats() {
         modeCard.querySelector('.mode-best-stat').textContent = statsSaveLoc[mode]?.best?.level || '';
         modeCard.querySelector('.mode-played-stat').textContent = statsSaveLoc[mode]?.played || '';
         modeCard.querySelector('.mode-continue-button').style.display = statsSaveLoc[mode]?.continue ? '' : 'none';
+        modeCard.classList.remove('completed');
         
         if (modeMenuDaily) {
             if (mode === 'endless' || mode === 'custom') {
@@ -151,13 +152,14 @@ function updatePlayMenuStats() {
             }
         }
     }
+    
+    modeHeader.textContent = modeMenuDaily ? 'Select a Daily' : 'Select a Mode';
+    modeDailyButton.textContent = modeMenuDaily ? 'Normal' : 'Daily';
 }
 
 let dailyResetInInterval = null;
 modeDailyButton.addEventListener('click', () => {
     modeMenuDaily = !modeMenuDaily;
-    modeHeader.textContent = modeMenuDaily ? 'Select a Daily' : 'Select a Mode';
-    modeDailyButton.textContent = modeMenuDaily ? 'Normal' : 'Daily';
     if (modeMenuDaily) {
         clearInterval(dailyResetInInterval); 
         dailyResetsInDisplay.textContent = `Resets in: ${getTimeUntilNextUTCDay()}`;

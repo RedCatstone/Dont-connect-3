@@ -436,8 +436,8 @@ body:not(.menu-active) #menus {
     font-size: 1.2rem;
     font-weight: 700;
 }
-.mode-card.completed .mode-title::before {
-    content: '✔️ ';
+.mode-card.completed .mode-title::after {
+    content: ' ✔️';
 }
 
 
