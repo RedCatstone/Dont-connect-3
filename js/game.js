@@ -389,7 +389,7 @@ function updateTileSelectorDisplay() {
 function updateLivesDisplay() {
     livesDisplay.innerHTML = '';
     const numHearts = o.lives;
-    const heartsPerRow = 3;
+    const heartsPerRow = 5;
     const fragment = document.createDocumentFragment();
 
     for (let i = 0; i < numHearts; i++) {
@@ -844,6 +844,7 @@ function showEndScreen(status, timeout) {
     if (status === 'quit' && (!o.modeFindLast || !(o.modeGlobalTimeGain || o.modeLevelTime))) {
         let toSave = {};
         if (o.mode === 'custom') Object.assign(toSave, modeSettings);
+        delete toSave.statsSaveLoc;
         Object.assign(toSave, endStats);
         toSave.hintsLeft = o.hintsLeft;
         if (o.modeLivesCount > 1) toSave.lives = o.lives;

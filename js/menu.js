@@ -182,7 +182,7 @@ function handlePlay(mode, shouldContinue) {
     modeSettings.mode = mode;
 
     if (modeMenuDaily) {
-        modeSettings.seed = getDailySeed();
+        modeSettings.seed = getDailySeed() + mode[0];
         modeSettings.modeGoalLevel = getDailyLength(modeSettings.seed, mode);
         if (!STATS.daily) STATS.daily = {};
         if (!STATS.daily[modeSettings.seed]) STATS.daily[modeSettings.seed] = {};
@@ -241,6 +241,7 @@ function getTimeUntilNextUTCDay() {
 // --- CUSTOM GAME MENU ---
 customPlayButton.addEventListener('click', () => {
     goToGame();
+    if (!STATS.mode) STATS.mode = {};
     const rawSettings = {
         seed: customSeedInput.value || undefined,
         level: getNumber(customLevelInput.value),
@@ -254,6 +255,7 @@ customPlayButton.addEventListener('click', () => {
         modeLevelTime: getNumber(customLevelTimeInput.value),
         lineLength: getNumber(customLineLengthInput.value),
         mode: "custom",
+        statsSaveLoc: STATS.mode,
     };
 
     const cleanSettings = Object.fromEntries(
