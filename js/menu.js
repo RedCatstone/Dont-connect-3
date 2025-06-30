@@ -147,7 +147,7 @@ function updatePlayMenuStats() {
                 continue;
             }
 
-            if (statsSaveLoc[mode]?.best?.level >= getDailyLength(dailySeed, mode)) {
+            if (statsSaveLoc[mode]?.best?.level >= getDailyLength(dailySeed + mode[0])) {
                 modeCard.classList.add('completed');
             }
         }
@@ -182,11 +182,12 @@ function handlePlay(mode, shouldContinue) {
     modeSettings.mode = mode;
 
     if (modeMenuDaily) {
-        modeSettings.seed = getDailySeed() + mode[0];
-        modeSettings.modeGoalLevel = getDailyLength(modeSettings.seed, mode);
+        const dailySeed = getDailySeed();
+        modeSettings.seed = dailySeed + mode[0];
+        modeSettings.modeGoalLevel = getDailyLength(dailySeed + mode[0]);
         if (!STATS.daily) STATS.daily = {};
-        if (!STATS.daily[modeSettings.seed]) STATS.daily[modeSettings.seed] = {};
-        modeSettings.statsSaveLoc = STATS.daily[modeSettings.seed];
+        if (!STATS.daily[modeSettings.seed]) STATS.daily[dailySeed] = {};
+        modeSettings.statsSaveLoc = STATS.daily[dailySeed];
     }
     else {
         if (!STATS.mode) STATS.mode = {};
@@ -207,8 +208,8 @@ function getDailySeed() {
     const monthString = date.toLocaleString('en-us', { month: 'long', timeZone: 'UTC' });
 }
 
-function getDailyLength(dailySeed, mode) {
-    const rand = getRandomFunction(dailySeed + mode);
+function getDailyLength(dailySeed) {
+    const rand = getRandomFunction(dailySeed);
     return Math.floor(10 + 20 * rand());
 }
 
