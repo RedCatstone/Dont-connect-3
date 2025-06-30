@@ -21,68 +21,32 @@
 
         <div id="menu-mode" class="menu">
             <h1>Select a Mode</h1>
-                
+            <span id="daily-resets-in-display"></span> 
             <div class="mode-selection-grid">
-                <!-- Endless Mode Card -->
-                <div class="mode-card" id="mode-card-endless">
-                    <div class="mode-title-stats">
-                        <span class="mode-title">Endless</span>
-                        <div class="mode-stats" data-mode="endless">
-                            <span class="mode-best-stat"></span>
-                            <span class="mode-played-stat"></span>
-                        </div>
-                    </div>
-                    <div class="mode-buttons">
-                        <button class="mode-continue-button" data-mode="endless">Continue</button>
-                        <button class="mode-play-button" data-mode="endless">▶</button>
-                    </div>
-                </div>
-            
-                <!-- Hardcore Mode Card -->
-                <div class="mode-card" id="mode-card-hardcore">
-                    <div class="mode-title-stats">
-                        <span class="mode-title">Hardcore</span>
-                        <div class="mode-stats" data-mode="hardcore">
-                            <span class="mode-best-stat"></span>
-                            <span class="mode-played-stat"></span>
-                        </div>
-                    </div>
-                    <div class="mode-buttons">
-                        <button class="mode-continue-button" data-mode="hardcore">Continue</button>
-                        <button class="mode-play-button" data-mode="hardcore">▶</button>
-                    </div>
-                </div>
-            
-                <!-- Find Last Spot Mode Card -->
-                <div class="mode-card" id="mode-card-findlast">
-                    <div class="mode-title-stats">
-                        <span class="mode-title">Find Last</span>
-                        <div class="mode-stats" data-mode="findlast">
-                            <span class="mode-best-stat"></span>
-                            <span class="mode-played-stat"></span>
-                        </div>
-                    </div>
-                    <div class="mode-buttons">
-                        <button class="mode-continue-button" data-mode="findlast">Continue</button>
-                        <button class="mode-play-button" data-mode="findlast">▶</button>
-                    </div>
-                </div>
-
-                <div class="mode-card" id="mode-card-custom">
-                    <div class="mode-title-stats">
-                        <span class="mode-title">Custom</span>
-                        <div class="mode-stats" data-mode="custom">
-                            <span class="mode-best-stat"></span>
-                            <span class="mode-played-stat"></span>
-                        </div>
-                    </div>
-                    <div class="mode-buttons">
-                        <button class="mode-continue-button" data-mode="custom">Continue</button>
-                        <button class="mode-play-button" data-mode="custom">▶</button>
-                    </div>
-                </div>
+                <!-- js -->
+            </div>
+            <div class="menu-bottom-buttons">
+                <button id="mode-daily-button" class="big">Daily</button>
             </div>
         </div>
+
+        <template id="mode-card-template">
+            <div class="mode-card">
+                <div class="mode-title-stats">
+                    <span class="mode-title"></span>
+                    <div class="mode-stats">
+                        <span class="mode-best-stat"></span>
+                        <span class="mode-played-stat"></span>
+                    </div>
+                </div>
+                <div class="mode-buttons">
+                    <button class="mode-continue-button">Continue</button>
+                    <button class="mode-play-button">▶</button>
+                </div>
+            </div>
+        </template>
+
+        
 
         <div id="menu-custom" class="menu">
             <h1>Custom Game</h1>
@@ -97,9 +61,9 @@
                         <input type="number" id="custom-level-input" value="1" min="1" max="99" placeholder="1">
                     </div>
                 </div>
-                <label class="setting-item checkbox-group" for="custom-infinite-check">
-                    <input type="checkbox" id="custom-infinite-check">
-                    Infinite
+                <label class="setting-item text-group" for="custom-goal-level-input">
+                    Goal Level
+                    <input type="number" id="custom-goal-level-input" min="0" max="999" placeholder="Disabled">
                 </label>
                 <label class="setting-item checkbox-group" for="custom-findlast-check">
                     <input type="checkbox" id="custom-findlast-check">

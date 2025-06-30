@@ -94,9 +94,10 @@ export const o = {
     hintsUsed: 0,
 
     STATS: null,
+    modeSaveLoc: null,
 
     // mode specifics
-    modeInfinite: false,
+    modeGoalLevel: false,
     modeFindLast: false,
     modeHintCount: 0,
     modeLevelTime: 0,
@@ -127,9 +128,10 @@ export function startMode(customSettings) {
     const defaultSettings = {
         mode: "void",
         seed: generateRandomB64String(o.defaultSeedLength),
+        modeSaveLoc: STATS.mode,
         level: 1,
         time: 0,
-        modeInfinite: false,
+        modeGoalLevel: false,
         modeFindLast: false,
         modeHintCount: 0,
         modeLivesCount: 0,
@@ -168,7 +170,7 @@ function startGrid() {
     o.selectedAvailableTile = 0;
 
     calculateSpotsLeft();
-    levelDisplay.textContent = `Level ${o.level}`;
+    levelDisplay.textContent = `Level ${o.level}${o.modeGoalLevel ? `/${o.modeGoalLevel}` : ''}`;
     spotsLeftDisplay.textContent = o.spotsLeftCount;
     seedDisplay.textContent = o.seed;
     hintUsesDisplay.textContent = o.hintsLeft;
@@ -768,16 +770,16 @@ function gridComplete() {
     disableGridInput();
     clearInterval(levelTimeInterval);
     
-    if (o.modeInfinite) {
+    if (o.level === o.modeGoalLevel) {
+        showEndScreen('win', 0);
+    }
+    else {
         gridCompleteTimeout = setTimeout(() => {
             o.level++;
             if (o.hintsLeft < 99 && o.level % o.gainHintEveryLevel === 0) hintUsesDisplay.textContent = ++o.hintsLeft;
             enableGridInput();
             startGrid();
         }, 1000);
-    }
-    else {
-        showEndScreen('win', 0);
     }
 }
 
@@ -819,25 +821,25 @@ function showEndScreen(status, timeout) {
     
     // --- STATS ---
     let newRecord = false;
-    if (!STATS[o.mode]) STATS[o.mode] = {};
-    STATS[o.mode].played = (STATS[o.mode].played || 0) + 1;
+    if (!o.statsSaveLoc[o.mode]) o.statsSaveLoc[o.mode] = {};
+    const statsSaveLoc = o.statsSaveLoc[o.mode];
+    if (status !== 'quit') statsSaveLoc.played = (statsSaveLoc.played || 0) + 1;
 
-    if (endStats.level > (STATS[o.mode].best?.level ?? 0) && o.mode !== "custom") {
+    if (endStats.level > (statsSaveLoc.best?.level ?? 0) && o.mode !== "custom") {
         // new pb!
-        STATS[o.mode].best = endStats;
+        statsSaveLoc.best = endStats;
         newRecord = true;
     }
-
     // check if we can continue
-    if (status === "quit" && o.modeInfinite && (!o.modeFindLast || !(o.modeGlobalTimeGain || o.modeLevelTime))) {
+    if (status === 'quit' && (!o.modeFindLast || !(o.modeGlobalTimeGain || o.modeLevelTime))) {
         let toSave = {};
-        if (o.mode === "custom") Object.assign(toSave, modeSettings);
+        if (o.mode === 'custom') Object.assign(toSave, modeSettings);
         Object.assign(toSave, endStats);
         toSave.hintsLeft = o.hintsLeft;
         if (o.modeLivesCount > 1) toSave.lives = o.lives;
-        STATS[o.mode].continue = toSave;
+        statsSaveLoc.continue = toSave;
     }
-    else delete STATS[o.mode].continue;
+    else delete statsSaveLoc.continue;
     saveStats();
 
 

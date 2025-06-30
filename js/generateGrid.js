@@ -6,7 +6,7 @@ import { o, ALL_TILE_BLOCKS, shuffleArray, TILE_ID } from './game.js';
 
 
 export function generateGrid(seed, level) {
-    const rand = sfc32(...cyrb128(seed + level + seed));
+    const rand = getRandomFunction(seed + level + seed);
 
     // grid size
     const total = (Math.log(level + 1) * o.levelSizeMultiplier);
@@ -330,6 +330,10 @@ function replaceSmallAreaTiles(grid, threashold, targetTileId, replaceTileId) {
 
 
 // seeded random number generator from stackoverflow
+export function getRandomFunction(seed) {
+    return sfc32(...cyrb128(seed));
+}
+
 function cyrb128(str) {
     let h1 = 1779033703, h2 = 3144134277,
         h3 = 1013904242, h4 = 2773480762;

@@ -30,6 +30,7 @@
     --color-accent: #00A395;
 
     --animation-speed: 400ms;
+    --menu-speed: 200ms;
 
 
     --icon-font: 'Arial Black', Gadget, sans-serif;
@@ -216,7 +217,8 @@ button > .button-counter {
 }
 
 .settings-grid.advanced-mode .advanced {
-    display: unset;
+    display: flex;
+    background: color-mix(in oklab, var(--color-grid-cell) 80%, red 20%)
 }
 
 
@@ -239,7 +241,7 @@ button > .button-counter {
     box-sizing: border-box;
     padding: 10px 15px;
     background-color: var(--color-bg);
-    border: 2px solid var(--color-grid-cell);
+    border: none;
     border-radius: 12px;
     box-shadow: inset 0 4px 8px rgba(0,0,0,0.4);
     transition: all 100ms ease-out;
@@ -331,11 +333,7 @@ button > .button-counter {
 
 
 
-
-
-
-
-.menu-active #menus {
+body.menu-active #menus {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -344,19 +342,31 @@ button > .button-counter {
     text-align: center;
 }
 
-#menus .menu {
+body:not(.menu-active) #menus {
     display: none;
+}
+
+#menus .menu {
+    display: flex;
     flex-direction: column;
     align-items: center;
     gap: 20px;
+    position: absolute;
 
     width: 95%;
     max-width: 400px;
+
+    transition: opacity var(--menu-speed) ease-in-out,
+                transform var(--menu-speed) ease-in-out;
 }
 
-.menu-active #menus .menu.active {
-    display: flex;
+#menus .menu:not(.active) {
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
 }
+
+
 
 #menus h1 {
     font-size: clamp(2.5rem, 10vw, 5rem);
@@ -375,10 +385,10 @@ button > .button-counter {
 
 
 #main-play-button { --button-color: var(--color-accent); }
-#mode-card-endless { --button-color: #4CAF50; }
-#mode-card-hardcore { --button-color: #b9302b; }
-#mode-card-findlast { --button-color: #2196F3; }
-#mode-card-custom { --button-color: #cf08bf; }
+.mode-card[data-mode="endless"] { --button-color: #4CAF50; }
+.mode-card[data-mode="hardcore"] { --button-color: #b9302b; }
+.mode-card[data-mode="findlast"] { --button-color: #2196F3; }
+.mode-card[data-mode="custom"] { --button-color: #cf08bf; }
 #custom-play-button { --button-color: #cf08bf; }
 
 
@@ -413,6 +423,9 @@ button > .button-counter {
     border-radius: 12px;
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
 }
+
+
+
 .mode-title-stats {
     display: flex;
     flex-direction: column;
@@ -423,6 +436,11 @@ button > .button-counter {
     font-size: 1.2rem;
     font-weight: 700;
 }
+.mode-card.completed .mode-title::before {
+    content: '✔️ ';
+}
+
+
 .mode-stats {
     font-size: 0.9rem;
     font-weight: 600;
@@ -453,5 +471,4 @@ button > .button-counter {
 .mode-continue-button {
     --button-color: #6c757d;
     padding: 10px 15px;
-    display: none;
 }

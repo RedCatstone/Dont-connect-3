@@ -1,4 +1,5 @@
 import { o, startMode } from './game.js';
+import { getRandomFunction } from './generateGrid.js';
 
 
 const menuMain = document.getElementById('menu-main');
@@ -9,14 +10,16 @@ const mainPlayButton = document.getElementById('main-play-button');
 const mainSettingsButton = document.getElementById('main-settings-button');
 const mainAboutButton = document.getElementById('main-about-button');
 
-const modePlayButtons = document.querySelectorAll('.mode-play-button');
-const modeContinueButtons = document.querySelectorAll('.mode-continue-button');
-const modeStatDisplays = document.querySelectorAll('.mode-stats');
+const modeHeader = document.querySelector('#menu-mode > h1');
+const modeSelectionGrid = document.querySelector('#menu-mode > .mode-selection-grid');
+const modeCardTemplate = document.getElementById('mode-card-template');
+const modeDailyButton = document.getElementById('mode-daily-button');
+const dailyResetsInDisplay = document.getElementById('daily-resets-in-display');
 
 const customSettingsGrid = document.querySelector("#menu-custom > .settings-grid");
 const customSeedInput = document.getElementById('custom-seed-input');
 const customLevelInput = document.getElementById('custom-level-input');
-const customInfiniteCheck = document.getElementById('custom-infinite-check');
+const customGoalLevelInput = document.getElementById('custom-goal-level-input');
 const customFindLastCheck = document.getElementById('custom-findlast-check');
 const customHintsInput = document.getElementById('custom-hints-input');
 const customLivesInput = document.getElementById('custom-lives-input');
@@ -28,6 +31,9 @@ const customPlayButton = document.getElementById('custom-play-button');
 const customLineLengthInput = document.getElementById('custom-line-length-input');
 const customLevelTimeInput = document.getElementById('custom-level-time-input');
 
+const style = window.getComputedStyle(document.documentElement);
+const menuSpeed = parseInt(style.getPropertyValue('--menu-speed'));
+
 export let currentMenu = null;
 
 
@@ -35,7 +41,7 @@ export let currentMenu = null;
 
 goToMainMenu();
 document.addEventListener('keydown', (event) => {
-    if (currentMenu && currentMenu !== menuMain && event.key === 'Escape') switchMenu(menuMain);
+    if (currentMenu && event.key === 'Escape') switchMenu(menuMain);
 });
 
 let advancedModeCounter = 0;
@@ -52,11 +58,52 @@ document.addEventListener('click', (event) => {
 
 
 
+const GAMEMODE = {
+    endless: 'Endless',
+    hardcore: 'Hardcore',
+    findlast: 'Find Last',
+    custom: 'Custom',
+};
+
+
+for (const [gamemodeId, gamemodeDisplay] of Object.entries(GAMEMODE)) {
+    const cardClone = modeCardTemplate.content.cloneNode(true);
+
+    cardClone.querySelector('.mode-card').dataset.mode = gamemodeId;
+    cardClone.querySelector('.mode-title').textContent = gamemodeDisplay;
+    
+    cardClone.querySelector('.mode-play-button').addEventListener('click', () => {
+        if (gamemodeId === 'custom') {
+            switchMenu(menuCustom);
+            customSettingsGrid.classList.remove('advanced-mode');
+            customLineLengthInput.value = '';
+            customLevelTimeInput.value = '';
+            customSeedInput.maxLength = o.defaultSeedLength;
+        }
+        else handlePlay(gamemodeId);
+    });
+    cardClone.querySelector('.mode-continue-button').addEventListener('click', () => handlePlay(gamemodeId, true));
+
+    modeSelectionGrid.appendChild(cardClone);
+}
+const modeCards = document.querySelectorAll('.mode-card');
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 // --- MAIN MENU ---
 mainPlayButton.addEventListener('click', () => {
+    modeMenuDaily = false;
     updatePlayMenuStats();
     switchMenu(menuPlay);
 });
@@ -68,53 +115,117 @@ mainPlayButton.addEventListener('click', () => {
 
 
 // --- MODE MENU ---
-modePlayButtons.forEach(button => button.addEventListener('click', () => {
-    const mode = button.dataset.mode;
-    if (mode === "custom") {
-        switchMenu(menuCustom);
-        customSettingsGrid.classList.remove('advanced-mode');
-        customLineLengthInput.value = '';
-        customLevelTimeInput.value = '';
-        customSeedInput.maxLength = o.defaultSeedLength;
-    }
-    else handlePlay(mode);
-}));
-
-modeContinueButtons.forEach(button => button.addEventListener('click', () => {
-    const mode = button.dataset.mode;
-    handlePlay(mode, true);
-}));
-
+let modeMenuDaily = false;
 
 function updatePlayMenuStats() {
-    modeStatDisplays.forEach(modeStats => {
-        const mode = modeStats.dataset.mode;
-        const bestStatDiv = modeStats.querySelector('.mode-best-stat');
-        if (bestStatDiv) bestStatDiv.textContent = STATS[mode]?.best?.level || '';
-        const playedStatDiv = modeStats.querySelector('.mode-played-stat');
-        if (playedStatDiv) playedStatDiv.textContent = STATS[mode]?.played || '';
-    });
+    let dailySeed;
+    let statsSaveLoc;
 
-    modeContinueButtons.forEach(button => {
-        const mode = button.dataset.mode;
-        button.style.display = STATS[mode]?.continue ? 'block' : 'none';
-    });
+    if (modeMenuDaily) {
+        dailySeed = getDailySeed();
+        if (!STATS.daily) STATS.daily = {};
+        if (!STATS.daily[dailySeed]) STATS.daily[dailySeed] = {};
+        statsSaveLoc = STATS.daily[dailySeed];
+    }
+    else {
+        if (!STATS.mode) STATS.mode = {};
+        statsSaveLoc = STATS.mode;
+    }
+
+    for (const modeCard of modeCards) {
+        const mode = modeCard.dataset.mode;
+        modeCard.style.display = '';
+
+        modeCard.querySelector('.mode-best-stat').textContent = statsSaveLoc[mode]?.best?.level || '';
+        modeCard.querySelector('.mode-played-stat').textContent = statsSaveLoc[mode]?.played || '';
+        modeCard.querySelector('.mode-continue-button').style.display = statsSaveLoc[mode]?.continue ? '' : 'none';
+        
+        if (modeMenuDaily) {
+            if (mode === 'endless' || mode === 'custom') {
+                modeCard.style.display = 'none';
+                continue;
+            }
+
+            if (statsSaveLoc[mode]?.best?.level >= getDailyLength(dailySeed, mode)) {
+                modeCard.classList.add('completed');
+            }
+        }
+    }
 }
+
+let dailyResetInInterval = null;
+modeDailyButton.addEventListener('click', () => {
+    modeMenuDaily = !modeMenuDaily;
+    modeHeader.textContent = modeMenuDaily ? 'Select a Daily' : 'Select a Mode';
+    modeDailyButton.textContent = modeMenuDaily ? 'Normal' : 'Daily';
+    if (modeMenuDaily) {
+        clearInterval(dailyResetInInterval); 
+        dailyResetsInDisplay.textContent = `Resets in: ${getTimeUntilNextUTCDay()}`;
+        dailyResetInInterval = setInterval(() => dailyResetsInDisplay.textContent = `Resets in: ${getTimeUntilNextUTCDay()}`, 1000);
+    }
+    else {
+        dailyResetsInDisplay.textContent = '';
+        clearInterval(dailyResetInInterval);
+    }
+    updatePlayMenuStats();
+});
 
 
 
 function handlePlay(mode, shouldContinue) {
     let modeSettings = {};
-    if (mode === 'endless') modeSettings = { modeInfinite: true, modeHintCount: 2 };
-    if (mode === 'hardcore') modeSettings = { modeInfinite: true, modeLivesCount: 1 };
-    if (mode === 'findlast') modeSettings = { modeInfinite: true, modeFindLast: true, modeGlobalTimeGain: 4 };
+    if (mode === 'endless') modeSettings = { modeGoalLevel: 0, modeHintCount: 2 };
+    if (mode === 'hardcore') modeSettings = { modeGoalLevel: 0, modeLivesCount: 1 };
+    if (mode === 'findlast') modeSettings = { modeGoalLevel: 0, modeFindLast: true, modeGlobalTimeGain: 4 };
     modeSettings.mode = mode;
 
-    if (shouldContinue) Object.assign(modeSettings, STATS[mode].continue);
+    if (modeMenuDaily) {
+        modeSettings.seed = getDailySeed();
+        modeSettings.modeGoalLevel = getDailyLength(modeSettings.seed, mode);
+        if (!STATS.daily) STATS.daily = {};
+        if (!STATS.daily[modeSettings.seed]) STATS.daily[modeSettings.seed] = {};
+        modeSettings.statsSaveLoc = STATS.daily[modeSettings.seed];
+    }
+    else {
+        if (!STATS.mode) STATS.mode = {};
+        modeSettings.statsSaveLoc = STATS.mode;
+    }
+
+
+    if (shouldContinue) Object.assign(modeSettings, modeSettings.statsSaveLoc[mode].continue);
 
     goToGame();
     startMode(modeSettings);
 }
+
+
+function getDailySeed() {
+    const date = new Date();
+    return `${date.getUTCDate()}-${date.getUTCMonth() + 1}-${date.getUTCFullYear()}`;
+    const monthString = date.toLocaleString('en-us', { month: 'long', timeZone: 'UTC' });
+}
+
+function getDailyLength(dailySeed, mode) {
+    const rand = getRandomFunction(dailySeed + mode);
+    return Math.floor(10 + 20 * rand());
+}
+
+function getTimeUntilNextUTCDay() {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    tomorrow.setUTCHours(0, 0, 0, 0);
+    const diff = tomorrow.getTime() - now.getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    return `${hours}h ${minutes}m ${seconds}s`;
+}
+
+
+
+
+
 
 
 
@@ -131,16 +242,15 @@ customPlayButton.addEventListener('click', () => {
     const rawSettings = {
         seed: customSeedInput.value || undefined,
         level: getNumber(customLevelInput.value),
-        modeInfinite: customInfiniteCheck.checked,
+        modeGoalLevel: getNumber(customGoalLevelInput.value),
         modeFindLast: customFindLastCheck.checked,
         modeHintCount: getNumber(customHintsInput.value),
         modeLivesCount: getNumber(customLivesInput.value),
         modeGlobalTimeGain: getNumber(customGlobalTimeGainInput.value),
         botAmountMultiplier: getNumber(customBotMultiplierInput.value),
-        
-        // not in the menu
-        modeLevelTime: getNumber(customLevelTimeInput?.value),
-        lineLength: getNumber(customLineLengthInput?.value),
+        // advanced settings
+        modeLevelTime: getNumber(customLevelTimeInput.value),
+        lineLength: getNumber(customLineLengthInput.value),
         mode: "custom",
     };
 
@@ -214,13 +324,19 @@ export function goToMenu() {
 
 export function goToMainMenu() {
     goToMenu();
-    switchMenu(menuMain);
+    requestAnimationFrame(() => switchMenu(menuMain));
 }
 
 
 
+
 function switchMenu(menu) {
-    if (currentMenu) currentMenu.classList.remove('active');
+    if (currentMenu === menu) return;
+
+    if (currentMenu) {
+        currentMenu.classList.remove('active');
+    }
+
     if (menu) {
         menu.classList.add('active');
         currentMenu = menu;
