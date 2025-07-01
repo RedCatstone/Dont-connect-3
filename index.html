@@ -21,83 +21,27 @@
 
         <div id="menu-mode" class="menu">
             <h1>Select a Mode</h1>
-            <span id="daily-resets-in-display"></span> 
+            <div id="mode-tabs"></div>
+            <span id="daily-resets-in-display"></span>
             <div class="mode-selection-grid">
-                <!-- js -->
-            </div>
-            <div class="menu-bottom-buttons">
-                <button id="mode-daily-button" class="big">Daily</button>
-            </div>
-        </div>
-
-        <template id="mode-card-template">
-            <div class="mode-card">
-                <div class="mode-title-stats">
-                    <span class="mode-title"></span>
-                    <div class="mode-stats">
-                        <span class="mode-best-stat"></span>
-                        <span class="mode-played-stat"></span>
+                <!-- JS -->
+                <template id="mode-card-template">
+                    <div class="mode-card">
+                        <div class="mode-title-stats">
+                            <span class="mode-title"></span>
+                            <div class="mode-stats">
+                                <span class="mode-best-stat"></span>
+                                <span class="mode-played-stat"></span>
+                            </div>
+                        </div>
+                        <div class="mode-buttons">
+                            <button class="mode-continue-button">Continue</button>
+                            <button class="mode-play-button">▶</button>
+                        </div>
                     </div>
-                </div>
-                <div class="mode-buttons">
-                    <button class="mode-continue-button">Continue</button>
-                    <button class="mode-play-button">▶</button>
-                </div>
+                </template>
+
             </div>
-        </template>
-
-        
-
-        <div id="menu-custom" class="menu">
-            <h1>Custom Game</h1>
-            <div class="settings-grid">
-                <div class="setting-item big">
-                    <div class="text-group">
-                        <label for="custom-seed-input">Seed</label>
-                        <input type="text" id="custom-seed-input" data-allowed-chars="A-Za-z0-9_-" maxlength="3" placeholder="Random">
-                    </div>
-                    <div class="text-group">
-                        <label for="custom-level-input">Level</label>
-                        <input type="number" id="custom-level-input" value="1" min="1" max="99" placeholder="1">
-                    </div>
-                </div>
-                <label class="setting-item text-group" for="custom-goal-level-input">
-                    Goal Level
-                    <input type="number" id="custom-goal-level-input" min="0" max="999" placeholder="Disabled">
-                </label>
-                <label class="setting-item checkbox-group" for="custom-findlast-check">
-                    <input type="checkbox" id="custom-findlast-check">
-                    Find Last
-                </label>
-                <div class="setting-item text-group">
-                    <label for="custom-hints-input">Hints</label>
-                    <input type="number" id="custom-hints-input" value="2" min="0" max="99" placeholder="0">
-                </div>
-                <div class="setting-item text-group">
-                    <label for="custom-lives-input">Lives</label>
-                    <input type="number" id="custom-lives-input" min="0" max="15" placeholder="Disabled">
-                </div>
-                <div class="setting-item text-group">
-                    <label for="custom-global-time-gain-input">Time Limit Gain</label>
-                    <input type="number" id="custom-global-time-gain-input" min="0", max="60" placeholder="Disabled">
-                </div>
-                <div class="setting-item text-group">
-                    <label for="custom-bot-multiplier-input">Bot Multiplier</label>
-                    <input type="number" id="custom-bot-multiplier-input" min="0", max="10" placeholder="Normal">
-                </div>
-                <div class="setting-item advanced text-group">
-                    <label for="custom-level-time-input">Level Time Limit</label>
-                    <input type="number" id="custom-level-time-input" min="0", max="99" placeholder="Disabled">
-                </div>
-                <div class="setting-item advanced text-group">
-                    <label for="custom-line-length-input">Line Length</label>
-                    <input type="number" id="custom-line-length-input" min="3", max="5" placeholder="3">
-                </div>
-            </div>
-        
-
-            
-            <button id="custom-play-button">Play</button>
         </div>
     </div>
 

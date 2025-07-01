@@ -79,19 +79,20 @@ export const o = {
     drunkStepMultiplier: 3,
 
     // variables
-    mode: null,
     seed: null,
     level: null,
     time: performance.now(),
     selectedAvailableTile: 0,
     inputDisabled: false,
     spotsLeftCount: null,
-    globalTimeLeft: null,
-    lives: 0,
+    lives: null,
     endScreen: false,
     blocksPlaced: null,
     invalidClicks: null,
-    hintsUsed: 0,
+    hintsUsed: null,
+    levelTimeDeathTime: null,
+    globalTimeDeathTime: null,
+    activeCountdowns: {},
 
     STATS: null,
     modeSaveLoc: null,
@@ -126,9 +127,8 @@ export function startMode(customSettings) {
     modeSettings = customSettings;
 
     const defaultSettings = {
-        mode: "void",
         seed: generateRandomB64String(o.defaultSeedLength),
-        modeSaveLoc: STATS.mode,
+        modeSaveLoc: null,
         level: 1,
         time: 0,
         modeGoalLevel: false,
@@ -150,9 +150,8 @@ export function startMode(customSettings) {
 
     resetDisplaysAndIntervals();
     if (o.lives) updateLivesDisplay();
-    o.globalTimeLeft = 0;
+    if (o.modeGlobalTimeGain) startCountdown('global', 0, globalTimeDisplay);
     startGrid();
-    if (o.modeGlobalTimeGain) startGlobalTimeCountdown();
     startTimer();
 }
 
@@ -162,9 +161,7 @@ export function startMode(customSettings) {
 
 function startGrid() {
     // { grid, gridWidth, gridHeight, availableTiles, futureAvailableTiles, botAmount }
-    console.time();
     const generatedGrid = generateGrid(o.seed, o.level);
-    console.timeEnd();
     Object.assign(o, generatedGrid);
 
     o.selectedAvailableTile = 0;
@@ -177,9 +174,9 @@ function startGrid() {
     createGridDisplay();
     updateTileSelectorDisplay();
 
-    if (o.modeLevelTime) startLevelTimeCountdown();
+    if (o.modeLevelTime) startCountdown('level', o.modeLevelTime, levelTimeDisplay);
     if (o.modeFindLast) placeRandomTiles(Infinity, true);
-    incrementGlobalTimeLeft();
+    if (o.modeGlobalTimeGain) incrementGlobalTimeLeft();
 }
 
 
@@ -270,12 +267,10 @@ window.addEventListener('unload', () => {
 });
 [homeButton, endHomeButton].forEach(x => x.addEventListener('click', () => {
     if (!o.endScreen) showEndScreen('quit', 0);
-    resetDisplaysAndIntervals();
     goToMainMenu();
 }));
 endHideButton.addEventListener('click', () => levelEndScreen.classList.toggle('moveup'));
 endRetryButton.addEventListener('click', () => {
-    resetDisplaysAndIntervals();
     startMode(modeSettings);
 });
 
@@ -283,10 +278,9 @@ endRetryButton.addEventListener('click', () => {
 
 function resetDisplaysAndIntervals() {
     clearInterval(timerInterval);
+    for (const name in o.activeCountdowns) stopCountdown(name);
     timerDisplay.textContent = '';
-    clearInterval(levelTimeInterval);
     levelTimeDisplay.textContent = '';
-    clearInterval(globalTimeInterval);
     globalTimeDisplay.textContent = '';
     livesDisplay.textContent = '';
     enableGridInput(true);
@@ -326,44 +320,34 @@ function formatMinuteSeconds(time, fixed) {
     return `${minutes}:${integerPart.padStart(2, '0')}${decimalPart ? `.${decimalPart}` : ''}`;
 }
 
-let levelTime = null;
-let levelTimeInterval = null;
-function startLevelTimeCountdown() {
-    levelTime = performance.now();
-    clearTimeout(levelTimeInterval);
-    levelTimeInterval = setInterval(updateLevelTimeDisplay, 0);
-    updateLevelTimeDisplay();
-}
-function updateLevelTimeDisplay() {
-    const time = o.modeLevelTime - (performance.now() - levelTime) / 1000;
-    const totalSeconds = (time).toFixed(1);
-    levelTimeDisplay.textContent = `${totalSeconds}`;
-    if (time < 0) {
-        gridFail();
-        levelTimeDisplay.textContent = `0.0`;
+function startCountdown(name, durationInSeconds, timerDisplayElement) {
+    stopCountdown(name);
+    const deathTime = performance.now() + durationInSeconds * 1000;
+
+    function update(currentTime) {
+        const remainingMs = o.activeCountdowns[name].deathTime - currentTime;
+        if (remainingMs > 0) {
+            timerDisplayElement.textContent = (remainingMs / 1000).toFixed(1);
+            o.activeCountdowns[name].id = requestAnimationFrame(update);
+        } else {
+            timerDisplayElement.textContent = '0.0';
+            delete o.activeCountdowns[name];
+            gridFail();
+        }
     }
+    o.activeCountdowns[name] = { deathTime, id: requestAnimationFrame(update) };
+    timerDisplayElement.textContent = durationInSeconds.toFixed(1);
 }
 
-let globalTime = null;
-let globalTimeInterval = null;
-function startGlobalTimeCountdown() {
-    globalTime = performance.now();
-    clearTimeout(globalTimeInterval);
-    globalTimeInterval = setInterval(updateGlobalTimeDisplay, 0);
-    updateGlobalTimeDisplay();
-}
-function updateGlobalTimeDisplay() {
-    const time = o.globalTimeLeft - (performance.now() - globalTime) / 1000;
-    const totalSeconds = (time).toFixed(1);
-    globalTimeDisplay.textContent = `${totalSeconds}`;
-    if (time < 0) {
-        gridFail();
-        globalTimeDisplay.textContent = `0.0`;
+function stopCountdown(name) {
+    if (o.activeCountdowns[name]) {
+        cancelAnimationFrame(o.activeCountdowns[name].id);
+        delete o.activeCountdowns[name];
     }
 }
 function incrementGlobalTimeLeft() {
-    const factor = o.availableTiles.length / 2 + 0.5;   // 1->1  2->1.5  3->2  4->2.5  5->3
-    o.globalTimeLeft += o.modeGlobalTimeGain * factor;
+    const factor = !o.modeFindLast ? 1 : o.availableTiles.length / 2 + 0.5;   // 1->1  2->1.5  3->2  4->2.5  5->3
+    o.activeCountdowns['global'].deathTime += o.modeGlobalTimeGain * factor * 1000;
 }
 
 
@@ -434,7 +418,7 @@ function createGridDisplay() {
 }
 
 
-window.addEventListener('resize', drawCustomGridBorder);
+new ResizeObserver(() => drawCustomGridBorder()).observe(gameGridSizerContainer);
 
 
 
@@ -765,9 +749,9 @@ function zeroSpotsLeft() {
         calculateSpotsLeft();
         spotsLeftDisplay.textContent = o.spotsLeftCount;
         
-        if (o.modeLevelTime) startLevelTimeCountdown();
+        if (o.modeLevelTime) startCountdown('level', o.modeLevelTime, levelTimeDisplay);
         if (o.modeFindLast) placeRandomTiles(Infinity, true);
-        if (o.spotsLeftCount > 0) incrementGlobalTimeLeft();
+        if (o.modeGlobalTimeGain && o.spotsLeftCount > 0) incrementGlobalTimeLeft();
     }
     else gridComplete();
 }
@@ -778,25 +762,25 @@ function zeroSpotsLeft() {
 let gridCompleteTimeout = null;
 function gridComplete() {
     disableGridInput();
-    clearInterval(levelTimeInterval);
+    stopCountdown('level');
+    const globalTimeLeft = o.activeCountdowns['global']?.deathTime - performance.now();
+    stopCountdown('global');
     
     if (o.level === o.modeGoalLevel) {
         showEndScreen('win', 0);
     }
-    else {
-        gridCompleteTimeout = setTimeout(() => {
-            o.level++;
-            if (o.hintsLeft < 99 && o.level % o.gainHintEveryLevel === 0) hintUsesDisplay.textContent = ++o.hintsLeft;
-            enableGridInput();
-            startGrid();
-        }, 1000);
-    }
+    else gridCompleteTimeout = setTimeout(() => {
+        o.level++;
+        if (o.hintsLeft < 99 && o.level % o.gainHintEveryLevel === 0) hintUsesDisplay.textContent = ++o.hintsLeft;
+        if (o.modeGlobalTimeGain) startCountdown('global', globalTimeLeft/1000 + 1, globalTimeDisplay);
+        enableGridInput();
+        startGrid();
+    }, 1000);
 }
 
 function gridFail() {
     disableGridInput();
-    clearInterval(levelTimeInterval);
-    clearInterval(globalTimeInterval);
+    for (const name in o.activeCountdowns) stopCountdown(name);
 
     showEndScreen('lose', 600);
 }
@@ -816,8 +800,7 @@ function gridFail() {
 function showEndScreen(status, timeout) {
     updateTimerDisplay();
     clearInterval(timerInterval);
-    clearInterval(levelTimeInterval);
-    clearInterval(globalTimeInterval);
+    for (const name in o.activeCountdowns) stopCountdown(name);
     o.endScreen = true;
 
     const endStats = {
@@ -830,27 +813,24 @@ function showEndScreen(status, timeout) {
     };
     
     // --- STATS ---
-    let newRecord = false;
-    if (!o.statsSaveLoc[o.mode]) o.statsSaveLoc[o.mode] = {};
-    const statsSaveLoc = o.statsSaveLoc[o.mode];
-    if (status !== 'quit') statsSaveLoc.played = (statsSaveLoc.played || 0) + 1;
+    /*if (status !== 'quit') */ o.statsSaveLoc.played = (o.statsSaveLoc.played || 0) + 1;
+    
+    let newRecord = endStats.level > (o.statsSaveLoc.best?.level ?? 0);
+    if (newRecord) o.statsSaveLoc.best = endStats;
 
-    if (endStats.level > (statsSaveLoc.best?.level ?? 0) && o.mode !== "custom") {
-        // new pb!
-        statsSaveLoc.best = endStats;
-        newRecord = true;
-    }
     // check if we can continue
-    if (status === 'quit' && (!o.modeFindLast || !(o.modeGlobalTimeGain || o.modeLevelTime))) {
+    if (status === 'quit' && (!(o.modeGlobalTimeGain || o.modeLevelTime))) {
         let toSave = {};
-        if (o.mode === 'custom') Object.assign(toSave, modeSettings);
-        delete toSave.statsSaveLoc;
+        if (o.mode === 'custom') {
+            Object.assign(toSave, modeSettings);
+            delete toSave.statsSaveLoc;
+        }
         Object.assign(toSave, endStats);
         toSave.hintsLeft = o.hintsLeft;
         if (o.modeLivesCount > 1) toSave.lives = o.lives;
-        statsSaveLoc.continue = toSave;
+        o.statsSaveLoc.continue = toSave;
     }
-    else delete statsSaveLoc.continue;
+    else delete o.statsSaveLoc.continue;
     saveStats();
 
 
@@ -894,7 +874,7 @@ function hideEndScreen() {
 }
 
 
-function camelToTitleCase(str) {
+export function camelToTitleCase(str) {
     return str.charAt(0).toUpperCase() + str.slice(1).replace(/([A-Z])/g, ' $1');
 }
 

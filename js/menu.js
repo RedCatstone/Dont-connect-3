@@ -1,40 +1,30 @@
-import { o, startMode } from './game.js';
+import { camelToTitleCase, o, startMode } from './game.js';
 import { getRandomFunction } from './generateGrid.js';
 
 
 const menuMain = document.getElementById('menu-main');
 const menuPlay = document.getElementById('menu-mode');
-const menuCustom = document.getElementById('menu-custom');
 
 const mainPlayButton = document.getElementById('main-play-button');
 const mainSettingsButton = document.getElementById('main-settings-button');
 const mainAboutButton = document.getElementById('main-about-button');
 
-const modeHeader = document.querySelector('#menu-mode > h1');
-const modeSelectionGrid = document.querySelector('#menu-mode > .mode-selection-grid');
+const modeTabsContainer = document.getElementById('mode-tabs');
+const modeSelectionGrid = document.querySelector('#menu-mode .mode-selection-grid');
 const modeCardTemplate = document.getElementById('mode-card-template');
-const modeDailyButton = document.getElementById('mode-daily-button');
 const dailyResetsInDisplay = document.getElementById('daily-resets-in-display');
-
-const customSettingsGrid = document.querySelector("#menu-custom > .settings-grid");
-const customSeedInput = document.getElementById('custom-seed-input');
-const customLevelInput = document.getElementById('custom-level-input');
-const customGoalLevelInput = document.getElementById('custom-goal-level-input');
-const customFindLastCheck = document.getElementById('custom-findlast-check');
-const customHintsInput = document.getElementById('custom-hints-input');
-const customLivesInput = document.getElementById('custom-lives-input');
-const customGlobalTimeGainInput = document.getElementById('custom-global-time-gain-input');
-const customBotMultiplierInput = document.getElementById('custom-bot-multiplier-input');
-const customPlayButton = document.getElementById('custom-play-button');
-
-// not in the menu
-const customLineLengthInput = document.getElementById('custom-line-length-input');
-const customLevelTimeInput = document.getElementById('custom-level-time-input');
 
 const style = window.getComputedStyle(document.documentElement);
 const menuSpeed = parseInt(style.getPropertyValue('--menu-speed'));
 
+
+
+
+
+
 export let currentMenu = null;
+let activeTabId = 'normal';
+let dailyResetInInterval = null;
 
 
 
@@ -43,50 +33,6 @@ goToMainMenu();
 document.addEventListener('keydown', (event) => {
     if (currentMenu && event.key === 'Escape') switchMenu(menuMain);
 });
-
-let advancedModeCounter = 0;
-let advancedModeLastClickTimeout = 0;
-document.addEventListener('click', (event) => {
-    if (event.target.type === 'submit') playSound('tileSwitch');
-    if (event.target.id === 'menu-custom' || event.target.parentElement.id === 'menu-custom') {
-        // advanced mode after 5 clicks
-        clearTimeout(advancedModeLastClickTimeout);
-        advancedModeLastClickTimeout = setTimeout(() => advancedModeCounter = 0, 500);
-        if (++advancedModeCounter === 5) customSettingsGrid.classList.add('advanced-mode');
-    }
-}, true);
-
-
-
-const GAMEMODE = {
-    endless: 'Endless',
-    hardcore: 'Hardcore',
-    findlast: 'Find Last',
-    custom: 'Custom',
-};
-
-
-for (const [gamemodeId, gamemodeDisplay] of Object.entries(GAMEMODE)) {
-    const cardClone = modeCardTemplate.content.cloneNode(true);
-
-    cardClone.querySelector('.mode-card').dataset.mode = gamemodeId;
-    cardClone.querySelector('.mode-title').textContent = gamemodeDisplay;
-    
-    cardClone.querySelector('.mode-play-button').addEventListener('click', () => {
-        if (gamemodeId === 'custom') {
-            switchMenu(menuCustom);
-            customSettingsGrid.classList.remove('advanced-mode');
-            customLineLengthInput.value = '';
-            customLevelTimeInput.value = '';
-            customSeedInput.maxLength = o.defaultSeedLength;
-        }
-        else handlePlay(gamemodeId);
-    });
-    cardClone.querySelector('.mode-continue-button').addEventListener('click', () => handlePlay(gamemodeId, true));
-
-    modeSelectionGrid.appendChild(cardClone);
-}
-const modeCards = document.querySelectorAll('.mode-card');
 
 
 
@@ -103,8 +49,7 @@ const modeCards = document.querySelectorAll('.mode-card');
 
 // --- MAIN MENU ---
 mainPlayButton.addEventListener('click', () => {
-    modeMenuDaily = false;
-    updatePlayMenuStats();
+    renderActiveTabContent();
     switchMenu(menuPlay);
 });
 
@@ -114,93 +59,233 @@ mainPlayButton.addEventListener('click', () => {
 
 
 
+
+
+
+
+
+
+
+
+
 // --- MODE MENU ---
-let modeMenuDaily = false;
+const normalEndlessSettings = { modeGoalLevel: 0, modeHintCount: 2 };
+const normalHardcoreSettings = { modeGoalLevel: 0, modeLivesCount: 1 };
+const normalFindlastSettings = { modeGoalLevel: 0, modeFindLast: true };
 
-function updatePlayMenuStats() {
-    let dailySeed;
-    let statsSaveLoc;
+const timedEndlessSettings = { ...normalEndlessSettings, modeGlobalTimeGain: 8 };
+const timedHardcoreSettings = { ...normalHardcoreSettings, modeLevelTime: 20 };
+const timedFindlastSettings = { ...normalFindlastSettings, modeGlobalTimeGain: 3 };
 
-    if (modeMenuDaily) {
-        dailySeed = getDailySeed();
-        if (!STATS.daily) STATS.daily = {};
-        if (!STATS.daily[dailySeed]) STATS.daily[dailySeed] = {};
-        statsSaveLoc = STATS.daily[dailySeed];
-    }
-    else {
-        if (!STATS.mode) STATS.mode = {};
-        statsSaveLoc = STATS.mode;
-    }
+const TABS_DATA = {
+    normal: [
+        { id: 'endless', title: 'Endless', settings: normalEndlessSettings },
+        { id: 'hardcore', title: 'Hardcore', settings: normalHardcoreSettings },
+        { id: 'findlast', title: 'Find Last', settings: normalFindlastSettings },
+    ],
+    timed: [
+        { id: 'endless', title: 'Endless', playIcon: '⏱', settings: timedEndlessSettings },
+        { id: 'hardcore', title: 'Hardcore', playIcon: '⏱', settings: timedHardcoreSettings },
+        { id: 'findlast', title: 'Find Last', playIcon: '⏱', settings: timedFindlastSettings },
+    ],
+    daily: [
+        { id: 'endless', title: 'Endless', playIcon: '⏱', settings: timedEndlessSettings },
+        { id: 'hardcore', title: 'Hardcore', playIcon: '⏱', settings: timedHardcoreSettings },
+        { id: 'findlast', title: 'Find Last', playIcon: '⏱', settings: timedFindlastSettings }
+    ],
+    custom: [
+        { id: 'custom', title: 'Play' }
+    ]
+};
 
-    for (const modeCard of modeCards) {
-        const mode = modeCard.dataset.mode;
-        modeCard.style.display = '';
 
-        modeCard.querySelector('.mode-best-stat').textContent = statsSaveLoc[mode]?.best?.level || '';
-        modeCard.querySelector('.mode-played-stat').textContent = statsSaveLoc[mode]?.played || '';
-        modeCard.querySelector('.mode-continue-button').style.display = statsSaveLoc[mode]?.continue ? '' : 'none';
-        modeCard.classList.remove('completed');
-        
-        if (modeMenuDaily) {
-            if (mode === 'endless' || mode === 'custom') {
-                modeCard.style.display = 'none';
-                continue;
-            }
-
-            if (statsSaveLoc[mode]?.best?.level >= getDailyLength(dailySeed + mode[0])) {
-                modeCard.classList.add('completed');
-            }
-        }
-    }
-    
-    modeHeader.textContent = modeMenuDaily ? 'Select a Daily' : 'Select a Mode';
-    modeDailyButton.textContent = modeMenuDaily ? 'Normal' : 'Daily';
+// setup tab buttons
+for (const tabId in TABS_DATA) {
+    const button = document.createElement('button');
+    button.className = 'mode-tab-button';
+    button.textContent = camelToTitleCase(tabId);
+    button.dataset.tabId = tabId;
+    modeTabsContainer.appendChild(button);
 }
 
-let dailyResetInInterval = null;
-modeDailyButton.addEventListener('click', () => {
-    modeMenuDaily = !modeMenuDaily;
-    if (modeMenuDaily) {
-        clearInterval(dailyResetInInterval); 
-        dailyResetsInDisplay.textContent = `Resets in: ${getTimeUntilNextUTCDay()}`;
-        dailyResetInInterval = setInterval(() => dailyResetsInDisplay.textContent = `Resets in: ${getTimeUntilNextUTCDay()}`, 1000);
+modeTabsContainer.addEventListener('click', (e) => {
+    if (e.target.matches('.mode-tab-button')) {
+        activeTabId = e.target.dataset.tabId;
+        renderActiveTabContent();
     }
-    else {
-        dailyResetsInDisplay.textContent = '';
-        clearInterval(dailyResetInInterval);
-    }
-    updatePlayMenuStats();
 });
 
 
 
-function handlePlay(mode, shouldContinue) {
-    let modeSettings = {};
-    if (mode === 'endless') modeSettings = { modeGoalLevel: 0, modeHintCount: 2 };
-    if (mode === 'hardcore') modeSettings = { modeGoalLevel: 0, modeLivesCount: 1 };
-    if (mode === 'findlast') modeSettings = { modeGoalLevel: 0, modeFindLast: true, modeGlobalTimeGain: 4 };
-    modeSettings.mode = mode;
 
-    if (modeMenuDaily) {
-        const dailySeed = getDailySeed();
-        modeSettings.seed = dailySeed + mode[0];
-        modeSettings.modeGoalLevel = getDailyLength(dailySeed + mode[0]);
-        if (!STATS.daily) STATS.daily = {};
-        if (!STATS.daily[modeSettings.seed]) STATS.daily[dailySeed] = {};
-        modeSettings.statsSaveLoc = STATS.daily[dailySeed];
+
+const CUSTOM_GAME_SETTINGS = [
+    [
+        { label: 'Seed', type: 'text', placeholder: 'Random', maxLength: o.defaultSeedLength, allowedChars: 'A-Za-z0-9_-' },
+        { label: 'Level', type: 'number', placeholder: '1', value: 1, min: 1, max: 99 }
+    ],
+    [{ label: 'Goal Level', type: 'number', placeholder: 'Disabled', min: 1, max: 999 }],
+    [{ label: 'Find Last', type: 'checkbox' }],
+    [{ label: 'Hints', type: 'number', placeholder: '0', value: 2, min: 0, max: 99 }],
+    [{ label: 'Lives', type: 'number', placeholder: 'Disabled', min: 0, max: 15 }],
+    [{ label: 'Time Limit Gain', type: 'number', placeholder: 'Disabled', min: 0, max: 60 }],
+    [{ label: 'Bot Multiplier', type: 'number', placeholder: 'Normal', min: 0, max: 10 }],
+    [{ label: 'Level Time Limit', type: 'number', placeholder: 'Disabled', min: 0, max: 99, advanced: true }],
+    [{ label: 'Line Length', type: 'number', placeholder: '3', value: 3, min: 3, max: 5, advanced: true }],
+];
+
+
+
+
+
+
+
+
+function renderActiveTabContent() {
+    modeSelectionGrid.innerHTML = '';
+    document.querySelectorAll('.mode-tab-button').forEach(x => x.classList.toggle('active', x.dataset.tabId === activeTabId));
+
+    if (activeTabId === 'daily') {
+        dailyResetsInDisplay.style.display = 'block';
+        updateDailyTimer();
+    } else {
+        dailyResetsInDisplay.style.display = 'none';
+        clearInterval(dailyResetInInterval);
     }
-    else {
-        if (!STATS.mode) STATS.mode = {};
-        modeSettings.statsSaveLoc = STATS.mode;
+
+    if (activeTabId === 'custom') generateCustomSettingsGrid(modeSelectionGrid);
+
+
+    // --- Generate Mode Cards ---
+    for (const mode of TABS_DATA[activeTabId]) {
+        const cardClone = modeCardTemplate.content.cloneNode(true);
+        const card = cardClone.querySelector('.mode-card');
+        card.dataset.modeCategory = activeTabId;
+        card.dataset.mode = mode.id;
+        
+        const modeLength = getModeLength(activeTabId, mode.id);
+        card.querySelector('.mode-title').textContent = camelToTitleCase(mode.title) + (modeLength ? ` (${modeLength})`: '');
+        
+        const statsSaveLoc = getStatsSaveLoc(activeTabId, mode.id);
+        card.querySelector('.mode-best-stat').textContent = statsSaveLoc.best?.level || '';
+        card.querySelector('.mode-played-stat').textContent = statsSaveLoc.played || '';
+        card.classList.toggle('completed', modeLength <= statsSaveLoc.best?.level);
+        
+        const playButton = card.querySelector('.mode-play-button');
+        const continueButton = card.querySelector('.mode-continue-button');
+        playButton.textContent = mode.playIcon ?? '▶';
+        continueButton.style.display = statsSaveLoc.continue ? '' : 'none';
+        playButton.addEventListener('click', () => handlePlay(mode, statsSaveLoc));
+        continueButton.addEventListener('click', () => handlePlay(mode, statsSaveLoc, true));
+
+        modeSelectionGrid.appendChild(cardClone);
+    }
+}
+
+
+
+
+function generateCustomSettingsGrid(container) {
+    const customSettingsGrid = document.createElement('div');
+    customSettingsGrid.classList.add('settings-grid');
+    for (const settings of CUSTOM_GAME_SETTINGS) {
+        const settingItem = document.createElement('label');
+        settingItem.classList.add('setting-item');
+        if (settings.length > 1) settingItem.classList.add('big');
+
+        for (const setting of settings) {
+            const settingId = `custom-${setting.label.toLowerCase().replaceAll(' ', '-')}-input`;
+            if (settings.length === 1) settingItem.htmlFor = settingId;
+            if (setting.advanced) settingItem.classList.add('advanced');
+
+            const settingLabel = document.createElement('label');
+            settingLabel.textContent = setting.label;
+            settingLabel.htmlFor = settingId;
+
+            const input = document.createElement('input');
+            const inputHtml = {
+                id: settingId,
+                type: setting.type,
+                checked: setting.type === 'checkbox' ? setting.value : undefined,
+                value: setting.type !== 'checkbox' ? setting.value : undefined,
+                placeholder: setting.placeholder,
+                min: setting.min,
+                max: setting.max,
+                maxLength: setting.maxLength,
+            };
+            for (const key in inputHtml) {
+                if (inputHtml[key] === undefined) delete inputHtml[key];
+            }
+            Object.assign(input, inputHtml);
+            if (setting.allowedChars) input.dataset.allowedChars = setting.allowedChars;
+
+            
+            const wrapperDiv = document.createElement('div');
+            wrapperDiv.append(settingLabel, input);
+            settingItem.append(wrapperDiv);
+        }
+        customSettingsGrid.append(settingItem);
+    }
+    container.append(customSettingsGrid);
+}
+
+
+
+
+
+
+
+function handlePlay(mode, statsSaveLoc, shouldContinue) {
+    if (activeTabId === 'custom') {
+        mode.settings = {
+            seed: document.getElementById('custom-seed-input').value || undefined,
+            level: getNumber(document.getElementById('custom-level-input').value),
+            modeGoalLevel: getNumber(document.getElementById('custom-goal-level-input').value),
+            modeFindLast: document.getElementById('custom-find-last-input').checked,
+            modeHintCount: getNumber(document.getElementById('custom-hints-input').value),
+            modeLivesCount: getNumber(document.getElementById('custom-lives-input').value),
+            modeGlobalTimeGain: getNumber(document.getElementById('custom-time-limit-gain-input').value),
+            botAmountMultiplier: getNumber(document.getElementById('custom-bot-multiplier-input').value),
+            // advanced settings
+            modeLevelTime: getNumber(document.getElementById('custom-level-time-limit-input').value),
+            lineLength: getNumber(document.getElementById('custom-line-length-input').value),
+        };
     }
 
-
-    if (shouldContinue) Object.assign(modeSettings, modeSettings.statsSaveLoc[mode].continue);
-
+    const modeSettings = { ...mode.settings, statsSaveLoc };
+    if (activeTabId === 'daily') {
+        modeSettings.seed = getDailySeed() + mode.id[0];
+        modeSettings.modeGoalLevel = getModeLength(activeTabId, mode.id);
+    }
+    if (shouldContinue) Object.assign(modeSettings, statsSaveLoc.continue);
+    modeSettings.statsSaveLoc = statsSaveLoc;
     goToGame();
     startMode(modeSettings);
 }
 
+
+function getNumber(input) {
+    const result = parseInt(input, 10);
+    return Number.isNaN(result) ? undefined : result;
+}
+
+
+
+
+
+
+
+function getStatsSaveLoc(modeCategory, mode) {
+    if (!STATS[modeCategory]) STATS[modeCategory] = {};
+    let base = STATS[modeCategory];
+    if (modeCategory === 'daily') {
+        const dailySeed = getDailySeed();
+        if (!base[dailySeed]) base[dailySeed] = {}
+        base = base[getDailySeed()];
+    }
+    if (!base[mode]) base[mode] = {};
+    return base[mode];
+}
 
 function getDailySeed() {
     const date = new Date();
@@ -208,67 +293,28 @@ function getDailySeed() {
     const monthString = date.toLocaleString('en-us', { month: 'long', timeZone: 'UTC' });
 }
 
-function getDailyLength(dailySeed) {
-    const rand = getRandomFunction(dailySeed);
-    return Math.floor(10 + 20 * rand());
+function getModeLength(modeCategory, mode) {
+    if (modeCategory === 'daily') {
+        const rand = getRandomFunction(getDailySeed() + mode[0]);
+        return Math.floor(10 + 20 * rand());
+    }
 }
 
-function getTimeUntilNextUTCDay() {
+function updateDailyTimer() {
+    clearInterval(dailyResetInInterval);
+    setDailyTimerText();
+    dailyResetInInterval = setInterval(setDailyTimerText, 1000);
+}
+function setDailyTimerText() {
     const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-    tomorrow.setUTCHours(0, 0, 0, 0);
-    const diff = tomorrow.getTime() - now.getTime();
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-    return `${hours}h ${minutes}m ${seconds}s`;
+    const tomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+    const diff = tomorrow - now;
+    const h = Math.floor(diff / 3600_000);
+    const m = Math.floor((diff % 3600_000) / 60_000);
+    const s = Math.floor((diff % 60_000) / 1_000);
+    dailyResetsInDisplay.textContent = `Resets in: ${h}h ${m}m ${s}s`;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// --- CUSTOM GAME MENU ---
-customPlayButton.addEventListener('click', () => {
-    goToGame();
-    if (!STATS.mode) STATS.mode = {};
-    const rawSettings = {
-        seed: customSeedInput.value || undefined,
-        level: getNumber(customLevelInput.value),
-        modeGoalLevel: getNumber(customGoalLevelInput.value),
-        modeFindLast: customFindLastCheck.checked,
-        modeHintCount: getNumber(customHintsInput.value),
-        modeLivesCount: getNumber(customLivesInput.value),
-        modeGlobalTimeGain: getNumber(customGlobalTimeGainInput.value),
-        botAmountMultiplier: getNumber(customBotMultiplierInput.value),
-        // advanced settings
-        modeLevelTime: getNumber(customLevelTimeInput.value),
-        lineLength: getNumber(customLineLengthInput.value),
-        mode: "custom",
-        statsSaveLoc: STATS.mode,
-    };
-
-    const cleanSettings = Object.fromEntries(
-        Object.entries(rawSettings).filter(([_, value]) => value !== undefined)
-    );
-    startMode(cleanSettings);
-});
-
-function getNumber(input) {
-    const result = parseInt(input, 10);
-    return Number.isNaN(result) ? undefined : result;
-}
 
 
 
@@ -285,7 +331,7 @@ document.addEventListener('input', (event) => {
     if (target.type === 'text' && (target.dataset.allowedChars || target.maxLength)) {
         const originalValue = target.value;
         const originalCursorPos = target.selectionStart;
-        const invalidCharsRegex = new RegExp(`[^${target.dataset.allowedChars}]`, 'g');
+        const invalidCharsRegex = new RegExp(`[^${target.dataset.allowedChars ?? ''}]`, 'g');
         const finalValue = originalValue.replace(invalidCharsRegex, '');
 
         if (originalValue !== finalValue) {
@@ -299,6 +345,20 @@ document.addEventListener('input', (event) => {
         }
     }
 });
+
+
+let advancedModeCounter = 0;
+let advancedModeLastClickTimeout = 0;
+document.addEventListener('click', (event) => {
+    if (event.target.type === 'submit') playSound('tileSwitch');
+
+    if (activeTabId === 'custom' && event.target === menuPlay || event.target.parentElement === menuPlay) {
+        // advanced mode after 5 clicks
+        clearTimeout(advancedModeLastClickTimeout);
+        advancedModeLastClickTimeout = setTimeout(() => advancedModeCounter = 0, 500);
+        if (++advancedModeCounter === 5) document.querySelector('#menu-mode .settings-grid').classList.add('advanced-mode');
+    }
+}, true);
 
 
 
@@ -384,7 +444,7 @@ export function playSound(name) {
 
 
 
-const STORAGE_KEY = 'dontConnect3_stats';
+const STORAGE_KEY = 'dontConnect3';
 export const STATS = getStats();
 o.STATS = STATS;
 
