@@ -35,7 +35,7 @@
                             </div>
                         </div>
                         <div class="mode-buttons">
-                            <button class="mode-continue-button">Continue</button>
+                            <button class="mode-continue-button">Continue<span class="button-counter"></span></button>
                             <button class="mode-play-button">▶</button>
                         </div>
                     </div>
@@ -51,9 +51,13 @@
                 <span id="level-display">Level 1</span><span class="dot">•</span><span id="timer-display">00:00</span>
             </div>
             <p id="spots-display">0</p>
-            <p id="level-time-display"></p>
-            <p id="global-time-display"></p>
-            <p id="lives-display"></p>
+            <div id="timer-displays">
+                <p id="level-time-display"></p>
+                <div id="global-time-wrapper">
+                    <p id="global-time-display"></p>
+                </div>
+                <p id="lives-display"></p>
+            </div>
         </div>
         <div id="game-grid-sizer">
             <div id="game-grid-container">

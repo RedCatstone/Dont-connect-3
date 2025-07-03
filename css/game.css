@@ -45,18 +45,77 @@
     margin: 0;
 }
 
+#timer-displays {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+#timer-displays > *:empty {
+    display: none;
+}
+
 #level-time-display {
     color: var(--countdown-color);
     font-size: 50px;
     font-family: math;
     margin: 0;
 }
+
+    /* text-shadow: 0 0 8px rgba(0, 255, 255, 0.7); */
+
+
 #global-time-display {
     color: var(--global-time-color);
     font-size: 50px;
     font-family: math;
     margin: 0;
 }
+#global-time-wrapper {
+    position: relative;
+}
+#global-time-wrapper:has(#global-time-display:empty) {
+    display: none;
+}
+
+.time-gained-popup {
+    position: absolute;
+    bottom: 80%;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+
+    font-family: math;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--global-time-color);
+    pointer-events: none;
+    animation: time-gained-float-down 1s cubic-bezier(0.1, 0.8, 0.4, 1) forwards;
+}
+
+@keyframes time-gained-float-down {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+    80% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, 60px);
+    }
+}
+
+
+
+
+
+
+
+
+
 
 
 #lives-display {
@@ -175,11 +234,10 @@
     background-color: color-mix(in oklab, var(--color-grid-cell) 90%, var(--color-text) 10%);
     cursor: pointer;
 }
-/* disable for touchscreens becase it looks weird */
 @media (hover: none) or (pointer: coarse) {
     #game-grid-container:not(.input-disabled) .tile.grid:hover {
-        background-color: var(--color-grid-cell); /* Revert to the default color */
-        cursor: default; /* Revert cursor */
+        background-color: var(--color-grid-cell);
+        cursor: default;
     }
 }
 
@@ -244,7 +302,7 @@
     gap: 20px;
     margin-top: 20px;
 
-    --block-size: clamp(30px, 13vmin, 60px);
+    --block-size: clamp(30px, 10vmin, 60px);
 }
 #bottom-buttons-wrapper {
     grid-area: buttons;
@@ -316,7 +374,6 @@
     right: 5px;
     position: fixed;
     color: var(--color-seed-text);
-    z-index: 101;
 }
 
 
@@ -392,6 +449,7 @@
     width: 100%;
     max-width: 400px;
     margin-bottom: 10px;
+    justify-content: center;
 }
 
 .stat-item {
@@ -414,11 +472,13 @@
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--level-timer-color);
+    text-wrap-mode: nowrap;
 }
 .stat-item > .stat-value {
     font-size: 1.4rem;
     font-weight: 700;
     font-family: math;
+    text-wrap-mode: nowrap;
 }
 
 .stat-item.new-record {
@@ -475,7 +535,7 @@
 
 
 
-@media (width > 650px) {
+@media (width > 0px) {
     #bottom-controls-wrapper {
         grid-template-areas: "home selector hint";
 
@@ -509,6 +569,11 @@
         grid-template-areas: "home" "selector" "hint";
         margin-top: 0px;
         margin-left: 20px;
+    }
+
+    #timer-displays {
+        flex-direction: column;
+        gap: 0px;
     }
     
     #lives-display {
