@@ -167,7 +167,13 @@
     --grid-tile-shadow: calc(0.03 * var(--grid-tile-size));
     --grid-block-height: calc(0.2 * var(--grid-tile-size));
 
-    margin: 20px;
+    /* more margin if the grid is smaller, so there is space for the svg border */
+    /* i can't use --grid-tile-size in here, because that would result in an infinite loop between js and css */
+    margin-right: calc(120px / var(--grid-column-count));
+    margin-left: calc(120px / var(--grid-column-count));
+
+    margin-top: calc(120px / var(--grid-row-count));
+    margin-bottom: calc(120px / var(--grid-row-count));
 }
 
 #game-grid-container {
@@ -306,9 +312,8 @@
 
 
 #tile-selector {
-    grid-area: selector;
-    display: flex;
-    width: fit-content;
+    display: grid;
+    grid-auto-flow: column;
     gap: calc(0.7 * var(--block-size));
     background-color: var(--color-grid-cell);
     padding: calc(0.5 * var(--block-size));
@@ -518,24 +523,21 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 @media (width < 600px) {
     #tile-selector {
-        display: grid;
+        grid-auto-flow: row;
         grid-template-columns: 1fr 1fr;
     }
+
+    #tile-selector:has(> :only-child) {
+        grid-template-columns: 1fr;
+    }
 }
+
+
+
+
+
 
 
 @media (aspect-ratio > 1/1) {
@@ -572,7 +574,17 @@
     }
 
     #tile-selector {
-        flex-direction: column;
+        grid-auto-flow: row;
+    }
+    @media (height < 600px) {
+        #tile-selector {
+            grid-auto-flow: column;
+            grid-template-rows: 1fr 1fr;
+        }
+
+        #tile-selector:has(> :only-child) {
+            grid-template-rows: 1fr;
+        }
     }
 }
 
