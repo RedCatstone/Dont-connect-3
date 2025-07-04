@@ -1,4 +1,4 @@
-import { camelToTitleCase, o, startMode } from './game.js';
+import { camelToTitleCase, formatMinuteSeconds, o, startMode } from './game.js';
 import { getRandomFunction } from './generateGrid.js';
 
 
@@ -11,6 +11,7 @@ const mainAboutButton = document.getElementById('main-about-button');
 
 const modeTabsContainer = document.getElementById('mode-tabs');
 const modeSelectionGrid = document.querySelector('#menu-mode .mode-selection-grid');
+const modeSettingsGrid = document.getElementById('custom-settings-grid');
 const modeCardTemplate = document.getElementById('mode-card-template');
 const dailyResetsInDisplay = document.getElementById('daily-resets-in-display');
 
@@ -72,7 +73,7 @@ const normalEndlessSettings = { modeGoalLevel: 0, modeHintCount: 2 };
 const normalHardcoreSettings = { modeGoalLevel: 0, modeLivesCount: 1 };
 const normalFindlastSettings = { modeGoalLevel: 0, modeFindLast: true };
 
-const timedEndlessSettings = { ...normalEndlessSettings, modeGlobalTimeGain: 8 };
+const timedEndlessSettings = { ...normalEndlessSettings, modeGlobalTimeGain: 10 };
 const timedHardcoreSettings = { ...normalHardcoreSettings, modeLevelTime: 20 };
 const timedFindlastSettings = { ...normalFindlastSettings, modeGlobalTimeGain: 3 };
 
@@ -83,14 +84,14 @@ const TABS_DATA = {
         { id: 'findlast', title: 'Find Last', settings: normalFindlastSettings },
     ],
     timed: [
-        { id: 'endless', title: 'Endless', playIcon: '⏱', settings: timedEndlessSettings },
-        { id: 'hardcore', title: 'Hardcore', playIcon: '⏱', settings: timedHardcoreSettings },
-        { id: 'findlast', title: 'Find Last', playIcon: '⏱', settings: timedFindlastSettings },
+        { id: 'endless', title: 'Endless', settings: timedEndlessSettings },
+        { id: 'hardcore', title: 'Hardcore', settings: timedHardcoreSettings },
+        { id: 'findlast', title: 'Find Last', settings: timedFindlastSettings },
     ],
     daily: [
-        { id: 'endless', title: 'Endless', playIcon: '⏱', settings: timedEndlessSettings },
-        { id: 'hardcore', title: 'Hardcore', playIcon: '⏱', settings: normalHardcoreSettings },
-        { id: 'findlast', title: 'Find Last', playIcon: '⏱', settings: timedFindlastSettings }
+        { id: 'endless', title: 'Endless', settings: timedEndlessSettings },
+        { id: 'hardcore', title: 'Hardcore', settings: normalHardcoreSettings },
+        { id: 'findlast', title: 'Find Last', settings: timedFindlastSettings }
     ],
     custom: [
         { id: 'custom', title: 'Play' }
@@ -133,6 +134,8 @@ const CUSTOM_GAME_SETTINGS = [
     [{ label: 'Line Length', type: 'number', placeholder: '3', value: 3, min: 3, max: 5, advanced: true }],
 ];
 
+generateCustomSettingsGrid();
+
 
 
 
@@ -145,14 +148,15 @@ function renderActiveTabContent() {
     document.querySelectorAll('.mode-tab-button').forEach(x => x.classList.toggle('active', x.dataset.tabId === activeTabId));
 
     if (activeTabId === 'daily') {
-        dailyResetsInDisplay.style.display = 'block';
+        dailyResetsInDisplay.style.display = '';
         updateDailyTimer();
     } else {
         dailyResetsInDisplay.style.display = 'none';
         clearInterval(dailyResetInInterval);
     }
 
-    if (activeTabId === 'custom') generateCustomSettingsGrid(modeSelectionGrid);
+    if (activeTabId === 'custom') modeSettingsGrid.style.display = '';
+    else modeSettingsGrid.style.display = 'none';
 
 
     // --- Generate Mode Cards ---
@@ -166,13 +170,24 @@ function renderActiveTabContent() {
         card.querySelector('.mode-title').textContent = camelToTitleCase(mode.title) + (modeLength ? ` (${modeLength})`: '');
         
         const statsSaveLoc = getStatsSaveLoc(activeTabId, mode.id);
-        card.querySelector('.mode-best-stat').textContent = statsSaveLoc.best?.level || '';
-        card.querySelector('.mode-played-stat').textContent = statsSaveLoc.played || '';
+        if (statsSaveLoc.best) {
+            const bestStats = card.querySelector('.best-stats');
+            const bestLevelSpan = document.createElement('span');
+            bestLevelSpan.textContent = statsSaveLoc.best.level;
+            bestStats.append(bestLevelSpan);
+            if (mode.settings?.modeLevelTime || mode.settings?.modeGlobalTimeGain || activeTabId === 'daily') {
+                const bestTimeSpan = document.createElement('span');
+                bestTimeSpan.textContent = formatMinuteSeconds(statsSaveLoc.best.time, 2);
+                bestStats.append(bestTimeSpan);
+            }
+        }
         card.classList.toggle('completed', statsSaveLoc.best?.level > modeLength);
         
         const playButton = card.querySelector('.mode-play-button');
         const continueButton = card.querySelector('.mode-continue-button');
-        // playButton.textContent = mode.playIcon ?? '▶';
+        if (mode.settings?.modeLevelTime || mode.settings?.modeGlobalTimeGain) {
+            playButton.dataset.customIcon = 'timer';
+        }
         continueButton.style.display = statsSaveLoc.continue ? '' : 'none';
         continueButton.querySelector('.button-counter').textContent = statsSaveLoc.continue?.level;
         playButton.addEventListener('click', () => handlePlay(mode, statsSaveLoc));
@@ -185,9 +200,7 @@ function renderActiveTabContent() {
 
 
 
-function generateCustomSettingsGrid(container) {
-    const customSettingsGrid = document.createElement('div');
-    customSettingsGrid.classList.add('settings-grid');
+function generateCustomSettingsGrid() {
     for (const settings of CUSTOM_GAME_SETTINGS) {
         const settingItem = document.createElement('label');
         settingItem.classList.add('setting-item');
@@ -225,20 +238,12 @@ function generateCustomSettingsGrid(container) {
             wrapperDiv.append(settingLabel, input);
             settingItem.append(wrapperDiv);
         }
-        customSettingsGrid.append(settingItem);
+        modeSettingsGrid.append(settingItem);
     }
-    container.append(customSettingsGrid);
-}
-
-
-
-
-
-
-
-function handlePlay(mode, statsSaveLoc, shouldContinue) {
-    if (activeTabId === 'custom') {
-        mode.settings = Object.fromEntries(Object.entries({
+    modeSettingsGrid.display = 'none';
+    modeSettingsGrid.addEventListener('input', () => {
+        // save new settings
+        TABS_DATA.custom[0].settings = Object.fromEntries(Object.entries({
             seed: document.getElementById('custom-seed-input').value || undefined,
             level: getNumber(document.getElementById('custom-level-input').value),
             modeGoalLevel: getNumber(document.getElementById('custom-goal-level-input').value),
@@ -251,8 +256,18 @@ function handlePlay(mode, statsSaveLoc, shouldContinue) {
             modeLevelTime: getNumber(document.getElementById('custom-level-time-limit-input').value),
             lineLength: getNumber(document.getElementById('custom-line-length-input').value),
         }).filter(([_, value]) => value !== undefined));
-    }
+        // refresh play mode card
+        renderActiveTabContent();
+    });
+}
 
+
+
+
+
+
+
+function handlePlay(mode, statsSaveLoc, shouldContinue) {
     const modeSettings = { ...mode.settings, statsSaveLoc };
     if (activeTabId === 'daily') {
         modeSettings.seed = getDailySeed() + mode.id[0];

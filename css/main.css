@@ -194,8 +194,13 @@ button.icon::after {
 .mode-play-button::before,
 .mode-play-button::after {
     mask-image: url('../svg/play.svg');
-    scale: 60%;
+    scale: 70%;
     transform-origin: 10% 0%;
+}
+
+.mode-play-button[data-custom-icon="timer"]::before,
+.mode-play-button[data-custom-icon="timer"]::after {
+    mask-image: url('../svg/timer.svg');
 }
 
 .mode-continue-button::before,
@@ -251,7 +256,7 @@ button > .button-counter {
 
 
 
-.settings-grid {
+#custom-settings-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
@@ -286,8 +291,8 @@ button > .button-counter {
 }
 
 
-.settings-grid .advanced { display: none; }
-.settings-grid.advanced-mode .advanced {
+#custom-settings-grid .advanced { display: none; }
+#custom-settings-grid.advanced-mode .advanced {
     display: flex;
     background: color-mix(in oklab, var(--color-grid-cell) 80%, red 20%);
 }
@@ -500,24 +505,20 @@ body:not(.menu-active) #menus {
 }
 
 
-.mode-stats {
+.best-stats {
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--level-timer-color);
 }
-.mode-stats > :not(:empty):not(:last-child)::after {
+.best-stats::before {
+    content: 'Best: ';
+}
+
+.best-stats > :not(:empty):not(:last-child)::after {
     content: '•';
     font-weight: 900;
     margin-left: 8px;
     margin-right: 4px;
-}
-
-
-.mode-best-stat:not(:empty)::before {
-    content: 'Best: ';
-}
-.mode-played-stat:not(:empty)::before {
-    content: 'Played: ';
 }
 
 

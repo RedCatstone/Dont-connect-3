@@ -88,7 +88,7 @@ export const o = {
     lives: null,
     endScreen: false,
     blocksPlaced: null,
-    invalidClicks: null,
+    mistakes: null,
     hintsUsed: null,
     levelTimeDeathTime: null,
     globalTimeDeathTime: null,
@@ -140,7 +140,7 @@ export function startMode(customSettings) {
         modeLevelTime: 0,
         lineLength: 3,
         blocksPlaced: 0,
-        invalidClicks: 0,
+        mistakes: 0,
         hintsUsed: 0,
         hintsLeft: customSettings.modeHintCount ?? 0,
         lives: customSettings.modeLivesCount ?? 0,
@@ -316,7 +316,7 @@ function updateTimerDisplay() {
     const time = performance.now() - o.time;
     timerDisplay.textContent = formatMinuteSeconds(time, 0);
 }
-function formatMinuteSeconds(time, fixed) {
+export function formatMinuteSeconds(time, fixed) {
     const minutes = Math.floor(time / 60_000).toString().padStart(2, '0');
     const seconds = (time / 1000 % 60).toFixed(fixed).padStart(2, '0');
     const [integerPart, decimalPart] = seconds.split('.');
@@ -623,7 +623,7 @@ function canPlaceTile(x, y, tileId, drawLine) {
     else {
         disableGridInput();
         playSound('invalidMove');
-        o.invalidClicks++;
+        o.mistakes++;
         if (o.lives > 0) loseLife();
         setTimeout(() => enableGridInput(), o.invalidMoveTimeout);
         return false;
@@ -816,30 +816,34 @@ function showEndScreen(status, timeout) {
         level: o.level + (status === 'win'),
         time: Math.round(performance.now() - o.time),
         blocksPlaced: o.blocksPlaced,
-        invalidClicks: o.invalidClicks,
+        mistakes: o.mistakes,
         hintsUsed: o.hintsUsed,
         seed: o.seed,
     };
     
     // --- STATS ---
     /*if (status !== 'quit') */ o.statsSaveLoc.played = (o.statsSaveLoc.played || 0) + 1;
-    
-    const newRecord = endStats.level > (o.statsSaveLoc.best?.level ?? 0);
+
+    const previousBestLevel = o.statsSaveLoc.best?.level ?? 0;
+    const previousBestTime = o.statsSaveLoc.best?.time ?? 0;
+    const newRecord = endStats.level > previousBestLevel || (endStats.level === previousBestLevel && endStats.time < previousBestTime);
     if (newRecord) o.statsSaveLoc.best = endStats;
 
     // check if we can continue
-    if (status === 'quit' && (!(o.modeGlobalTimeGain || o.modeLevelTime))) {
-        let toSave = {};
-        if (o.mode === 'custom') {
-            Object.assign(toSave, modeSettings);
-            delete toSave.statsSaveLoc;
+    if (endStats.level > 1) {
+        if (status === 'quit' && (!(o.modeGlobalTimeGain || o.modeLevelTime))) {
+            let toSave = {};
+            if (o.mode === 'custom') {
+                Object.assign(toSave, modeSettings);
+                delete toSave.statsSaveLoc;
+            }
+            Object.assign(toSave, endStats);
+            toSave.hintsLeft = o.hintsLeft;
+            if (o.modeLivesCount > 1) toSave.lives = o.lives;
+            o.statsSaveLoc.continue = toSave;
         }
-        Object.assign(toSave, endStats);
-        toSave.hintsLeft = o.hintsLeft;
-        if (o.modeLivesCount > 1) toSave.lives = o.lives;
-        o.statsSaveLoc.continue = toSave;
+        else delete o.statsSaveLoc.continue;
     }
-    else delete o.statsSaveLoc.continue;
     saveStats();
 
 
