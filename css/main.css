@@ -31,9 +31,6 @@
 
     --animation-speed: 400ms;
     --menu-speed: 200ms;
-
-
-    --icon-font: 'Arial Black', Gadget, sans-serif;
 }
 
 
@@ -130,23 +127,92 @@ button.big {
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 button.icon {
     height: 60px;
     width: 60px;
     position: relative;
 }
-button.icon::before {
+
+button.icon::before,
+button.icon::after {
+    content: '';
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    width: 45px;
+    height: 45px;
 
-    font-family: var(--icon-font);
-    font-size: 45px;
-    color: rgba(0, 0, 0, 0.5);
-    text-shadow: 2px 2px rgba(255, 255, 255, 0.2);
-    line-height: 1;
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
 }
+
+/* shadow icon layer */
+button.icon::before {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: translate(calc(-50% + 2px), calc(-50% + 2px));
+    z-index: 1;
+}
+/* main icon layer */
+button.icon::after {
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2;
+}
+
+
+
+#home-button::before,
+#home-button::after,
+#end-home-button::before,
+#end-home-button::after {
+    mask-image: url('../svg/home.svg');
+}
+
+#hint-button::before,
+#hint-button::after {
+    mask-image: url('../svg/eye.svg');
+}
+
+#end-retry-button::before,
+#end-retry-button::after {
+    mask-image: url('../svg/retry.svg');
+}
+
+.mode-play-button::before,
+.mode-play-button::after {
+    mask-image: url('../svg/play.svg');
+    scale: 60%;
+    transform-origin: 10% 0%;
+}
+
+.mode-continue-button::before,
+.mode-continue-button::after {
+    mask-image: url('../svg/save.svg');
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 button > .button-counter {

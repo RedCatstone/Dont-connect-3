@@ -172,7 +172,7 @@ function renderActiveTabContent() {
         
         const playButton = card.querySelector('.mode-play-button');
         const continueButton = card.querySelector('.mode-continue-button');
-        playButton.textContent = mode.playIcon ?? '▶';
+        // playButton.textContent = mode.playIcon ?? '▶';
         continueButton.style.display = statsSaveLoc.continue ? '' : 'none';
         continueButton.querySelector('.button-counter').textContent = statsSaveLoc.continue?.level;
         playButton.addEventListener('click', () => handlePlay(mode, statsSaveLoc));
