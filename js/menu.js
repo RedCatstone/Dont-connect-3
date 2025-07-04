@@ -109,9 +109,10 @@ for (const tabId in TABS_DATA) {
 }
 
 modeTabsContainer.addEventListener('click', (e) => {
-    if (e.target.matches('.mode-tab-button')) {
+    if (e.target.matches('.mode-tab-button') && activeTabId !== e.target.dataset.tabId) {
         activeTabId = e.target.dataset.tabId;
         renderActiveTabContent();
+        modeSettingsGrid.classList.remove('advanced-mode');
     }
 });
 
@@ -372,7 +373,7 @@ document.addEventListener('click', (event) => {
         // advanced mode after 5 clicks
         clearTimeout(advancedModeLastClickTimeout);
         advancedModeLastClickTimeout = setTimeout(() => advancedModeCounter = 0, 500);
-        if (++advancedModeCounter === 5) document.querySelector('#menu-mode .settings-grid').classList.add('advanced-mode');
+        if (++advancedModeCounter === 5) modeSettingsGrid.classList.add('advanced-mode');
     }
 }, true);
 

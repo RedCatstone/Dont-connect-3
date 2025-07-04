@@ -295,20 +295,15 @@
 
 
 #bottom-controls-wrapper {
-    display: grid;
+    display: flex;
     justify-items: center;
     align-items: center;
-    grid-template-areas: "selector" "buttons";
-    gap: 20px;
+    gap: calc(0.4 * var(--block-size));
     margin-top: 20px;
 
     --block-size: clamp(30px, 10vmin, 60px);
 }
-#bottom-buttons-wrapper {
-    grid-area: buttons;
-    display: flex;
-    gap: 30px;
-}
+
 
 #tile-selector {
     grid-area: selector;
@@ -342,8 +337,8 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -90%);
-    width: 45px;
-    height: 45px;
+    width: calc(0.8 * var(--block-size));
+    height: calc(0.8 * var(--block-size));
     
     mask-size: contain;
     mask-repeat: no-repeat;
@@ -535,15 +530,11 @@
 
 
 
-@media (width > 0px) {
-    #bottom-controls-wrapper {
-        grid-template-areas: "home selector hint";
-
+@media (width < 600px) {
+    #tile-selector {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
     }
-
-    #bottom-buttons-wrapper { display: contents; }
-    #home-button { grid-area: home; }
-    #hint-button { grid-area: hint; }
 }
 
 
@@ -566,9 +557,9 @@
     }
 
     #bottom-controls-wrapper {
-        grid-template-areas: "home" "selector" "hint";
         margin-top: 0px;
         margin-left: 20px;
+        flex-direction: column;
     }
 
     #timer-displays {

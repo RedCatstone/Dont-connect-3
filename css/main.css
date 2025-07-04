@@ -510,7 +510,7 @@ body:not(.menu-active) #menus {
     font-weight: 600;
     color: var(--level-timer-color);
 }
-.best-stats::before {
+.best-stats:not(:empty)::before {
     content: 'Best: ';
 }
 

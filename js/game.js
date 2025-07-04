@@ -759,6 +759,9 @@ function zeroSpotsLeft() {
         calculateSpotsLeft();
         spotsLeftDisplay.textContent = o.spotsLeftCount;
 
+        const newlyUnlockedTile = [...document.querySelectorAll('#tile-selector :not(.future)')].at(-1);
+        createBlockPlaceParticles(newlyUnlockedTile);
+
         if (o.modeFindLast) placeRandomTiles(Infinity, true);
         if (o.modeGlobalTimeGain && o.spotsLeftCount > 0) incrementGlobalTimeLeft();
     }
