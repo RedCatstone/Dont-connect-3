@@ -240,7 +240,7 @@
     background-color: color-mix(in oklab, var(--color-grid-cell) 95%, var(--color-text) 5%);
 }
 /* disabled on mobile */
-@media (hover: hover) and (pointer: fine) {
+@media (pointer: fine) {
     #game-grid-container:not(.input-disabled) .tile.grid:hover {
         background-color: color-mix(in oklab, var(--color-grid-cell) 93%, var(--selected-tile-color) 7%);
         outline: calc(0.02 * var(--grid-tile-size)) solid var(--selected-outline-color);
