@@ -166,12 +166,10 @@ button.icon::after {
 button.icon::before {
     background-color: rgba(255, 255, 255, 0.2);
     transform: translate(calc(-50% + 2px), calc(-50% + 2px));
-    z-index: 1;
 }
 /* main icon layer */
 button.icon::after {
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 2;
 }
 
 

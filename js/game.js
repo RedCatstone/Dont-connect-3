@@ -940,7 +940,7 @@ function drawInvalidLine(startX, startY, endX, endY) {
             tileElement.style.animationDuration = animationDuration + 'ms';
             setTimeout(() => {
                 tileElement.classList.remove('invalid-shake-animation');
-                tileElement.animationDuration = '';
+                tileElement.style.animationDuration = '';
             }, animationDuration);
         }, i * (animationDuration / 10));
     }
