@@ -89,9 +89,9 @@ const TABS_DATA = {
         { id: 'findlast', title: 'Find Last', settings: timedFindlastSettings },
     ],
     daily: [
-        { id: 'endless', title: 'Endless', settings: timedEndlessSettings },
+        { id: 'endless', title: 'Endless', settings: normalEndlessSettings },
         { id: 'hardcore', title: 'Hardcore', settings: normalHardcoreSettings },
-        { id: 'findlast', title: 'Find Last', settings: timedFindlastSettings }
+        { id: 'findlast', title: 'Find Last', settings: normalFindlastSettings }
     ],
     custom: [
         { id: 'custom', title: 'Play' }
@@ -398,6 +398,7 @@ function goToGame() {
     document.body.classList.add('game-active');
     currentMenu.classList.remove('active');
     currentMenu = null;
+    clearInterval(dailyResetInInterval);
 }
 export function goToMenu() {
     document.body.classList.remove('game-active');
@@ -453,6 +454,7 @@ function loadSound(name, path) {
 }
 export function playSound(name) {
     sounds[name].currentTime = 0;
+    sounds[name].volume = o.volume;
     sounds[name].play().catch(error => console.error(`Error playing sound "${name}":`, error));
 }
 

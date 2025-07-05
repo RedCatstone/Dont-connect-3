@@ -1,5 +1,8 @@
 #game-wrapper {
     display: none;
+    
+    /* set by js */
+    --selected-tile-color: unset;
 }
 
 .game-active #game-wrapper {
@@ -236,14 +239,12 @@
     animation: hint-breathe 1.5s infinite cubic-bezier(0.4, 0, 0.6, 1);
     background-color: color-mix(in oklab, var(--color-grid-cell) 95%, var(--color-text) 5%);
 }
-#game-grid-container:not(.input-disabled) .tile.grid:hover {
-    background-color: color-mix(in oklab, var(--color-grid-cell) 90%, var(--color-text) 10%);
-    cursor: pointer;
-}
-@media (hover: none) or (pointer: coarse) {
+/* disabled on mobile */
+@media (hover: hover) and (pointer: fine) {
     #game-grid-container:not(.input-disabled) .tile.grid:hover {
-        background-color: var(--color-grid-cell);
-        cursor: default;
+        background-color: color-mix(in oklab, var(--color-grid-cell) 93%, var(--selected-tile-color) 7%);
+        outline: calc(0.02 * var(--grid-tile-size)) solid var(--selected-outline-color);
+        cursor: pointer;
     }
 }
 
@@ -327,7 +328,7 @@
     margin: 0;
 }
 #tile-selector .tile.block.selected::before {
-    outline: 3px solid white;
+    outline: 3px solid var(--selected-outline-color);
     outline-offset: calc(0.1 * var(--block-size));
     border-radius: calc(0.1 * var(--block-size));
 }
@@ -598,44 +599,47 @@
 
 
 
-
-
-
-
-
-
-
-.invalid-line-indicator {
-    position: absolute;
-    background-color: var(--color-invalid-line);
-
-    height: calc(var(--grid-tile-size) * 0.2);
-    width: calc(var(--grid-tile-size) * var(--line-length));
-    
-    border-radius: calc(var(--grid-tile-size) * 0.2);
-    pointer-events: none;
-    transform-origin: 0 50%;
-    z-index: 20;
-    
-    top: 50%;
-    left: 50%;
-    transform: translateY(-50%) rotate(var(--line-rotation));
-
-    /* set by js */
-    --line-length: 0;
-    --line-rotation: 0deg;
-
-    animation: wipeInLine 500ms cubic-bezier(.3, .7, .4, 1);
-}
-
-@keyframes wipeInLine {
+@keyframes invalid-shake-animation {
     0% {
-        clip-path: inset(0 100% 0 0); /* Clip everything but the leftmost edge */
+        transform: translateY(0) rotate(0);
+        filter: brightness(1);
+    }
+    30% {
+        transform: translateY(calc(-0.2 * var(--grid-tile-size))) rotate(-2deg);
+        filter: brightness(1.3);
+    }
+    40% { transform: translateY(calc(-0.2 * var(--grid-tile-size))) rotate(2deg); }
+    50% { transform: translateY(calc(-0.2 * var(--grid-tile-size))) rotate(-2deg); }
+    60% { transform: translateY(calc(-0.2 * var(--grid-tile-size))) rotate(2deg); }
+    70% {
+        transform: translateY(calc(-0.2 * var(--grid-tile-size))) rotate(0);
+        filter: brightness(1.3);
     }
     100% {
-        clip-path: inset(0 0 0 0); /* Reveal the whole line */
+        transform: translateY(0) rotate(0);
+        filter: brightness(1);
     }
 }
+
+.invalid-shake-animation {
+    outline: 2px solid var(--mistake-color);
+    animation-name: invalid-shake-animation;
+    animation-timing-function: cubic-bezier(0.5, 0, 0.2, 1);
+    animation-fill-mode: forwards;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

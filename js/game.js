@@ -2,6 +2,7 @@ import { generateGrid, generateRandomB64String } from './generateGrid.js';
 import { goToMainMenu, playSound, saveStats } from './menu.js';
 
 
+const gameWrapper = document.getElementById('game-wrapper');
 const gameGridContainer = document.querySelector("#game-grid-container");
 const gameGridSizerContainer = document.querySelector("#game-grid-sizer");
 const gameGridBorderSvg = document.querySelector("#game-grid-border-svg");
@@ -50,6 +51,14 @@ const TILE_CLASS_MAP = {
     [TILE_ID.YELLOW]: 'tile block tile-yellow',
     [TILE_ID.PURPLE]: 'tile block tile-purple',
     [TILE_ID.WHITE]: 'tile block tile-white'
+};
+
+const TILE_COLOR_VAR_MAP = {
+    [TILE_ID.RED]: 'var(--tile-red-color)',
+    [TILE_ID.BLUE]: 'var(--tile-blue-color)',
+    [TILE_ID.YELLOW]: 'var(--tile-yellow-color)',
+    [TILE_ID.PURPLE]: 'var(--tile-purple-color)',
+    [TILE_ID.WHITE]: 'var(--tile-white-color)',
 };
 
 export const ALL_TILE_BLOCKS = [TILE_ID.RED, TILE_ID.BLUE, TILE_ID.YELLOW, TILE_ID.PURPLE, TILE_ID.WHITE];
@@ -112,6 +121,7 @@ export const o = {
     botAnimationSpeed: 100,  // ms
     invalidMoveTimeout: 600,
     defaultSeedLength: 3,
+    volume: 1,
 
     placeRandomTiles,
 }
@@ -244,8 +254,7 @@ function showHint(timeout, colored=false) {
         if (canPlaceSpot !== SPOTS_LEFT_ID.INITIAL && canPlaceSpot !== SPOTS_LEFT_ID.IMPOSSIBLE) {
             tileElement.dataset.hint = true;
             if (colored) {
-                tileElement.style.backgroundColor = 'color-mix(in oklab, var(--color-grid-cell) 70%, var(--tile-color) 30%)';
-                tileElement.classList.add(TILE_CLASS_MAP[canPlaceSpot].split(' ')[2]);
+                tileElement.style.backgroundColor = `color-mix(in oklab, var(--color-grid-cell) 70%, ${TILE_COLOR_VAR_MAP[canPlaceSpot]} 30%)`;
             }
         }
     }
@@ -258,10 +267,7 @@ function clearHint() {
     gameGridContainer.classList.remove('hint-active');
     for (const tileElement of gameGridContainer.children) {
         delete tileElement.dataset.hint;
-        // if (o.coloredHints) {
-            tileElement.style.backgroundColor = '';
-            if (tileElement.className.includes(TILE_CLASS_MAP[TILE_ID.GRID])) tileElement.className = TILE_CLASS_MAP[TILE_ID.GRID];
-        // }
+        tileElement.style.backgroundColor = '';
     }
 }
 
@@ -367,6 +373,7 @@ function updateTileSelectorDisplay() {
     o.availableTiles.forEach((availableTile, i) => {
         const selectableTile = document.createElement('div');
         selectableTile.className = TILE_CLASS_MAP[availableTile];
+
         if (i === o.selectedAvailableTile) selectableTile.classList.add('selected');
         selectableTile.dataset.i = i;
         tileSelectorContainer.append(selectableTile);
@@ -378,6 +385,8 @@ function updateTileSelectorDisplay() {
         selectableTile.classList.add('future');
         tileSelectorContainer.append(selectableTile);
     });
+
+    gameWrapper.style.setProperty('--selected-tile-color', TILE_COLOR_VAR_MAP[o.availableTiles[o.selectedAvailableTile]]);
 }
 
 function updateLivesDisplay() {
@@ -828,9 +837,10 @@ function showEndScreen(status, timeout) {
     /*if (status !== 'quit') */ o.statsSaveLoc.played = (o.statsSaveLoc.played || 0) + 1;
 
     const previousBestLevel = o.statsSaveLoc.best?.level ?? 0;
-    const previousBestTime = o.statsSaveLoc.best?.time ?? 0;
-    const newRecord = endStats.level > previousBestLevel || (endStats.level === previousBestLevel && endStats.time < previousBestTime);
-    if (newRecord) o.statsSaveLoc.best = endStats;
+    const previousBestTime = o.statsSaveLoc.best?.time ?? Infinity;
+    const newLevelRecord = endStats.level > previousBestLevel;
+    const newTimeRecord = o.modeGoalLevel && (endStats.level === previousBestLevel && (endStats.time < previousBestTime));
+    if (newLevelRecord || newTimeRecord) o.statsSaveLoc.best = endStats;
 
     // check if we can continue
     if (endStats.level > 1) {
@@ -860,7 +870,8 @@ function showEndScreen(status, timeout) {
             const statItem = document.createElement('div');
             statItem.className = 'stat-item';
 
-            if (key === 'level' && newRecord) statItem.classList.add('new-record');
+            if (key === 'level' && newLevelRecord) statItem.classList.add('new-record');
+            if (key === 'time' && newTimeRecord) statItem.classList.add('new-record');
             if (key === 'time') value = formatMinuteSeconds(value, 2);
 
 
@@ -916,16 +927,23 @@ export function camelToTitleCase(str) {
 
 
 function drawInvalidLine(startX, startY, endX, endY) {
-    const lineLength = Math.hypot(endX - startX, endY - startY);
-    const angle = Math.atan2(endY - startY, endX - startX) * (180 / Math.PI)
+    const dx = Math.sign(endX - startX);
+    const dy = Math.sign(endY - startY);
 
-    const lineElement = document.createElement('div');
-    lineElement.className = 'invalid-line-indicator';
-    lineElement.style.setProperty('--line-length', lineLength);
-    lineElement.style.setProperty('--line-rotation', `${angle}deg`);
-    getTileElement(startX, startY).appendChild(lineElement);
+    const animationDuration = 0.9 * o.invalidMoveTimeout;
 
-    setTimeout(() => lineElement.remove(), o.invalidMoveTimeout);
+    for (let i = 0; i < o.lineLength; i++) {
+
+        const tileElement = getTileElement(startX + i * dx, startY + i * dy);
+        setTimeout(() => {
+            tileElement.classList.add('invalid-shake-animation');
+            tileElement.style.animationDuration = animationDuration + 'ms';
+            setTimeout(() => {
+                tileElement.classList.remove('invalid-shake-animation');
+                tileElement.animationDuration = '';
+            }, animationDuration);
+        }, i * (animationDuration / 10));
+    }
 }
 
 
