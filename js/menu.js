@@ -69,13 +69,13 @@ mainPlayButton.addEventListener('click', () => {
 
 
 // --- MODE MENU ---
-const normalEndlessSettings = { modeGoalLevel: 0, modeHintCount: 2 };
-const normalHardcoreSettings = { modeGoalLevel: 0, modeLivesCount: 1 };
-const normalFindlastSettings = { modeGoalLevel: 0, modeFindLast: true };
+const normalEndlessSettings = { modeHintCount: 2 };
+const normalHardcoreSettings = { modeHintCount: 2, modeLivesCount: 1 };
+const normalFindlastSettings = { modeHintCount: 2, modeFindLast: true };
 
-const timedEndlessSettings = { ...normalEndlessSettings, modeGlobalTimeGain: 10 };
-const timedHardcoreSettings = { ...normalHardcoreSettings, modeLevelTime: 20 };
-const timedFindlastSettings = { ...normalFindlastSettings, modeGlobalTimeGain: 3 };
+const timedEndlessSettings = { ...normalEndlessSettings, modeHintCount: 0, modeGlobalTimeGain: 10 };
+const timedHardcoreSettings = { ...normalHardcoreSettings, modeHintCount: 0, modeLevelTime: 20 };
+const timedFindlastSettings = { ...normalFindlastSettings, modeHintCount: 0, modeGlobalTimeGain: 3 };
 
 const TABS_DATA = {
     normal: [
@@ -89,9 +89,9 @@ const TABS_DATA = {
         { id: 'findlast', title: 'Find Last', settings: timedFindlastSettings },
     ],
     daily: [
-        { id: 'endless', title: 'Endless', settings: normalEndlessSettings },
+        { id: 'endless', title: 'Endless', settings: timedEndlessSettings },
         { id: 'hardcore', title: 'Hardcore', settings: normalHardcoreSettings },
-        { id: 'findlast', title: 'Find Last', settings: normalFindlastSettings }
+        { id: 'findlast', title: 'Find Last', settings: timedFindlastSettings }
     ],
     custom: [
         { id: 'custom', title: 'Play' }
@@ -307,7 +307,6 @@ function getStatsSaveLoc(modeCategory, mode) {
 function getDailySeed() {
     const date = new Date();
     return `${date.getUTCDate()}-${date.getUTCMonth() + 1}-${date.getUTCFullYear()}`;
-    const monthString = date.toLocaleString('en-us', { month: 'long', timeZone: 'UTC' });
 }
 
 function getModeLength(modeCategory, mode) {
@@ -329,7 +328,20 @@ function setDailyTimerText() {
     const h = Math.floor(diff / 3600_000);
     const m = Math.floor((diff % 3600_000) / 60_000);
     const s = Math.floor((diff % 60_000) / 1_000);
-    dailyResetsInDisplay.textContent = `Resets in: ${h}h ${m}m ${s}s`;
+    
+    const monthString = now.toLocaleString('en-us', { month: 'long', timeZone: 'UTC' });
+    const dayNumber = now.getUTCDate();
+    const dayString = getDaySuffix(now.getUTCDate());
+    dailyResetsInDisplay.textContent = `${monthString} ${dayNumber}${dayString} - Resets in: ${h}h ${m}m ${s}s`;
+}
+function getDaySuffix(day) {
+    if (day > 3 && day < 21) return 'th';
+    switch (day % 10) {
+        case 1:  return "st";
+        case 2:  return "nd";
+        case 3:  return "rd";
+        default: return "th";
+    }
 }
 
 
@@ -367,7 +379,7 @@ document.addEventListener('input', (event) => {
 let advancedModeCounter = 0;
 let advancedModeLastClickTimeout = 0;
 document.addEventListener('click', (event) => {
-    if (event.target.type === 'submit') playSound('tileSwitch');
+    if (event.target.type) playSound('switchTile');
 
     if (activeTabId === 'custom' && event.target === menuPlay || event.target.parentElement === menuPlay) {
         // advanced mode after 5 clicks
@@ -444,9 +456,10 @@ function switchMenu(menu) {
 
 
 const sounds = {};
-loadSound('tilePlace', 'sounds/pOp.wav');
-loadSound('invalidMove', 'sounds/error.wav');
-loadSound('tileSwitch', 'sounds/switchTile.wav');
+loadSound('pOp', 'sounds/pOp.wav');
+loadSound('error', 'sounds/error.wav');
+loadSound('switchTile', 'sounds/switchTile.wav');
+loadSound('win', 'sounds/win.wav');
 
 function loadSound(name, path) {
     sounds[name] = new Audio(path);

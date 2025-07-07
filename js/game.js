@@ -122,6 +122,7 @@ export const o = {
     invalidMoveTimeout: 600,
     defaultSeedLength: 3,
     volume: 1,
+    winLooseTimeout: 1000,
 
     placeRandomTiles,
 }
@@ -141,7 +142,7 @@ export function startMode(customSettings) {
         modeSaveLoc: null,
         level: 1,
         time: 0,
-        modeGoalLevel: false,
+        modeGoalLevel: 0,
         modeFindLast: false,
         modeHintCount: 0,
         modeLivesCount: 0,
@@ -178,7 +179,6 @@ function startGrid() {
 
     calculateSpotsLeft();
     levelDisplay.textContent = `Level ${o.level}${o.modeGoalLevel ? `/${o.modeGoalLevel}` : ''}`;
-    spotsLeftDisplay.textContent = o.spotsLeftCount;
     seedDisplay.textContent = o.seed;
     hintUsesDisplay.textContent = o.hintsLeft;
     createGridDisplay();
@@ -207,7 +207,7 @@ function startGrid() {
 
 
 
-
+let lastX, lastY;
 
 
 
@@ -215,7 +215,11 @@ gameGridContainer.addEventListener('click', (event) => {
     if (o.inputDisabled) return;
     const target = event.target;
     if (target.className.includes(TILE_CLASS_MAP[TILE_ID.GRID])) {
-        userPlaceTile(parseInt(target.dataset.x), parseInt(target.dataset.y), o.availableTiles[o.selectedAvailableTile]);
+        const x = parseInt(target.dataset.x);
+        const y = parseInt(target.dataset.y);
+        lastX = x;
+        lastY = y
+        userPlaceTile(x, y, o.availableTiles[o.selectedAvailableTile]);
     }
 });
 
@@ -287,6 +291,7 @@ endRetryButton.addEventListener('click', () => {
 
 function resetDisplaysAndIntervals() {
     clearInterval(timerInterval);
+    clearTimeout(gridCompleteTimeout);
     for (const name in o.activeCountdowns) stopCountdown(name);
     timerDisplay.textContent = '';
     levelTimeDisplay.textContent = '';
@@ -297,7 +302,6 @@ function resetDisplaysAndIntervals() {
     clearHint();
     hintUsesDisplay.classList.remove('using-hint');
     hintUsed = false;
-    clearTimeout(gridCompleteTimeout);
 }
 
 
@@ -521,7 +525,7 @@ function switchToAvailableTile(index) {
     if (o.selectedAvailableTile !== index) {
         o.selectedAvailableTile = index;
         updateTileSelectorDisplay();
-        playSound('tileSwitch');
+        playSound('switchTile');
     }
 }
 
@@ -578,8 +582,8 @@ function placeTileVisual(x, y, tileId, spotsLeft) {
     const tileElement = getTileElement(x, y);
     tileElement.className = TILE_CLASS_MAP[tileId];
     createBlockPlaceParticles(tileElement);
-    playSound('tilePlace');
-    spotsLeftDisplay.textContent = spotsLeft;
+    playSound('pOp');
+    spotsLeftDisplay.textContent = `${spotsLeft} spot${spotsLeft !== 1 ? 's' : ''}`;
 }
 
 
@@ -631,7 +635,7 @@ function canPlaceTile(x, y, tileId, drawLine) {
     if (valid) return true;
     else {
         disableGridInput();
-        playSound('invalidMove');
+        playSound('error');
         o.mistakes++;
         if (o.lives > 0) loseLife();
         setTimeout(() => enableGridInput(), o.invalidMoveTimeout);
@@ -703,6 +707,7 @@ function calculateSpotsLeft() {
             else o.spotsLeftGrid[x][y] = SPOTS_LEFT_ID.IMPOSSIBLE;
         }
     }
+    spotsLeftDisplay.textContent = `${o.spotsLeftCount} spot${o.spotsLeftCount !== 1 ? 's' : ''}`;
     if (o.spotsLeftCount === 0) zeroSpotsLeft();
 }
 
@@ -766,7 +771,6 @@ function zeroSpotsLeft() {
         o.availableTiles.push(o.futureAvailableTiles.shift());
         updateTileSelectorDisplay();
         calculateSpotsLeft();
-        spotsLeftDisplay.textContent = o.spotsLeftCount;
 
         const newlyUnlockedTile = [...document.querySelectorAll('#tile-selector :not(.future)')].at(-1);
         createBlockPlaceParticles(newlyUnlockedTile);
@@ -788,22 +792,40 @@ function gridComplete() {
     stopCountdown('global');
     
     if (o.level === o.modeGoalLevel) {
-        showEndScreen('win', 0);
+        showEndScreen('win', o.winLooseTimeout);
     }
     else gridCompleteTimeout = setTimeout(() => {
         o.level++;
         if (o.hintsLeft < 99 && o.level % o.gainHintEveryLevel === 0) hintUsesDisplay.textContent = ++o.hintsLeft;
-        if (o.modeGlobalTimeGain) startCountdown('global', globalTimeLeft/1000 + 1, globalTimeDisplay);
+        if (o.modeGlobalTimeGain) startCountdown('global', (globalTimeLeft + o.winLooseTimeout) / 1000, globalTimeDisplay);
         enableGridInput();
         startGrid();
-    }, 1000);
+    }, o.winLooseTimeout);
+
+
+    playSound('win');
+    
+    // cascade animation
+    const maxDist = Math.hypot(o.gridWidth, o.gridHeight);
+    for (const tileElement of gameGridContainer.children) {
+        const x = parseInt(tileElement.dataset.x);
+        const y = parseInt(tileElement.dataset.y);
+
+        const distance = Math.hypot(x - lastX, y - lastY);
+        const delay = (distance / maxDist) * (o.winLooseTimeout - 400);
+
+        tileElement.style.animationDelay = `${delay}ms`;
+        tileElement.classList.add('is-animating-cascade');
+    }
 }
 
 function gridFail() {
     disableGridInput();
     for (const name in o.activeCountdowns) stopCountdown(name);
 
-    showEndScreen('lose', 600);
+    showEndScreen('lose', o.winLooseTimeout / 2);
+    playSound('error');
+    showHint(0, true);
 }
 
 
@@ -821,6 +843,7 @@ function gridFail() {
 function showEndScreen(status, timeout) {
     updateTimerDisplay();
     clearInterval(timerInterval);
+    clearTimeout(gridCompleteTimeout);
     for (const name in o.activeCountdowns) stopCountdown(name);
     o.endScreen = true;
 
@@ -888,9 +911,6 @@ function showEndScreen(status, timeout) {
 
         levelEndScreen.classList.add('visible');
         setTimeout(() => levelEndScreen.classList.add('moveup'), 30);
-
-
-        showHint(0, true);
     }, timeout);
 }
 

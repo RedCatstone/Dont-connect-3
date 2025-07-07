@@ -46,6 +46,8 @@
     font-size: 50px;
     font-family: math;
     margin: 0;
+    min-width: 7.5ch;
+    text-align: center;
 }
 
 #timer-displays {
@@ -65,8 +67,6 @@
     font-family: math;
     margin: 0;
 }
-
-    /* text-shadow: 0 0 8px rgba(0, 255, 255, 0.7); */
 
 
 #global-time-display {
@@ -184,14 +184,8 @@
     aspect-ratio: var(--grid-column-count) / var(--grid-row-count);
     width: 100%;
     height: auto;
-
     display: grid;
-
-    /* border: 1vmin solid var(--color-grid-cell); */
-    /* padding: 1vmin; */
-
     grid-template-columns: repeat(var(--grid-column-count), 1fr);
-
     background-color: rgb(from var(--color-bg) r g b / 0.5);
 }
 
@@ -680,4 +674,28 @@
       transform: translate(0, -600%) scale(2);
       opacity: 0;
     }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+@keyframes tile-cascade-flip {
+    0% {}
+    50% {
+        transform: scale(1.1); 
+        filter: brightness(2);
+    }
+    100% {}
+}
+.is-animating-cascade {
+    animation: tile-cascade-flip 400ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
