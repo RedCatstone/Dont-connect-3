@@ -16,6 +16,7 @@
     --level-timer-color: #ccc;
 
     --mistake-color: red;
+    --tutorial-color: rgb(204, 105, 105);
 
 
     --color-bg: #202020;
@@ -451,6 +452,7 @@ body:not(.menu-active) #menus {
 
 
 #main-play-button { --button-color: var(--color-accent); }
+#main-tutorial-button { --button-color: var(--tutorial-color); }
 .mode-card[data-mode="endless"] { --button-color: #4CAF50; }
 .mode-card[data-mode="hardcore"] { --button-color: #b9302b; }
 .mode-card[data-mode="findlast"] { --button-color: #2196F3; }

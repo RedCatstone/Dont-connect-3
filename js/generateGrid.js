@@ -1,5 +1,5 @@
 import { genPatterns } from './genPatterns.js';
-import { o, ALL_TILE_BLOCKS, shuffleArray, TILE_ID } from './game.js';
+import { o, ALL_TILE_BLOCKS, shuffleArray, TILE } from './game.js';
 
 
 
@@ -13,7 +13,7 @@ export function generateGrid(seed, level) {
     const randomSplit = rand() * total/4;
     let gridWidth = 2 + Math.round(total/4 + randomSplit);
     let gridHeight = 2 + Math.round(total/2 - randomSplit);
-    let grid = Array(gridWidth).fill(null).map(() => Array(gridHeight).fill(TILE_ID.GRID));
+    let grid = create2dGrid(gridWidth, gridHeight, TILE.GRID);
 
     // available tiles
     let tiles = ALL_TILE_BLOCKS.slice(0, Math.ceil(Math.sqrt(level)));
@@ -36,7 +36,7 @@ export function generateGrid(seed, level) {
         grid = newGrid;
         gridWidth = newWidth;
         gridHeight = newHeight;
-        replaceSmallAreaTiles(grid, 2, TILE_ID.WALL, TILE_ID.GRID);
+        replaceSmallAreaTiles(grid, 2, TILE.WALL, TILE.GRID);
     }
     
     // holes (patterns)
@@ -46,9 +46,14 @@ export function generateGrid(seed, level) {
     }
 
 
-    return { grid, gridWidth, gridHeight, availableTiles, futureAvailableTiles, botAmount };
+    return { grid, availableTiles, futureAvailableTiles, botAmount };
 }
 
+
+
+export function create2dGrid(width, height, fill) {
+    return Array(width).fill(null).map(() => Array(height).fill(fill));
+}
 
 
 
@@ -117,7 +122,7 @@ function placeRandomHolePatterns(numPatterns, grid, rand) {
             const startY = Math.floor(rand() * (validYRange + 1));
 
             if (canPlacePatternAt(placementGrid, startX, startY, patternWidth, patternHeight)) {
-                const placeTiles = [TILE_ID.AIR, TILE_ID.GRID];
+                const placeTiles = [TILE.AIR, TILE.GRID];
                 if (invert) placeTiles.reverse();
                 placePattern(grid, placementGrid, patternShape, startX, startY, scale, ...placeTiles);
                 break;
@@ -161,7 +166,7 @@ function placePattern(grid, placementGrid, pattern, startX, startY, scale, mainT
     const patternWidth = pattern[0].length;
 
     const placePatternTile = (x, y, id, overwriteWalls) => {
-        if (grid[x]?.[y] !== undefined && (overwriteWalls || grid[x][y] !== TILE_ID.WALL)) {
+        if (grid[x]?.[y] !== undefined && (overwriteWalls || grid[x][y] !== TILE.WALL)) {
             grid[x][y] = id;
             placementGrid[x][y] = true;
         }
@@ -207,7 +212,7 @@ function placePattern(grid, placementGrid, pattern, startX, startY, scale, mainT
 
 
 function generateDrunkenWalkWalls(gridWidth, gridHeight, rand) {
-    const grid = Array(gridWidth).fill(0).map(() => Array(gridHeight).fill(TILE_ID.WALL));
+    const grid = Array(gridWidth).fill(0).map(() => Array(gridHeight).fill(TILE.WALL));
 
     const totalSteps = Math.floor((gridWidth * gridHeight) * o.drunkStepMultiplier);
     let stepsTaken = 0;
@@ -219,7 +224,7 @@ function generateDrunkenWalkWalls(gridWidth, gridHeight, rand) {
     let [walkerX, walkerY] = [centerX, centerY];
 
     while (stepsTaken < totalSteps) {
-        grid[walkerX][walkerY] = TILE_ID.GRID;
+        grid[walkerX][walkerY] = TILE.GRID;
 
         const direction = Math.floor(rand() * 4);
         if (direction === 0 && walkerX > 0) walkerX--;
@@ -250,7 +255,7 @@ function resizeGridToFit(grid) {
 
     for (let y = 0; y < gridHeight; y++) {
         for (let x = 0; x < gridWidth; x++) {
-            if (grid[x][y] !== TILE_ID.WALL) {
+            if (grid[x][y] !== TILE.WALL) {
                 if (x < minX) minX = x;
                 if (x > maxX) maxX = x;
                 if (y < minY) minY = y;

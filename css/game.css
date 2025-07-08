@@ -45,7 +45,6 @@
 #spots-display {
     font-size: 50px;
     font-family: math;
-    margin: 0;
     min-width: 7.5ch;
     text-align: center;
 }
@@ -56,6 +55,7 @@
     align-items: center;
     justify-content: center;
     gap: 20px;
+    font-family: math;
 }
 #timer-displays > *:empty {
     display: none;
@@ -64,16 +64,12 @@
 #level-time-display {
     color: var(--countdown-color);
     font-size: 50px;
-    font-family: math;
-    margin: 0;
 }
 
 
 #global-time-display {
     color: var(--global-time-color);
     font-size: 50px;
-    font-family: math;
-    margin: 0;
 }
 #global-time-wrapper {
     position: relative;
@@ -86,14 +82,11 @@
     position: absolute;
     bottom: 80%;
     left: 50%;
-    bottom: 0;
     transform: translateX(-50%);
 
-    font-family: math;
     font-size: 24px;
     font-weight: 700;
     color: var(--global-time-color);
-    pointer-events: none;
     animation: time-gained-float-down 1s cubic-bezier(0.1, 0.8, 0.4, 1) forwards;
 }
 
@@ -125,10 +118,8 @@
     display: flex;
     flex-direction: row;
     justify-content: center;
-    margin: 0;
 }
 .heart {
-    font-family: math;
     font-size: 40px;
     background: linear-gradient(160deg, #ff4d4d, var(--countdown-color) 80%);
     -webkit-background-clip: text;
@@ -144,6 +135,27 @@
     30% { transform: scale(1.2) rotate(-5deg); }
     100% { opacity: 0; transform: translateY(80px) translateX(-20px) rotate(45deg) scale(0); }
 }
+
+
+#tutorial-text-display {
+    font-family: 'Poppins', sans-serif;
+    font-size: clamp(1rem, 5vw, 2rem);
+    font-weight: 400;
+    max-width: 25ch;
+    color: var(--tutorial-color);
+    transition: opacity 300ms ease-in-out;
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 

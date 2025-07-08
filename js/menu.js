@@ -1,11 +1,13 @@
 import { camelToTitleCase, formatMinuteSeconds, o, startMode } from './game.js';
 import { getRandomFunction } from './generateGrid.js';
+import { startTutorial } from './tutorial.js';
 
 
 const menuMain = document.getElementById('menu-main');
 const menuPlay = document.getElementById('menu-mode');
 
 const mainPlayButton = document.getElementById('main-play-button');
+const mainTutorialButton = document.getElementById('main-tutorial-button');
 const mainSettingsButton = document.getElementById('main-settings-button');
 const mainAboutButton = document.getElementById('main-about-button');
 
@@ -49,8 +51,18 @@ document.addEventListener('keydown', (event) => {
 
 // --- MAIN MENU ---
 mainPlayButton.addEventListener('click', () => {
-    renderActiveTabContent();
-    switchMenu(menuPlay);
+    if (STATS.tutorial) {
+        renderActiveTabContent();
+        switchMenu(menuPlay);
+    }
+    else {
+        goToGame();
+        startTutorial();
+    }
+});
+mainTutorialButton.addEventListener('click', () => {
+    goToGame();
+    startTutorial();
 });
 
 
@@ -412,7 +424,7 @@ function goToGame() {
     currentMenu = null;
     clearInterval(dailyResetInInterval);
 }
-export function goToMenu() {
+function goToMenu() {
     document.body.classList.remove('game-active');
     document.body.classList.add('menu-active');
 }
@@ -427,6 +439,7 @@ export function goToMainMenu() {
 
 function switchMenu(menu) {
     if (currentMenu === menu) return;
+    if (menu === menuMain) mainTutorialButton.style.display = STATS.tutorial ? '' : 'none';
 
     if (currentMenu) {
         currentMenu.classList.remove('active');

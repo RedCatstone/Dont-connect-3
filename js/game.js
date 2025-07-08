@@ -1,4 +1,4 @@
-import { generateGrid, generateRandomB64String } from './generateGrid.js';
+import { create2dGrid, generateGrid, generateRandomB64String } from './generateGrid.js';
 import { goToMainMenu, playSound, saveStats } from './menu.js';
 
 
@@ -11,6 +11,8 @@ const homeButton = document.querySelector("#home-button");
 const hintButton = document.querySelector("#hint-button");
 
 const hintUsesDisplay = document.querySelector("#hint-button > .button-counter");
+export const levelTimerInfoDisplay = document.getElementById('level-timer-info');
+export const tutorialTextDisplay = document.getElementById('tutorial-text-display');
 const levelDisplay = document.querySelector("#level-display");
 const timerDisplay = document.querySelector("#timer-display");
 const spotsLeftDisplay = document.querySelector("#spots-display");
@@ -30,7 +32,7 @@ const endRetryButton = document.querySelector("#end-retry-button");
 
 
 // Tile Ids
-export const TILE_ID = {
+export const TILE = {
     WALL: 1,
     GRID: 2,
     AIR: 3,
@@ -43,25 +45,25 @@ export const TILE_ID = {
 
 // Map tile IDs to CSS classes
 const TILE_CLASS_MAP = {
-    [TILE_ID.WALL]: 'tile wall',
-    [TILE_ID.AIR]: 'tile air',
-    [TILE_ID.GRID]: 'tile grid',
-    [TILE_ID.RED]: 'tile block tile-red',
-    [TILE_ID.BLUE]: 'tile block tile-blue',
-    [TILE_ID.YELLOW]: 'tile block tile-yellow',
-    [TILE_ID.PURPLE]: 'tile block tile-purple',
-    [TILE_ID.WHITE]: 'tile block tile-white'
+    [TILE.WALL]: 'tile wall',
+    [TILE.AIR]: 'tile air',
+    [TILE.GRID]: 'tile grid',
+    [TILE.RED]: 'tile block tile-red',
+    [TILE.BLUE]: 'tile block tile-blue',
+    [TILE.YELLOW]: 'tile block tile-yellow',
+    [TILE.PURPLE]: 'tile block tile-purple',
+    [TILE.WHITE]: 'tile block tile-white'
 };
 
-const TILE_COLOR_VAR_MAP = {
-    [TILE_ID.RED]: 'var(--tile-red-color)',
-    [TILE_ID.BLUE]: 'var(--tile-blue-color)',
-    [TILE_ID.YELLOW]: 'var(--tile-yellow-color)',
-    [TILE_ID.PURPLE]: 'var(--tile-purple-color)',
-    [TILE_ID.WHITE]: 'var(--tile-white-color)',
+const TILE_BLOCK_COLOR_MAP = {
+    [TILE.RED]: 'var(--tile-red-color)',
+    [TILE.BLUE]: 'var(--tile-blue-color)',
+    [TILE.YELLOW]: 'var(--tile-yellow-color)',
+    [TILE.PURPLE]: 'var(--tile-purple-color)',
+    [TILE.WHITE]: 'var(--tile-white-color)',
 };
 
-export const ALL_TILE_BLOCKS = [TILE_ID.RED, TILE_ID.BLUE, TILE_ID.YELLOW, TILE_ID.PURPLE, TILE_ID.WHITE];
+export const ALL_TILE_BLOCKS = [...Object.keys(TILE_BLOCK_COLOR_MAP)];
 
 
 
@@ -90,6 +92,7 @@ export const o = {
     // variables
     seed: null,
     level: null,
+    hardcodedLevels: null,
     time: performance.now(),
     selectedAvailableTile: 0,
     inputDisabled: false,
@@ -102,6 +105,8 @@ export const o = {
     levelTimeDeathTime: null,
     globalTimeDeathTime: null,
     activeCountdowns: {},
+    tutorialCallback: null,
+    tutorialDissallowValidMoves: false,
 
     STATS: null,
     modeSaveLoc: null,
@@ -141,6 +146,7 @@ export function startMode(customSettings) {
         seed: generateRandomB64String(o.defaultSeedLength),
         modeSaveLoc: null,
         level: 1,
+        hardcodedLevels: {},
         time: 0,
         modeGoalLevel: 0,
         modeFindLast: false,
@@ -155,6 +161,7 @@ export function startMode(customSettings) {
         hintsUsed: 0,
         hintsLeft: customSettings.modeHintCount ?? 0,
         lives: customSettings.modeLivesCount ?? 0,
+        tutorialCallback: null,
     };
 
     Object.assign(o, defaultSettings, customSettings);
@@ -171,9 +178,12 @@ export function startMode(customSettings) {
 
 
 function startGrid() {
-    // { grid, gridWidth, gridHeight, availableTiles, futureAvailableTiles, botAmount }
-    const generatedGrid = generateGrid(o.seed, o.level);
+    // { grid, availableTiles, futureAvailableTiles, botAmount }
+    const generatedGrid = o.hardcodedLevels[o.level] ?? generateGrid(o.seed, o.level);
     Object.assign(o, generatedGrid);
+    o.grid = o.grid.map(x => [...x]);
+    o.gridWidth = o.grid.length;
+    o.gridHeight = o.grid[0].length;
 
     o.selectedAvailableTile = 0;
 
@@ -204,21 +214,12 @@ function startGrid() {
 
 
 
-
-
-
-let lastX, lastY;
-
-
-
 gameGridContainer.addEventListener('click', (event) => {
     if (o.inputDisabled) return;
     const target = event.target;
-    if (target.className.includes(TILE_CLASS_MAP[TILE_ID.GRID])) {
+    if (target.className.includes(TILE_CLASS_MAP[TILE.GRID])) {
         const x = parseInt(target.dataset.x);
         const y = parseInt(target.dataset.y);
-        lastX = x;
-        lastY = y
         userPlaceTile(x, y, o.availableTiles[o.selectedAvailableTile]);
     }
 });
@@ -258,7 +259,7 @@ function showHint(timeout, colored=false) {
         if (canPlaceSpot !== SPOTS_LEFT_ID.INITIAL && canPlaceSpot !== SPOTS_LEFT_ID.IMPOSSIBLE) {
             tileElement.dataset.hint = true;
             if (colored) {
-                tileElement.style.backgroundColor = `color-mix(in oklab, var(--color-grid-cell) 70%, ${TILE_COLOR_VAR_MAP[canPlaceSpot]} 30%)`;
+                tileElement.style.backgroundColor = `color-mix(in oklab, var(--color-grid-cell) 70%, ${TILE_BLOCK_COLOR_MAP[canPlaceSpot]} 30%)`;
             }
         }
     }
@@ -297,6 +298,8 @@ function resetDisplaysAndIntervals() {
     levelTimeDisplay.textContent = '';
     globalTimeDisplay.textContent = '';
     livesDisplay.textContent = '';
+    tutorialTextDisplay.textContent = '';
+    levelTimerInfoDisplay.style.display = '';
     enableGridInput(true);
     hideEndScreen();
     clearHint();
@@ -390,7 +393,7 @@ function updateTileSelectorDisplay() {
         tileSelectorContainer.append(selectableTile);
     });
 
-    gameWrapper.style.setProperty('--selected-tile-color', TILE_COLOR_VAR_MAP[o.availableTiles[o.selectedAvailableTile]]);
+    gameWrapper.style.setProperty('--selected-tile-color', TILE_BLOCK_COLOR_MAP[o.availableTiles[o.selectedAvailableTile]]);
 }
 
 function updateLivesDisplay() {
@@ -457,7 +460,7 @@ function drawCustomGridBorder() {
     const overlap = tileSize / 10;
     let pathData = '';
 
-    const isWall = (x, y) => (o.grid[x]?.[y] ?? TILE_ID.WALL) === TILE_ID.WALL;
+    const isWall = (x, y) => (o.grid[x]?.[y] ?? TILE.WALL) === TILE.WALL;
 
     for (let y = 0; y < o.gridHeight; y++) {
         for (let x = 0; x < o.gridWidth; x++) {
@@ -539,31 +542,39 @@ function switchToAvailableTile(index) {
 
 
 
-
+let lastX, lastY;
 function userPlaceTile(x, y, tileId) {
     if (canPlaceTile(x, y, tileId, true)) {
-        const { endBots } = placeTile(x, y, tileId);
-        // bots
-        if (!endBots) placeRandomTiles(o.botAmount);
-
-        o.blocksPlaced++;
-        if (hintUsed) {
-            hintUsed = false;
-            hintUsesDisplay.textContent = --o.hintsLeft;
-            o.hintsUsed++;
-            clearHint();
-            hintUsesDisplay.classList.remove('using-hint');
+        if (!o.tutorialDissallowValidMoves) {
+            if (o.tutorialCallback) o.tutorialCallback('tile_place', { x, y, tileId });
+            
+            lastX = x;
+            lastY = y
+            const { endBots } = placeTile(x, y, tileId);
+            
+            if (!endBots) placeRandomTiles(o.botAmount);
+            o.blocksPlaced++;
+            if (hintUsed) {
+                hintUsed = false;
+                hintUsesDisplay.textContent = --o.hintsLeft;
+                o.hintsUsed++;
+                clearHint();
+                hintUsesDisplay.classList.remove('using-hint');
+            }
         }
     }
+    else if (o.tutorialCallback) o.tutorialCallback('invalid_move', { x, y, tileId });
+
     gameGridContainer.classList.remove('hint-active');
 }
+
 function placeTile(x, y, tileId, displayAfterDelay, dontPlaceIfLast) {
     o.grid[x][y] = tileId;
     updateSpotsLeftAtSpot(x, y);
     const spotsLeft = o.spotsLeftCount;
 
     if (dontPlaceIfLast && spotsLeft === 0) {
-        o.grid[x][y] = TILE_ID.GRID;
+        o.grid[x][y] = TILE.GRID;
         updateSpotsLeftAtSpot(x, y);
         return { didntPlaceLast: true };
     }
@@ -589,7 +600,7 @@ function placeTileVisual(x, y, tileId, spotsLeft) {
 
 
 function canPlaceTile(x, y, tileId, drawLine) {
-    if (o.grid[x][y] !== TILE_ID.GRID) return false;
+    if (o.grid[x][y] !== TILE.GRID) return false;
     let valid = true;
 
     const directions = [
@@ -612,7 +623,7 @@ function canPlaceTile(x, y, tileId, drawLine) {
                 if (tile === tileId) sameTileIdCounter++;
 
                 // tile is outside of grid OR another color OR a wall -> valid
-                else if (tile !== TILE_ID.AIR && tile !== TILE_ID.GRID) {
+                else if (tile !== TILE.AIR && tile !== TILE.GRID) {
                     sameTileIdCounter = -Infinity;
                     break;
                 }
@@ -690,12 +701,12 @@ const SPOTS_LEFT_ID = {
 
 
 function calculateSpotsLeft() {
-    o.spotsLeftGrid = Array(o.gridWidth).fill(null).map(() => Array(o.gridHeight).fill(SPOTS_LEFT_ID.INITIAL));
+    o.spotsLeftGrid = create2dGrid(o.gridWidth, o.gridHeight, SPOTS_LEFT_ID.INITIAL);
     o.spotsLeftCount = 0;
     for (let x = 0; x < o.gridWidth; x++) {
         for (let y = 0; y < o.gridHeight; y++) {
             const tile = o.grid[x][y];
-            if (tile === TILE_ID.GRID) {
+            if (tile === TILE.GRID) {
                 for (const availableTile of o.availableTiles) {
                     if (canPlaceTile(x, y, availableTile, false)) {
                         o.spotsLeftGrid[x][y] = availableTile;
@@ -721,7 +732,7 @@ function updateSpotsLeftAtSpot(x, y) {
     ];
 
     // mark as completely unplacable
-    if (o.grid[x][y] !== TILE_ID.GRID) {
+    if (o.grid[x][y] !== TILE.GRID) {
         o.spotsLeftGrid[x][y] = SPOTS_LEFT_ID.IMPOSSIBLE;
         o.spotsLeftCount--;
     }
@@ -767,6 +778,8 @@ function updateSpotsLeftAtSpot(x, y) {
 
 
 function zeroSpotsLeft() {
+    if (o.tutorialCallback) o.tutorialCallback('color_complete', {});
+
     if (o.futureAvailableTiles.length > 0) {
         o.availableTiles.push(o.futureAvailableTiles.shift());
         updateTileSelectorDisplay();
@@ -803,6 +816,7 @@ function gridComplete() {
     }, o.winLooseTimeout);
 
 
+    if (o.tutorialCallback) o.tutorialCallback('grid_complete', {});
     playSound('win');
     
     // cascade animation

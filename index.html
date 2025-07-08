@@ -15,6 +15,7 @@
         <div id="menu-main" class="menu">
             <h1>Don't connect 3</h1>
             <button id="main-play-button" class="big">Play</button>
+            <button id="main-tutorial-button">Tutorial</button>
             <button id="main-settings-button">Settings</button>
             <button id="main-about-button">About</button>
         </div>
@@ -48,13 +49,12 @@
             <div id="level-timer-info">
                 <span id="level-display">Level 1</span><span class="dot">•</span><span id="timer-display">00:00</span>
             </div>
-            <p id="spots-display">0</p>
+            <span id="spots-display">0</span>
             <div id="timer-displays">
-                <p id="level-time-display"></p>
-                <div id="global-time-wrapper">
-                    <p id="global-time-display"></p>
-                </div>
-                <p id="lives-display"></p>
+                <span id="level-time-display"></span>
+                <div id="global-time-wrapper"><span id="global-time-display"></span></div>
+                <span id="lives-display"></span>
+                <span id="tutorial-text-display"></span>
             </div>
         </div>
         <div id="game-grid-sizer">
@@ -84,5 +84,6 @@
     <script src="js/game.js" type="module"></script>
     <script src="js/generateGrid.js" type="module"></script>
     <script src="js/genPatterns.js" type="module"></script>
+    <script src="js/tutorial.js" type="module"></script>
 </body>
 </html>
