@@ -27,7 +27,7 @@ export function generateGrid(seed, level) {
     });
 
     // bot amount
-    const botAmount = Math.ceil(rand() * Math.log(level) * o.botAmountMultiplier);
+    const botAmount = Math.ceil(rand() * Math.log(level) * o.botAmountMultiplier) || 0;
 
     // walls
     if (level > 4 && rand() < o.chanceDrunkWalls) {

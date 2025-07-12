@@ -1,86 +1,105 @@
-import { levelTimerInfoDisplay, o, startMode, TILE as T, tutorialTextDisplay } from "./game.js";
+import { o, startMode, TILE as T, levelTimerInfoDisplay, tutorialTextDisplay } from "./game.js";
 import { create2dGrid } from "./generateGrid.js";
-import { goToMainMenu, STATS } from "./menu.js";
+import { STATS } from "./menu.js";
 
-
-
-const HARDCODED_TUTORIAL_LEVELS = {
-    1: {
-        grid: create2dGrid(4, 3, T.GRID),
-        availableTiles: [T.RED],
-        futureAvailableTiles: [],
-        botAmount: 0,
-    },
-    2: {
-        grid: create2dGrid(5, 5, T.GRID),
-        availableTiles: [T.BLUE],
-        futureAvailableTiles: [],
-        botAmount: 0,
-    },
-    3: {
-        grid: [
-            [T.GRID,T.GRID,T.GRID,T.GRID],
-            [T.GRID,T.GRID,T.GRID,T.GRID],
-            [T.WALL,T.GRID,T.GRID,T.WALL],
-            [T.GRID,T.GRID,T.GRID,T.GRID],
-            [T.GRID,T.GRID,T.GRID,T.GRID],
-        ],
-        availableTiles: [T.RED],
-        futureAvailableTiles: [T.BLUE],
-        botAmount: 0,
-    },
-    4: {
-        grid: [
-            [T.WALL,T.GRID,T.GRID,T.GRID,T.GRID,T.GRID,T.WALL],
-            [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
-            [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
-            [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
-            [T.WALL,T.GRID,T.GRID,T.GRID,T.GRID,T.GRID,T.WALL],
-        ],
-        availableTiles: [T.RED],
-        futureAvailableTiles: [T.BLUE, T.PURPLE],
-        botAmount: 0,
-    },
-};
 
 
 let currentTutorialStep = 0;
 const TUTORIAL_STEPS = [
-    {
-        text: "click an empty spot on the Grid to place a Tile.",
+    { // Level 1
+        text: "Welcome! Tap an empty spot to place a tile.",
         waitFor: 'tile_place',
     },
     {
-        text: "Now, try to get 3 in a row.",
-        waitFor: 'invalid_move',
+        text: "Alright, try to place another tile!",
+        waitFor: 'tile_place',
     },
     {
-        text: "Oops, setting up for 3 in a row is not allowed.<br>Now place more Tiles!",
+        text: "The grid is complete if you can't place any more tiles.",
         waitFor: 'grid_complete',
     },
-    {
-        text: "Nice! now solve this one.",
+    { // Level 2
+        text: "Nice! Let's try a larger grid.",
         waitFor: 'grid_complete',
     },
-    {
-        text: "H",
+    { // Level 3
+        text: "Neat! Now solve this one.",
+        waitFor: 'grid_complete',
+    },
+    { // Level 4
+        text: "Keep going!",
         waitFor: 'color_complete',
     },
     {
-        text: "You unlocked Blue. Select it!",
+        text: "Blue unlocked. Select it!",
+        color: "blue",
         waitFor: 'grid_complete',
     },
-    {
+    { // Level 5
         text: "If you ever get stuck, use a Hint.",
         waitFor: 'grid_complete',
     },
     {
-        text: "Tutorial Completed!",
+        text: "Tutorial Complete!",
     }
 ];
 
 
 export function startTutorial() {
+    const HARDCODED_TUTORIAL_LEVELS = {
+        1: {
+            grid: create2dGrid(5, 3, T.GRID),
+            availableTiles: [T.RED],
+            futureAvailableTiles: [],
+            botAmount: 0,
+        },
+        2: {
+            grid: create2dGrid(6, 6, T.GRID),
+            availableTiles: [T.RED],
+            futureAvailableTiles: [],
+            botAmount: 0,
+        },
+        3: {
+            grid: [
+                [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
+                [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
+                [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
+                [T.WALL,T.GRID,T.GRID,T.GRID,T.WALL],
+                [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
+                [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
+                [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
+            ],
+            availableTiles: [T.RED],
+            futureAvailableTiles: [],
+            botAmount: 0,
+        },
+        4: {
+            grid: [
+                [T.GRID,T.GRID,T.GRID],
+                [T.WALL,T.GRID,T.GRID],
+                [T.GRID,T.GRID,T.GRID],
+                [T.GRID,T.GRID,T.WALL],
+                [T.GRID,T.GRID,T.GRID],
+            ],
+            availableTiles: [T.RED],
+            futureAvailableTiles: [T.BLUE],
+            botAmount: 0,
+        },
+        5: {
+            grid: [
+                [T.WALL,T.GRID,T.GRID,T.GRID,T.GRID,T.WALL],
+                [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
+                [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
+                [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
+                [T.WALL,T.GRID,T.GRID,T.GRID,T.GRID,T.WALL],
+            ],
+            availableTiles: [T.RED],
+            futureAvailableTiles: [T.BLUE, T.PURPLE],
+            botAmount: 0,
+        },
+    };
+
+
     if (!STATS['tutorial']) STATS['tutorial'] = {};
 
     const modeSettings = {
@@ -89,7 +108,6 @@ export function startTutorial() {
         modeHintCount: 5,
         statsSaveLoc: STATS['tutorial'],
         seed: 'Tutorial',
-        tutorialCallback: onGameEvent,
     }
     startMode(modeSettings);
 
@@ -113,31 +131,27 @@ function advanceTutorial() {
 
     o.tutorialDissallowValidMoves = step.waitFor === 'invalid_move';
 
-    tutorialTextDisplay.style.opacity = '0';
-    if (currentTutorialStep === 0) tutorialTextDisplay.innerHTML = step.text;
-
     let waitingDelay;
-    if (currentTutorialStep === 0) waitingDelay = 0;
+    if (currentTutorialStep === 0) {
+        waitingDelay = 0;
+        tutorialTextDisplay.innerHTML = step.text;  // literally no idea why this is neccessary
+    }
     else if (previousStep?.waitFor === 'grid_complete') waitingDelay = o.winLooseTimeout;
     else waitingDelay = 300;
 
+    tutorialTextDisplay.style.opacity = '0';
     setTimeout(() => {
+        tutorialTextDisplay.classList = `tile-${step.color ?? 'red'}`;
         tutorialTextDisplay.style.opacity = '';
         tutorialTextDisplay.innerHTML = step.text;
     }, waitingDelay);
-
-}
-
-function finishTutorial() {
-    levelTimerInfoDisplay.style.display = '';
-    goToMainMenu();
 }
 
 
 
 
 
-function onGameEvent(eventName, eventData) {
+export function tutorialOnGameEvent(eventName, eventData) {
     const step = TUTORIAL_STEPS[currentTutorialStep];
 
     if (step.waitFor === eventName) {

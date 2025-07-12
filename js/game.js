@@ -1,10 +1,12 @@
 import { create2dGrid, generateGrid, generateRandomB64String } from './generateGrid.js';
 import { goToMainMenu, playSound, saveStats } from './menu.js';
+import { startTutorial, tutorialOnGameEvent } from './tutorial.js';
 
 
 const gameWrapper = document.getElementById('game-wrapper');
-const gameGridContainer = document.querySelector("#game-grid-container");
-const gameGridSizerContainer = document.querySelector("#game-grid-sizer");
+const gameGridContainer = document.querySelector("#game-grid-grid");
+const gameGridSizerContainer = document.querySelector("#game-grid-sizer-height");
+const gameGridGrid = document.querySelector("#game-grid-grid");
 const gameGridBorderSvg = document.querySelector("#game-grid-border-svg");
 const tileSelectorContainer = document.querySelector("#tile-selector");
 const homeButton = document.querySelector("#home-button");
@@ -105,7 +107,6 @@ export const o = {
     levelTimeDeathTime: null,
     globalTimeDeathTime: null,
     activeCountdowns: {},
-    tutorialCallback: null,
     tutorialDissallowValidMoves: false,
 
     STATS: null,
@@ -127,7 +128,7 @@ export const o = {
     invalidMoveTimeout: 600,
     defaultSeedLength: 3,
     volume: 1,
-    winLooseTimeout: 1000,
+    winLooseTimeout: 1500,
 
     placeRandomTiles,
 }
@@ -161,7 +162,6 @@ export function startMode(customSettings) {
         hintsUsed: 0,
         hintsLeft: customSettings.modeHintCount ?? 0,
         lives: customSettings.modeLivesCount ?? 0,
-        tutorialCallback: null,
     };
 
     Object.assign(o, defaultSettings, customSettings);
@@ -180,10 +180,12 @@ export function startMode(customSettings) {
 function startGrid() {
     // { grid, availableTiles, futureAvailableTiles, botAmount }
     const generatedGrid = o.hardcodedLevels[o.level] ?? generateGrid(o.seed, o.level);
-    Object.assign(o, generatedGrid);
-    o.grid = o.grid.map(x => [...x]);
-    o.gridWidth = o.grid.length;
-    o.gridHeight = o.grid[0].length;
+    o.grid = generatedGrid.grid.map(x => [...x]);
+    o.gridWidth = generatedGrid.grid.length;
+    o.gridHeight = generatedGrid.grid[0].length;
+    o.botAmount = generatedGrid.botAmount;
+    o.availableTiles = [...generatedGrid.availableTiles];
+    o.futureAvailableTiles = [...generatedGrid.futureAvailableTiles];
 
     o.selectedAvailableTile = 0;
 
@@ -257,7 +259,7 @@ function showHint(timeout, colored=false) {
     for (const tileElement of gameGridContainer.children) {
         const canPlaceSpot = o.spotsLeftGrid[tileElement.dataset.x][tileElement.dataset.y];
         if (canPlaceSpot !== SPOTS_LEFT_ID.INITIAL && canPlaceSpot !== SPOTS_LEFT_ID.IMPOSSIBLE) {
-            tileElement.dataset.hint = true;
+            tileElement.classList.add('animating-hint-breathe');
             if (colored) {
                 tileElement.style.backgroundColor = `color-mix(in oklab, var(--color-grid-cell) 70%, ${TILE_BLOCK_COLOR_MAP[canPlaceSpot]} 30%)`;
             }
@@ -271,7 +273,7 @@ function clearHint() {
     clearTimeout(hintTimeout);
     gameGridContainer.classList.remove('hint-active');
     for (const tileElement of gameGridContainer.children) {
-        delete tileElement.dataset.hint;
+        tileElement.classList.remove('animating-hint-breathe');
         tileElement.style.backgroundColor = '';
     }
 }
@@ -285,7 +287,8 @@ window.addEventListener('unload', () => {
 }));
 endHideButton.addEventListener('click', () => levelEndScreen.classList.toggle('moveup'));
 endRetryButton.addEventListener('click', () => {
-    startMode(modeSettings);
+    if (o.seed === 'Tutorial') startTutorial();
+    else startMode(modeSettings);
 });
 
 
@@ -394,6 +397,7 @@ function updateTileSelectorDisplay() {
     });
 
     gameWrapper.style.setProperty('--selected-tile-color', TILE_BLOCK_COLOR_MAP[o.availableTiles[o.selectedAvailableTile]]);
+    gameWrapper.style.setProperty('--latest-tile-color', TILE_BLOCK_COLOR_MAP[o.availableTiles.at(-1)]);
 }
 
 function updateLivesDisplay() {
@@ -440,11 +444,10 @@ function createGridDisplay() {
     gameGridContainer.append(fragment);
     gameGridSizerContainer.style.setProperty('--grid-column-count', o.gridWidth);
     gameGridSizerContainer.style.setProperty('--grid-row-count', o.gridHeight);
-    requestAnimationFrame(drawCustomGridBorder);
 }
 
 
-new ResizeObserver(() => drawCustomGridBorder()).observe(gameGridSizerContainer);
+new ResizeObserver(() => drawCustomGridBorder()).observe(gameGridGrid);
 
 
 
@@ -546,7 +549,7 @@ let lastX, lastY;
 function userPlaceTile(x, y, tileId) {
     if (canPlaceTile(x, y, tileId, true)) {
         if (!o.tutorialDissallowValidMoves) {
-            if (o.tutorialCallback) o.tutorialCallback('tile_place', { x, y, tileId });
+            if (o.seed === 'Tutorial') tutorialOnGameEvent('tile_place', { x, y, tileId });
             
             lastX = x;
             lastY = y
@@ -563,7 +566,7 @@ function userPlaceTile(x, y, tileId) {
             }
         }
     }
-    else if (o.tutorialCallback) o.tutorialCallback('invalid_move', { x, y, tileId });
+    else if (o.seed === 'Tutorial') tutorialOnGameEvent('invalid_move', { x, y, tileId });
 
     gameGridContainer.classList.remove('hint-active');
 }
@@ -601,7 +604,7 @@ function placeTileVisual(x, y, tileId, spotsLeft) {
 
 function canPlaceTile(x, y, tileId, drawLine) {
     if (o.grid[x][y] !== TILE.GRID) return false;
-    let valid = true;
+    const invalidLinesList = [];
 
     const directions = [
         [1, 0],  // Horizontal -
@@ -622,7 +625,7 @@ function canPlaceTile(x, y, tileId, drawLine) {
                 // tile is tileId, increase the counter
                 if (tile === tileId) sameTileIdCounter++;
 
-                // tile is outside of grid OR another color OR a wall -> valid
+                // tile is outside of grid OR another color OR a wall -> break out
                 else if (tile !== TILE.AIR && tile !== TILE.GRID) {
                     sameTileIdCounter = -Infinity;
                     break;
@@ -635,23 +638,21 @@ function canPlaceTile(x, y, tileId, drawLine) {
                     const startY = y - i * dy;
                     const endX = x + (o.lineLength - 1 - i) * dx;
                     const endY = y + (o.lineLength - 1 - i) * dy;
-                    drawInvalidLine(startX, startY, endX, endY);
-                    valid = false;
+                    invalidLinesList.push([startX, startY, endX, endY]);
                 }
                 else return false;
             }
         }
     }
-
-    if (valid) return true;
-    else {
+    if (invalidLinesList.length > 0) {
+        drawInvalidLines(x, y, tileId, invalidLinesList);
         disableGridInput();
         playSound('error');
         o.mistakes++;
         if (o.lives > 0) loseLife();
-        setTimeout(() => enableGridInput(), o.invalidMoveTimeout);
         return false;
     }
+    return true;
 }
 
 
@@ -778,7 +779,7 @@ function updateSpotsLeftAtSpot(x, y) {
 
 
 function zeroSpotsLeft() {
-    if (o.tutorialCallback) o.tutorialCallback('color_complete', {});
+    if (o.seed === 'Tutorial') tutorialOnGameEvent('color_complete', {});
 
     if (o.futureAvailableTiles.length > 0) {
         o.availableTiles.push(o.futureAvailableTiles.shift());
@@ -816,7 +817,7 @@ function gridComplete() {
     }, o.winLooseTimeout);
 
 
-    if (o.tutorialCallback) o.tutorialCallback('grid_complete', {});
+    if (o.seed === 'Tutorial') tutorialOnGameEvent('grid_complete', {});
     playSound('win');
     
     // cascade animation
@@ -826,10 +827,10 @@ function gridComplete() {
         const y = parseInt(tileElement.dataset.y);
 
         const distance = Math.hypot(x - lastX, y - lastY);
-        const delay = (distance / maxDist) * (o.winLooseTimeout - 400);
+        const delay = (distance / maxDist) * 600;
 
         tileElement.style.animationDelay = `${delay}ms`;
-        tileElement.classList.add('is-animating-cascade');
+        tileElement.classList.add('animating-win');
     }
 }
 
@@ -957,27 +958,41 @@ export function camelToTitleCase(str) {
 
 
 
+function drawInvalidLines(x, y, tileId, invalidLinesList) {
+    const tileStaggerDelay = 50;
+    const animationDuration = o.invalidMoveTimeout - (tileStaggerDelay * (o.lineLength - 1));
 
+    // give the main tile the animation
+    const mainTile = getTileElement(x, y);
+    mainTile.style.backgroundColor = `color-mix(in oklab, var(--color-grid-cell) 70%, ${TILE_BLOCK_COLOR_MAP[tileId]} 30%)`;
 
+    invalidLinesList.forEach(([startX, startY, endX, endY], lineIndex) => {
+        const lineStartDelay = lineIndex * o.invalidMoveTimeout;
+        const dx = Math.sign(endX - startX);
+        const dy = Math.sign(endY - startY);
 
-function drawInvalidLine(startX, startY, endX, endY) {
-    const dx = Math.sign(endX - startX);
-    const dy = Math.sign(endY - startY);
+        for (let i = 0; i < o.lineLength; i++) {
+            const tileX = startX + i * dx;
+            const tileY = startY + i * dy;
+            const tileElement = getTileElement(tileX, tileY);
+            const tileStartDelay = lineStartDelay + i * tileStaggerDelay;
 
-    const animationDuration = 0.9 * o.invalidMoveTimeout;
-
-    for (let i = 0; i < o.lineLength; i++) {
-
-        const tileElement = getTileElement(startX + i * dx, startY + i * dy);
-        setTimeout(() => {
-            tileElement.classList.add('invalid-shake-animation');
-            tileElement.style.animationDuration = animationDuration + 'ms';
+            // start animation
             setTimeout(() => {
-                tileElement.classList.remove('invalid-shake-animation');
-                tileElement.style.animationDuration = '';
-            }, animationDuration);
-        }, i * (animationDuration / 10));
-    }
+                tileElement.classList.add('animating-invalid-shake');
+            }, tileStartDelay);
+
+            // end animation
+            if (tileX !== x || tileY !== y || lineIndex === invalidLinesList.length - 1) setTimeout(() => {
+                tileElement.classList.remove('animating-invalid-shake');
+            }, tileStartDelay + animationDuration);
+        }
+    });
+    const allLinesFinished = o.invalidMoveTimeout * invalidLinesList.length;
+    setTimeout(() => {
+        enableGridInput();
+        mainTile.style.backgroundColor = '';
+    }, allLinesFinished);
 }
 
 

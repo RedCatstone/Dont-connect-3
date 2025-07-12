@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Don't connect 3</title>
+    <title>Don't connect 2.5</title>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
 
     <link rel="stylesheet" href="css/main.css">
@@ -13,7 +13,7 @@
 <body>
     <div id="menus">
         <div id="menu-main" class="menu">
-            <h1>Don't connect 3</h1>
+            <h1>Don't connect 2.5</h1>
             <button id="main-play-button" class="big">Play</button>
             <button id="main-tutorial-button">Tutorial</button>
             <button id="main-settings-button">Settings</button>
@@ -54,12 +54,14 @@
                 <span id="level-time-display"></span>
                 <div id="global-time-wrapper"><span id="global-time-display"></span></div>
                 <span id="lives-display"></span>
-                <span id="tutorial-text-display"></span>
             </div>
         </div>
-        <div id="game-grid-sizer">
-            <div id="game-grid-container"><!-- JS --></div>
-            <svg id="game-grid-border-svg"></svg>
+        <div id="game-grid-sizer-height">
+            <span id="tutorial-text-display"></span>
+            <div id="game-grid-sizer-width">
+                <div id="game-grid-grid"><!-- JS --></div>
+                <svg id="game-grid-border-svg"></svg>
+            </div>
         </div>
         <div id="bottom-controls-wrapper">
             <button id="home-button" class="icon"></button>
