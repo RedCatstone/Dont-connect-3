@@ -1,140 +1,35 @@
+import { o, TILE, TILE_CLASS_MAP, TILE_BLOCK_COLOR_MAP, TUTORIAL_STEPS } from './constants.js';
 import { create2dGrid, generateGrid, generateRandomB64String } from './generateGrid.js';
 import { goToMainMenu, playSound, saveStats } from './menu.js';
-import { startTutorial, tutorialOnGameEvent } from './tutorial.js';
 
 
 const gameWrapper = document.getElementById('game-wrapper');
-const gameGridContainer = document.querySelector("#game-grid-grid");
-const gameGridSizerContainer = document.querySelector("#game-grid-sizer-height");
-const gameGridGrid = document.querySelector("#game-grid-grid");
-const gameGridBorderSvg = document.querySelector("#game-grid-border-svg");
-const tileSelectorContainer = document.querySelector("#tile-selector");
-const homeButton = document.querySelector("#home-button");
-const hintButton = document.querySelector("#hint-button");
+const gameGridContainer = document.getElementById('gamegrid-grid');
+const gameGridSizerContainer = document.getElementById('gamegrid-sizer-height');
+const gameGridGrid = document.getElementById('gamegrid-grid');
+const gameGridBorderSvg = document.getElementById('gamegrid-border-svg');
+const tileSelectorContainer = document.getElementById('tile-selector');
+const homeButton = document.getElementById('home-button');
+const hintButton = document.getElementById('hint-button');
 
-const hintUsesDisplay = document.querySelector("#hint-button > .button-counter");
-export const levelTimerInfoDisplay = document.getElementById('level-timer-info');
+const hintUsesDisplay = hintButton.querySelector('.button-counter');
+const levelTimerInfoDisplay = document.getElementById('level-timer-info');
 export const tutorialTextDisplay = document.getElementById('tutorial-text-display');
-const levelDisplay = document.querySelector("#level-display");
-const timerDisplay = document.querySelector("#timer-display");
-const spotsLeftDisplay = document.querySelector("#spots-display");
-const levelTimeDisplay = document.querySelector("#level-time-display");
+const levelDisplay = document.getElementById('level-display');
+const timerDisplay = document.getElementById('timer-display');
+const spotsLeftDisplay = document.getElementById('spots-display');
+const levelTimeDisplay = document.getElementById('level-time-display');
 const globalTimeWrapper = document.getElementById('global-time-wrapper');
-const globalTimeDisplay = document.querySelector("#global-time-display");
-const livesDisplay = document.querySelector("#lives-display");
-const seedDisplay = document.querySelector("#seed-display");
+const globalTimeDisplay = document.getElementById('global-time-display');
+const livesDisplay = document.getElementById('lives-display');
+const seedDisplay = document.getElementById('seed-display');
 
-const levelEndScreen = document.querySelector("#level-end-screen");
-const endScreenTitle = document.querySelector("#end-screen-title");
-const endScreenStats = document.querySelector("#end-screen-stats");
-const endHideButton = document.querySelector("#end-hide-button");
-const endHomeButton = document.querySelector("#end-home-button");
-const endRetryButton = document.querySelector("#end-retry-button");
-
-
-
-// Tile Ids
-export const TILE = {
-    WALL: 1,
-    GRID: 2,
-    AIR: 3,
-    RED: 5,
-    BLUE: 6,
-    YELLOW: 7,
-    PURPLE: 8,
-    WHITE: 9,
-}
-
-// Map tile IDs to CSS classes
-const TILE_CLASS_MAP = {
-    [TILE.WALL]: 'tile wall',
-    [TILE.AIR]: 'tile air',
-    [TILE.GRID]: 'tile grid',
-    [TILE.RED]: 'tile block tile-red',
-    [TILE.BLUE]: 'tile block tile-blue',
-    [TILE.YELLOW]: 'tile block tile-yellow',
-    [TILE.PURPLE]: 'tile block tile-purple',
-    [TILE.WHITE]: 'tile block tile-white'
-};
-
-const TILE_BLOCK_COLOR_MAP = {
-    [TILE.RED]: 'var(--tile-red-color)',
-    [TILE.BLUE]: 'var(--tile-blue-color)',
-    [TILE.YELLOW]: 'var(--tile-yellow-color)',
-    [TILE.PURPLE]: 'var(--tile-purple-color)',
-    [TILE.WHITE]: 'var(--tile-white-color)',
-};
-
-export const ALL_TILE_BLOCKS = [...Object.keys(TILE_BLOCK_COLOR_MAP)];
-
-
-
-export const o = {
-    // grid generated
-    grid: null,
-    gridWidth: null,
-    gridHeight: null,
-    availableTiles: null,
-    futureAvailableTiles: null,
-    botAmount: null,
-    spotsLeftGrid: null,
-
-    // generation settings
-    levelSizeMultiplier: 6,
-    botAmountMultiplier: 1,
-    //hole gen
-    chanceHoles: 0.5,
-    chanceHoleInvert: 0.3,
-    chanceLockedTile: 0.5,
-    // wall gen
-    chanceDrunkWalls: 0.4,
-    drunkRespawnChance: 0.02,
-    drunkStepMultiplier: 3,
-
-    // variables
-    seed: null,
-    level: null,
-    hardcodedLevels: null,
-    time: performance.now(),
-    selectedAvailableTile: 0,
-    inputDisabled: false,
-    spotsLeftCount: null,
-    lives: null,
-    endScreen: false,
-    blocksPlaced: null,
-    mistakes: null,
-    hintsUsed: null,
-    levelTimeDeathTime: null,
-    globalTimeDeathTime: null,
-    activeCountdowns: {},
-    tutorialDissallowValidMoves: false,
-
-    STATS: null,
-    modeSaveLoc: null,
-
-    // mode specifics
-    modeGoalLevel: false,
-    modeFindLast: false,
-    modeHintCount: 0,
-    modeLevelTime: 0,
-    modeLivesCount: 0,
-    modeGlobalTimeGain: 0,
-    
-    // settings
-    lineLength: 3,
-    gainHintEveryLevel: 10,
-    hintsLeft: 0,
-    botAnimationSpeed: 100,  // ms
-    invalidMoveTimeout: 600,
-    defaultSeedLength: 3,
-    volume: 1,
-    winLooseTimeout: 1500,
-
-    placeRandomTiles,
-}
-window.o = o;
-
-
+const levelEndScreen = document.getElementById('level-end-screen');
+const endScreenTitle = document.getElementById('end-screen-title');
+const endScreenStats = document.getElementById('end-screen-stats');
+const endHideButton = document.getElementById('end-hide-button');
+const endHomeButton = document.getElementById('end-home-button');
+const endRetryButton = document.getElementById('end-retry-button');
 
 
 
@@ -171,6 +66,12 @@ export function startMode(customSettings) {
     if (o.modeGlobalTimeGain) startCountdown('global', 0, globalTimeDisplay);
     startGrid();
     startTimer();
+
+    if (o.seed === 'Tutorial') {
+        levelTimerInfoDisplay.style.display = 'none';
+        o.currentTutorialStep = -1;
+        advanceTutorial();
+    }
 }
 
 
@@ -261,7 +162,7 @@ function showHint(timeout, colored=false) {
         if (canPlaceSpot !== SPOTS_LEFT_ID.INITIAL && canPlaceSpot !== SPOTS_LEFT_ID.IMPOSSIBLE) {
             tileElement.classList.add('animating-hint-breathe');
             if (colored) {
-                tileElement.style.backgroundColor = `color-mix(in oklab, var(--color-grid-cell) 70%, ${TILE_BLOCK_COLOR_MAP[canPlaceSpot]} 30%)`;
+                tileElement.style.setProperty('--tile-color', TILE_BLOCK_COLOR_MAP[canPlaceSpot]);
             }
         }
     }
@@ -274,7 +175,7 @@ function clearHint() {
     gameGridContainer.classList.remove('hint-active');
     for (const tileElement of gameGridContainer.children) {
         tileElement.classList.remove('animating-hint-breathe');
-        tileElement.style.backgroundColor = '';
+        tileElement.style.setProperty('--tile-color', '');
     }
 }
 
@@ -286,10 +187,7 @@ window.addEventListener('unload', () => {
     goToMainMenu();
 }));
 endHideButton.addEventListener('click', () => levelEndScreen.classList.toggle('moveup'));
-endRetryButton.addEventListener('click', () => {
-    if (o.seed === 'Tutorial') startTutorial();
-    else startMode(modeSettings);
-});
+endRetryButton.addEventListener('click', () => startMode(modeSettings));
 
 
 
@@ -380,21 +278,21 @@ function incrementGlobalTimeLeft() {
 
 function updateTileSelectorDisplay() {
     tileSelectorContainer.innerHTML = '';
-    o.availableTiles.forEach((availableTile, i) => {
+    for (const [i, availableTile] of o.availableTiles.entries()) {
         const selectableTile = document.createElement('div');
         selectableTile.className = TILE_CLASS_MAP[availableTile];
 
         if (i === o.selectedAvailableTile) selectableTile.classList.add('selected');
         selectableTile.dataset.i = i;
         tileSelectorContainer.append(selectableTile);
-    });
+    }
 
-    o.futureAvailableTiles.forEach((availableTile) => {
+    for (const availableTile of o.futureAvailableTiles) {
         const selectableTile = document.createElement('div');
         selectableTile.className = TILE_CLASS_MAP[availableTile];
         selectableTile.classList.add('future');
         tileSelectorContainer.append(selectableTile);
-    });
+    }
 
     gameWrapper.style.setProperty('--selected-tile-color', TILE_BLOCK_COLOR_MAP[o.availableTiles[o.selectedAvailableTile]]);
     gameWrapper.style.setProperty('--latest-tile-color', TILE_BLOCK_COLOR_MAP[o.availableTiles.at(-1)]);
@@ -444,6 +342,7 @@ function createGridDisplay() {
     gameGridContainer.append(fragment);
     gameGridSizerContainer.style.setProperty('--grid-column-count', o.gridWidth);
     gameGridSizerContainer.style.setProperty('--grid-row-count', o.gridHeight);
+    drawCustomGridBorder();
 }
 
 
@@ -491,7 +390,7 @@ function drawCustomGridBorder() {
     }
 
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('id', 'game-grid-border-path');
+    path.setAttribute('id', 'gamegrid-border-path');
     path.setAttribute('d', pathData);
     gameGridBorderSvg.appendChild(path);
 }
@@ -852,6 +751,41 @@ function gridFail() {
 
 
 
+function advanceTutorial() {
+    const previousStep = TUTORIAL_STEPS[o.currentTutorialStep];
+    const step = TUTORIAL_STEPS[++o.currentTutorialStep];
+
+    o.tutorialDissallowValidMoves = step.waitFor === 'invalid_move';
+
+    let waitingDelay;
+    if (o.currentTutorialStep === 0) {
+        waitingDelay = 0;
+        tutorialTextDisplay.innerHTML = step.text;  // literally no idea why this is neccessary
+    }
+    else if (previousStep?.waitFor === 'grid_complete') waitingDelay = o.winLooseTimeout;
+    else waitingDelay = 300;
+
+    tutorialTextDisplay.style.opacity = '0';
+    setTimeout(() => {
+        tutorialTextDisplay.classList = `tile-${step.color ?? 'red'}`;
+        tutorialTextDisplay.style.opacity = '';
+        tutorialTextDisplay.innerHTML = step.text;
+    }, waitingDelay);
+}
+function tutorialOnGameEvent(eventName) {
+    const step = TUTORIAL_STEPS[o.currentTutorialStep];
+    if (step.waitFor === eventName) advanceTutorial();
+}
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -964,9 +898,9 @@ function drawInvalidLines(x, y, tileId, invalidLinesList) {
 
     // give the main tile the animation
     const mainTile = getTileElement(x, y);
-    mainTile.style.backgroundColor = `color-mix(in oklab, var(--color-grid-cell) 70%, ${TILE_BLOCK_COLOR_MAP[tileId]} 30%)`;
+    mainTile.style.setProperty('--tile-color', TILE_BLOCK_COLOR_MAP[tileId]);
 
-    invalidLinesList.forEach(([startX, startY, endX, endY], lineIndex) => {
+    for (const [lineIndex, [startX, startY, endX, endY]] of invalidLinesList.entries()) {
         const lineStartDelay = lineIndex * o.invalidMoveTimeout;
         const dx = Math.sign(endX - startX);
         const dy = Math.sign(endY - startY);
@@ -987,11 +921,11 @@ function drawInvalidLines(x, y, tileId, invalidLinesList) {
                 tileElement.classList.remove('animating-invalid-shake');
             }, tileStartDelay + animationDuration);
         }
-    });
+    }
     const allLinesFinished = o.invalidMoveTimeout * invalidLinesList.length;
     setTimeout(() => {
         enableGridInput();
-        mainTile.style.backgroundColor = '';
+        mainTile.style.setProperty('--tile-color', '');
     }, allLinesFinished);
 }
 
