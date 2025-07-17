@@ -180,7 +180,7 @@ function renderActiveTabContent() {
         card.dataset.modeCategory = activeTabId;
         card.dataset.mode = mode.id;
         
-        const modeLength = getModeLength(activeTabId, mode.id);
+        const modeLength = mode.settings?.modeGoalLevel ?? getModeLength(activeTabId, mode.id);
         card.querySelector('.mode-title').textContent = camelToTitleCase(mode.title) + (modeLength ? ` (${modeLength})`: '');
         
         const statsSaveLoc = getStatsSaveLoc(activeTabId, mode.id);
