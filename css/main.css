@@ -32,6 +32,13 @@
 
     --color-accent: #00A395;
 
+    --color-author: firebrick;
+    --color-gold: gold;
+    --color-silver: silver;
+    --color-bronze: chocolate;
+
+
+
     --animation-speed: 400ms;
     --menu-speed: 200ms;
 }
@@ -507,6 +514,19 @@ body:not(.menu-active) #menus {
 .mode-card.completed .mode-title::after {
     content: ' ✔️';
 }
+
+
+.mode-card[data-medal="author"] { border: 3px solid var(--color-author); }
+.mode-card[data-medal="gold"] { border: 2px solid var(--color-gold); }
+.mode-card[data-medal="silver"] { border: 2px solid var(--color-silver); }
+.mode-card[data-medal="bronze"] { border: 2px solid var(--color-bronze); }
+
+
+
+
+
+
+
 
 
 .best-stats {

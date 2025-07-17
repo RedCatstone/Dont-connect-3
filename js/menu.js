@@ -81,6 +81,8 @@ const tutorialMode = {
         hardcodedLevels: HARDCODED_TUTORIAL_LEVELS,
         modeGoalLevel: Object.keys(HARDCODED_TUTORIAL_LEVELS).length,
         modeHintCount: 5,
+        medalAuthor: 17000,
+        medalGold: 30000,
     },
 };
 
@@ -91,7 +93,7 @@ const findlastSettings = { modeHintCount: 2, modeFindLast: true };
 const TABS_DATA = {
     normal: [
         tutorialMode,
-        { id: 'endless', title: 'Endless', settings: { ...endlessSettings, modeHintCount: 2 } },
+        { id: 'endless', title: 'Endless', settings: { ...endlessSettings, modeHintCount: 2, medalAuthor: 30, medalGold: 10 } },
         { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, modeHintCount: 2 } },
         { id: 'findlast', title: 'Find Last', settings: { ...findlastSettings, modeHintCount: 2 } },
     ],
@@ -183,14 +185,38 @@ function renderActiveTabContent() {
         
         const statsSaveLoc = getStatsSaveLoc(activeTabId, mode.id);
         if (statsSaveLoc.best) {
+            const bestLevel = statsSaveLoc.best.level;
+            const bestTime = statsSaveLoc.best.time;
+
             const bestStats = card.querySelector('.best-stats');
             const bestLevelSpan = document.createElement('span');
-            bestLevelSpan.textContent = statsSaveLoc.best.level;
+            bestLevelSpan.textContent = bestLevel;
             bestStats.append(bestLevelSpan);
-            if (mode.settings?.modeLevelTime || mode.settings?.modeGlobalTimeGain || mode.settings?.modeGoalLevel) {
+            if (mode.settings?.modeLevelTime || mode.settings?.modeGlobalTimeGain || bestLevel === modeLength + 1) {
                 const bestTimeSpan = document.createElement('span');
-                bestTimeSpan.textContent = formatMinuteSeconds(statsSaveLoc.best.time, 2);
+                bestTimeSpan.textContent = formatMinuteSeconds(bestTime, 2);
                 bestStats.append(bestTimeSpan);
+            }
+
+            const goldMedal = mode.settings?.medalGold;
+            if (goldMedal) {
+                const authorMedal = mode.settings.medalAuthor;
+                if (mode.settings?.modeGoalLevel) {
+                    // time
+                    if (bestLevel === mode.settings.modeGoalLevel + 1) {
+                        if (bestTime <= authorMedal) card.dataset.medal = "author";
+                        else if (bestTime <= goldMedal) card.dataset.medal = "gold";
+                        else if (bestTime <= goldMedal*2) card.dataset.medal = "silver";
+                        else if (bestTime <= goldMedal*5) card.dataset.medal = "bronze";
+                    }
+                }
+                else {
+                    // level
+                    if (bestLevel >= authorMedal) card.dataset.medal = "author";
+                    else if (bestLevel >= goldMedal) card.dataset.medal = "gold";
+                    else if (bestLevel >= goldMedal/2) card.dataset.medal = "silver";
+                    else if (bestLevel >= goldMedal/5) card.dataset.medal = "bronze";
+                }
             }
         }
         card.classList.toggle('completed', statsSaveLoc.best?.level > modeLength);
@@ -324,6 +350,7 @@ function getDailySeed() {
 }
 
 function getModeLength(modeCategory, mode) {
+    return 2;
     if (modeCategory === 'daily') {
         const rand = getRandomFunction(getDailySeed() + mode[0]);
         return Math.floor(12 + 10 * rand());
@@ -440,12 +467,9 @@ export function goToMainMenu() {
 
 
 function switchMenu(menu) {
-    if (currentMenu === menu) return;
-
     if (currentMenu) {
         currentMenu.classList.remove('active');
     }
-
     if (menu) {
         menu.classList.add('active');
         currentMenu = menu;
@@ -462,21 +486,14 @@ function switchMenu(menu) {
 
 
 
-
-
-
-
-
-
-
 const sounds = {};
-loadSound('pOp', 'sounds/pOp.wav');
-loadSound('error', 'sounds/error.wav');
-loadSound('switchTile', 'sounds/switchTile.wav');
-loadSound('win', 'sounds/win.wav');
+loadSound('pOp', 'pOp.wav');
+loadSound('error', 'error.wav');
+loadSound('switchTile', 'switchTile.wav');
+loadSound('win', 'win.wav');
 
-function loadSound(name, path) {
-    sounds[name] = new Audio(path);
+function loadSound(name, fileName) {
+    sounds[name] = new Audio(`sounds/${fileName}`);
     sounds[name].preload = 'auto';
 }
 export function playSound(name) {

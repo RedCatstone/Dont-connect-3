@@ -1,3 +1,4 @@
+import { placeRandomTiles } from "./game.js";
 import { create2dGrid } from "./generateGrid.js";
 
 // Tile Ids
@@ -73,6 +74,7 @@ export const o = {
     activeCountdowns: {},
     tutorialDissallowValidMoves: false,
     currentTutorialStep: null,
+    previousBestLevel: null,
 
     STATS: null,
     modeSaveLoc: null,
@@ -94,6 +96,8 @@ export const o = {
     defaultSeedLength: 3,
     volume: 1,
     winLooseTimeout: 1500,
+
+    placeRandomTiles
 }
 window.o = o;
 

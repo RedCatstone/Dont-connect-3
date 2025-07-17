@@ -57,6 +57,7 @@ export function startMode(customSettings) {
         hintsUsed: 0,
         hintsLeft: customSettings.modeHintCount ?? 0,
         lives: customSettings.modeLivesCount ?? 0,
+        previousBestLevel: customSettings.statsSaveLoc.best?.level ?? 0,
     };
 
     Object.assign(o, defaultSettings, customSettings);
@@ -180,10 +181,10 @@ function clearHint() {
 }
 
 window.addEventListener('unload', () => {
-    if (!o.endScreen && body.classList.contains('game-active')) showEndScreen('quit', 0);
+    if (!o.endScreen && body.classList.contains('game-active')) saveCurrentGameStats(false);
 });
 [homeButton, endHomeButton].forEach(x => x.addEventListener('click', () => {
-    if (!o.endScreen) showEndScreen('quit', 0);
+    if (!o.endScreen) saveCurrentGameStats(false);
     goToMainMenu();
 }));
 endHideButton.addEventListener('click', () => levelEndScreen.classList.toggle('moveup'));
@@ -556,7 +557,7 @@ function canPlaceTile(x, y, tileId, drawLine) {
 
 
 
-function placeRandomTiles(amount, dontPlaceIfLast) {
+export function placeRandomTiles(amount, dontPlaceIfLast) {
     if (!amount) return;
     const allXYPairs = Array.from({ length: o.gridWidth }).flatMap((_, x) => Array.from({ length: o.gridHeight }, (__, y) => [x, y]));
     const randomXY = shuffleArray(allXYPairs);
@@ -707,13 +708,16 @@ function gridComplete() {
     if (o.level === o.modeGoalLevel) {
         showEndScreen('win', o.winLooseTimeout);
     }
-    else gridCompleteTimeout = setTimeout(() => {
-        o.level++;
-        if (o.hintsLeft < 99 && o.level % o.gainHintEveryLevel === 0) hintUsesDisplay.textContent = ++o.hintsLeft;
-        if (o.modeGlobalTimeGain) startCountdown('global', (globalTimeLeft + o.winLooseTimeout) / 1000, globalTimeDisplay);
-        enableGridInput();
-        startGrid();
-    }, o.winLooseTimeout);
+    else {
+        saveCurrentGameStats(true);
+        gridCompleteTimeout = setTimeout(() => {
+            o.level++;
+            if (o.hintsLeft < 99 && o.level % o.gainHintEveryLevel === 0) hintUsesDisplay.textContent = ++o.hintsLeft;
+            if (o.modeGlobalTimeGain) startCountdown('global', (globalTimeLeft + o.winLooseTimeout) / 1000, globalTimeDisplay);
+            enableGridInput();
+            startGrid();
+        }, o.winLooseTimeout);
+    }
 
 
     if (o.seed === 'Tutorial') tutorialOnGameEvent('grid_complete', {});
@@ -739,7 +743,6 @@ function gridFail() {
 
     showEndScreen('lose', o.winLooseTimeout / 2);
     playSound('error');
-    showHint(0, true);
 }
 
 
@@ -785,6 +788,49 @@ function tutorialOnGameEvent(eventName) {
 
 
 
+function saveCurrentGameStats(gridWasSuccess) {
+    const gameStats = {
+        level: o.level + gridWasSuccess,   // +1 level if grid was completed successfully
+        time: Math.round(performance.now() - o.time),
+        blocksPlaced: o.blocksPlaced,
+        mistakes: o.mistakes,
+        hintsUsed: o.hintsUsed,
+        seed: o.seed,
+    };
+    
+    if (gridWasSuccess) o.statsSaveLoc.gridsDone = (o.statsSaveLoc.gridsDone || 0) + 1;
+
+    const previousBestTime = o.statsSaveLoc.best?.time ?? Infinity;
+    const newLevelRecord = gameStats.level > o.previousBestLevel;
+    const newTimeRecord = gameStats.level === o.previousBestLevel  &&  gameStats.time < previousBestTime;
+    if (newLevelRecord || newTimeRecord) o.statsSaveLoc.best = gameStats;
+
+    // check if we can continue
+    if (gameStats.level > 1) {
+        if (!o.endScreen && !(o.modeGlobalTimeGain || o.modeLevelTime)) {
+            const toSave = { ...gameStats };
+            if (o.mode === 'custom') {
+                Object.assign(toSave, modeSettings);
+                delete toSave.statsSaveLoc;
+            }
+            toSave.hintsLeft = o.hintsLeft;
+            toSave.previousBestLevel = o.previousBestLevel;
+            if (o.modeLivesCount > 1) toSave.lives = o.lives;
+            o.statsSaveLoc.continue = toSave;
+        }
+        else delete o.statsSaveLoc.continue;
+    }
+    saveStats();
+
+    return { gameStats, newLevelRecord, newTimeRecord };
+}
+
+
+
+
+
+
+
 
 
 
@@ -796,49 +842,14 @@ function showEndScreen(status, timeout) {
     for (const name in o.activeCountdowns) stopCountdown(name);
     o.endScreen = true;
 
-    const endStats = {
-        level: o.level + (status === 'win'),
-        time: Math.round(performance.now() - o.time),
-        blocksPlaced: o.blocksPlaced,
-        mistakes: o.mistakes,
-        hintsUsed: o.hintsUsed,
-        seed: o.seed,
-    };
-    
-    // --- STATS ---
-    /*if (status !== 'quit') */ o.statsSaveLoc.played = (o.statsSaveLoc.played || 0) + 1;
+    const { gameStats, newLevelRecord, newTimeRecord } = saveCurrentGameStats(status === 'win');
 
-    const previousBestLevel = o.statsSaveLoc.best?.level ?? 0;
-    const previousBestTime = o.statsSaveLoc.best?.time ?? Infinity;
-    const newLevelRecord = endStats.level > previousBestLevel;
-    const newTimeRecord = o.modeGoalLevel && (endStats.level === previousBestLevel && (endStats.time < previousBestTime));
-    if (newLevelRecord || newTimeRecord) o.statsSaveLoc.best = endStats;
-
-    // check if we can continue
-    if (endStats.level > 1) {
-        if (status === 'quit' && (!(o.modeGlobalTimeGain || o.modeLevelTime))) {
-            let toSave = {};
-            if (o.mode === 'custom') {
-                Object.assign(toSave, modeSettings);
-                delete toSave.statsSaveLoc;
-            }
-            Object.assign(toSave, endStats);
-            toSave.hintsLeft = o.hintsLeft;
-            if (o.modeLivesCount > 1) toSave.lives = o.lives;
-            o.statsSaveLoc.continue = toSave;
-        }
-        else delete o.statsSaveLoc.continue;
-    }
-    saveStats();
-
-
-    // --- Actually display the end screen ---
     setTimeout(() => {
         endScreenTitle.textContent = `You ${status}!`;
         endScreenStats.innerHTML = '';
 
 
-        for (let [key, value] of Object.entries(endStats)) {
+        for (let [key, value] of Object.entries(gameStats)) {
             const statItem = document.createElement('div');
             statItem.className = 'stat-item';
 
@@ -857,7 +868,7 @@ function showEndScreen(status, timeout) {
             endScreenStats.appendChild(statItem);
         }
 
-
+        showHint(0, true);
         levelEndScreen.classList.add('visible');
         setTimeout(() => levelEndScreen.classList.add('moveup'), 30);
     }, timeout);
