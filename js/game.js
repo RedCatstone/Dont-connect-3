@@ -67,12 +67,6 @@ export function startMode(customSettings) {
     if (o.modeGlobalTimeGain) startCountdown('global', 0, globalTimeDisplay);
     startGrid();
     startTimer();
-
-    if (o.seed === 'Tutorial') {
-        levelTimerInfoDisplay.style.display = 'none';
-        o.currentTutorialStep = -1;
-        advanceTutorial();
-    }
 }
 
 
@@ -83,8 +77,8 @@ function startGrid() {
     // { grid, availableTiles, futureAvailableTiles, botAmount }
     const generatedGrid = o.hardcodedLevels[o.level] ?? generateGrid(o.seed, o.level);
     o.grid = generatedGrid.grid.map(x => [...x]);
-    o.gridWidth = generatedGrid.grid.length;
-    o.gridHeight = generatedGrid.grid[0].length;
+    o.gridHeight = generatedGrid.grid.length;
+    o.gridWidth = generatedGrid.grid[0].length;
     o.botAmount = generatedGrid.botAmount;
     o.availableTiles = [...generatedGrid.availableTiles];
     o.futureAvailableTiles = [...generatedGrid.futureAvailableTiles];
@@ -104,6 +98,12 @@ function startGrid() {
     }
     if (o.modeFindLast) placeRandomTiles(Infinity, true);
     if (o.modeGlobalTimeGain) incrementGlobalTimeLeft();
+    
+    if (o.seed === 'Tutorial') {
+        levelTimerInfoDisplay.style.display = 'none';
+        o.tutorialSubStep = -1;
+        advanceTutorial();
+    }
 }
 
 
@@ -124,7 +124,7 @@ gameGridContainer.addEventListener('click', (event) => {
     if (target.className.includes(TILE_CLASS_MAP[TILE.GRID])) {
         const x = parseInt(target.dataset.x);
         const y = parseInt(target.dataset.y);
-        userPlaceTile(x, y, o.availableTiles[o.selectedAvailableTile]);
+        userPlaceTile(y, x, o.availableTiles[o.selectedAvailableTile]);
     }
 });
 
@@ -159,7 +159,7 @@ function showHint(timeout, colored=false) {
     hintUsed = true;
     if (timeout) hintUsesDisplay.classList.add('using-hint');
     for (const tileElement of gameGridContainer.children) {
-        const canPlaceSpot = o.spotsLeftGrid[tileElement.dataset.x][tileElement.dataset.y];
+        const canPlaceSpot = o.spotsLeftGrid[tileElement.dataset.y][tileElement.dataset.x];
         if (canPlaceSpot !== SPOTS_LEFT_ID.INITIAL && canPlaceSpot !== SPOTS_LEFT_ID.IMPOSSIBLE) {
             tileElement.classList.add('animating-hint-breathe');
             if (colored) {
@@ -334,9 +334,9 @@ function createGridDisplay() {
     for (let y = 0; y < o.gridHeight; y++) {
         for (let x = 0; x < o.gridWidth; x++) {
             const gridCell = document.createElement('div');
-            gridCell.className = TILE_CLASS_MAP[o.grid[x][y]];
-            gridCell.dataset.x = x;
+            gridCell.className = TILE_CLASS_MAP[o.grid[y][x]];
             gridCell.dataset.y = y;
+            gridCell.dataset.x = x;
             fragment.append(gridCell);
         }
     }
@@ -363,26 +363,26 @@ function drawCustomGridBorder() {
     const overlap = tileSize / 10;
     let pathData = '';
 
-    const isWall = (x, y) => (o.grid[x]?.[y] ?? TILE.WALL) === TILE.WALL;
+    const isWall = (y, x) => (o.grid[y]?.[x] ?? TILE.WALL) === TILE.WALL;
 
     for (let y = 0; y < o.gridHeight; y++) {
         for (let x = 0; x < o.gridWidth; x++) {
-            if (isWall(x, y)) continue;
+            if (isWall(y, x)) continue;
 
             // top and bottom
             for (const dy of [-1, 1]) {
-                if (isWall(x, y + dy)) {
-                    const startX = x * tileSize - overlap * (isWall(x - 1, y + dy) ? 1 : -1);
-                    const endX = (x + 1) * tileSize + overlap * (isWall(x + 1, y + dy) ? 1 : -1);
+                if (isWall(y + dy, x)) {
+                    const startX = x * tileSize - overlap * (isWall(y + dy, x - 1) ? 1 : -1);
+                    const endX = (x + 1) * tileSize + overlap * (isWall(y + dy, x + 1) ? 1 : -1);
                     const lineY = (y + (dy === 1)) * tileSize + overlap * dy;
                     pathData += `M ${startX} ${lineY} L ${endX} ${lineY} `;
                 }
             }
             // left and right
             for (const dx of [-1, 1]) {
-                if (isWall(x + dx, y)) {
-                    const startY = y * tileSize - overlap * (isWall(x + dx, y - 1) ? 1 : -1);
-                    const endY = (y + 1) * tileSize + overlap * (isWall(x + dx, y + 1) ? 1 : -1);
+                if (isWall(y, x + dx)) {
+                    const startY = y * tileSize - overlap * (isWall(y - 1, x + dx) ? 1 : -1);
+                    const endY = (y + 1) * tileSize + overlap * (isWall(y + 1, x + dx) ? 1 : -1);
                     const lineX = (x + (dx === 1)) * tileSize + overlap * dx;
                     pathData += `M ${lineX} ${startY} L ${lineX} ${endY} `;
                 }
@@ -410,8 +410,8 @@ function drawCustomGridBorder() {
 
 
 
-function getTileElement(x, y) {
-    return gameGridContainer.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+function getTileElement(y, x) {
+    return gameGridContainer.querySelector(`[data-y="${y}"][data-x="${x}"]`);
 }
 
 
@@ -446,14 +446,14 @@ function switchToAvailableTile(index) {
 
 
 let lastX, lastY;
-function userPlaceTile(x, y, tileId) {
-    if (canPlaceTile(x, y, tileId, true)) {
+function userPlaceTile(y, x, tileId) {
+    if (canPlaceTile(y, x, tileId, true)) {
         if (!o.tutorialDissallowValidMoves) {
-            if (o.seed === 'Tutorial') tutorialOnGameEvent('tile_place', { x, y, tileId });
+            if (o.seed === 'Tutorial') tutorialOnGameEvent('tile_place');
             
             lastX = x;
             lastY = y
-            const { endBots } = placeTile(x, y, tileId);
+            const { endBots } = placeTile(y, x, tileId);
             
             if (!endBots) placeRandomTiles(o.botAmount);
             o.blocksPlaced++;
@@ -466,24 +466,24 @@ function userPlaceTile(x, y, tileId) {
             }
         }
     }
-    else if (o.seed === 'Tutorial') tutorialOnGameEvent('invalid_move', { x, y, tileId });
+    else if (o.seed === 'Tutorial') tutorialOnGameEvent('invalid_move');
 
     gameGridContainer.classList.remove('hint-active');
 }
 
-function placeTile(x, y, tileId, displayAfterDelay, dontPlaceIfLast) {
-    o.grid[x][y] = tileId;
-    updateSpotsLeftAtSpot(x, y);
+function placeTile(y, x, tileId, displayAfterDelay, dontPlaceIfLast) {
+    o.grid[y][x] = tileId;
+    updateSpotsLeftAtSpot(y, x);
     const spotsLeft = o.spotsLeftCount;
 
     if (dontPlaceIfLast && spotsLeft === 0) {
-        o.grid[x][y] = TILE.GRID;
-        updateSpotsLeftAtSpot(x, y);
+        o.grid[y][x] = TILE.GRID;
+        updateSpotsLeftAtSpot(y, x);
         return { didntPlaceLast: true };
     }
 
-    if (!displayAfterDelay) placeTileVisual(x, y, tileId, spotsLeft);
-    else setTimeout(() => placeTileVisual(x, y, tileId, Math.max(o.spotsLeftCount, spotsLeft)), displayAfterDelay);
+    if (!displayAfterDelay) placeTileVisual(y, x, tileId, spotsLeft);
+    else setTimeout(() => placeTileVisual(y, x, tileId, Math.max(o.spotsLeftCount, spotsLeft)), displayAfterDelay);
     
     if (o.spotsLeftCount === 0) {
         zeroSpotsLeft();
@@ -492,8 +492,8 @@ function placeTile(x, y, tileId, displayAfterDelay, dontPlaceIfLast) {
     }
     return {};
 }
-function placeTileVisual(x, y, tileId, spotsLeft) {
-    const tileElement = getTileElement(x, y);
+function placeTileVisual(y, x, tileId, spotsLeft) {
+    const tileElement = getTileElement(y, x);
     tileElement.className = TILE_CLASS_MAP[tileId];
     createBlockPlaceParticles(tileElement);
     playSound('pOp');
@@ -502,25 +502,25 @@ function placeTileVisual(x, y, tileId, spotsLeft) {
 
 
 
-function canPlaceTile(x, y, tileId, drawLine) {
-    if (o.grid[x][y] !== TILE.GRID) return false;
+function canPlaceTile(y, x, tileId, drawLine) {
+    if (o.grid[y][x] !== TILE.GRID) return false;
     const invalidLinesList = [];
 
     const directions = [
-        [1, 0],  // Horizontal -
-        [0, 1],  // Vertical |
+        [0, 1],  // Horizontal -
+        [1, 0],  // Vertical |
         [1, 1],  // Diagonal \
-        [1, -1]  // Diagonal /
+        [-1, 1]  // Diagonal /
     ];
 
-    for (const [dx, dy] of directions) {
+    for (const [dy, dx] of directions) {
         for (let i = 0; i < o.lineLength; i++) {
             let sameTileIdCounter = 0;
             for (let j = 0; j < o.lineLength; j++) {
-                // tile is the spot we are checking (x, y) -> skip
+                // tile is the spot we are checking (y, x) -> skip
                 if (i === j) continue;
 
-                const tile = o.grid[x + (j - i) * dx]?.[y + (j - i) * dy];
+                const tile = o.grid[y + (j - i) * dy]?.[x + (j - i) * dx];
 
                 // tile is tileId, increase the counter
                 if (tile === tileId) sameTileIdCounter++;
@@ -534,18 +534,18 @@ function canPlaceTile(x, y, tileId, drawLine) {
             // too many found in one line -> nope.
             if (sameTileIdCounter > o.lineLength - 3) {
                 if (drawLine) {
-                    const startX = x - i * dx;
                     const startY = y - i * dy;
-                    const endX = x + (o.lineLength - 1 - i) * dx;
+                    const startX = x - i * dx;
                     const endY = y + (o.lineLength - 1 - i) * dy;
-                    invalidLinesList.push([startX, startY, endX, endY]);
+                    const endX = x + (o.lineLength - 1 - i) * dx;
+                    invalidLinesList.push([startY, startX, endY, endX]);
                 }
                 else return false;
             }
         }
     }
     if (invalidLinesList.length > 0) {
-        drawInvalidLines(x, y, tileId, invalidLinesList);
+        drawInvalidLines(y, x, tileId, invalidLinesList);
         disableGridInput();
         playSound('error');
         o.mistakes++;
@@ -559,19 +559,19 @@ function canPlaceTile(x, y, tileId, drawLine) {
 
 export function placeRandomTiles(amount, dontPlaceIfLast) {
     if (!amount) return;
-    const allXYPairs = Array.from({ length: o.gridWidth }).flatMap((_, x) => Array.from({ length: o.gridHeight }, (__, y) => [x, y]));
+    const allXYPairs = Array.from({ length: o.gridWidth }).flatMap((_, x) => Array.from({ length: o.gridHeight }, (__, y) => [y, x]));
     const randomXY = shuffleArray(allXYPairs);
 
     let placed = 0;
     let changes = true;
     while (changes) {
         changes = false;
-        for (const [x, y] of randomXY) {
-            const spotsLeftTile = o.spotsLeftGrid[x][y];
+        for (const [y, x] of randomXY) {
+            const spotsLeftTile = o.spotsLeftGrid[y][x];
             if (spotsLeftTile > 0) {
                 // can place tile
                 const displayAfterDelay = (placed + 1) * o.botAnimationSpeed / amount;
-                const { didntPlaceLast, endBots } = placeTile(x, y, spotsLeftTile, displayAfterDelay, dontPlaceIfLast);
+                const { didntPlaceLast, endBots } = placeTile(y, x, spotsLeftTile, displayAfterDelay, dontPlaceIfLast);
                 if (endBots) return;
                 if (!didntPlaceLast) {
                     placed++;
@@ -602,21 +602,21 @@ const SPOTS_LEFT_ID = {
 
 
 function calculateSpotsLeft() {
-    o.spotsLeftGrid = create2dGrid(o.gridWidth, o.gridHeight, SPOTS_LEFT_ID.INITIAL);
+    o.spotsLeftGrid = create2dGrid(o.gridHeight, o.gridWidth, SPOTS_LEFT_ID.INITIAL);
     o.spotsLeftCount = 0;
-    for (let x = 0; x < o.gridWidth; x++) {
-        for (let y = 0; y < o.gridHeight; y++) {
-            const tile = o.grid[x][y];
+    for (let y = 0; y < o.gridHeight; y++) {
+        for (let x = 0; x < o.gridWidth; x++) {
+            const tile = o.grid[y][x];
             if (tile === TILE.GRID) {
                 for (const availableTile of o.availableTiles) {
-                    if (canPlaceTile(x, y, availableTile, false)) {
-                        o.spotsLeftGrid[x][y] = availableTile;
+                    if (canPlaceTile(y, x, availableTile, false)) {
+                        o.spotsLeftGrid[y][x] = availableTile;
                         o.spotsLeftCount++;
                         break;
                     }
                 }
             }
-            else o.spotsLeftGrid[x][y] = SPOTS_LEFT_ID.IMPOSSIBLE;
+            else o.spotsLeftGrid[y][x] = SPOTS_LEFT_ID.IMPOSSIBLE;
         }
     }
     spotsLeftDisplay.textContent = `${o.spotsLeftCount} spot${o.spotsLeftCount !== 1 ? 's' : ''}`;
@@ -624,51 +624,51 @@ function calculateSpotsLeft() {
 }
 
 
-function updateSpotsLeftAtSpot(x, y) {
+function updateSpotsLeftAtSpot(y, x) {
     const directions = [
-        [1, 0],  // Horizontal -
-        [0, 1],  // Vertical |
+        [0, 1],  // Horizontal -
+        [1, 0],  // Vertical |
         [1, 1],  // Diagonal \
-        [1, -1]  // Diagonal /
+        [-1, 1]  // Diagonal /
     ];
 
     // mark as completely unplacable
-    if (o.grid[x][y] !== TILE.GRID) {
-        o.spotsLeftGrid[x][y] = SPOTS_LEFT_ID.IMPOSSIBLE;
+    if (o.grid[y][x] !== TILE.GRID) {
+        o.spotsLeftGrid[y][x] = SPOTS_LEFT_ID.IMPOSSIBLE;
         o.spotsLeftCount--;
     }
     else for (const availableTile of o.availableTiles) {
-        if (canPlaceTile(x, y, availableTile, false)) {
-            o.spotsLeftGrid[x][y] = availableTile;
+        if (canPlaceTile(y, x, availableTile, false)) {
+            o.spotsLeftGrid[y][x] = availableTile;
             o.spotsLeftCount++;
             break;
         }
     }
 
-    for (const [dx, dy] of directions) {
+    for (const [dy, dx] of directions) {
         for (let i = 1 - o.lineLength; i < o.lineLength; i++) {
             // if (0, 5) is being updated, update (0, 3) (0, 4) . (0, 6) (0, 7) horizontally
             if (i === 0) continue;
 
-            const checkX = x + i * dx;
             const checkY = y + i * dy;
-            const previousCanPlace = o.spotsLeftGrid[checkX]?.[checkY];
+            const checkX = x + i * dx;
+            const previousCanPlace = o.spotsLeftGrid[checkY]?.[checkX];
             if (previousCanPlace === undefined || previousCanPlace === SPOTS_LEFT_ID.IMPOSSIBLE) continue;
             let canPlace = false;
 
             for (const availableTile of o.availableTiles) {
-                if (canPlaceTile(checkX, checkY, availableTile, false)) {
+                if (canPlaceTile(checkY, checkX, availableTile, false)) {
                     if (previousCanPlace === SPOTS_LEFT_ID.INITIAL) {
                         // if it was previously marked as unplacable
                         o.spotsLeftCount++;
                     }
                     canPlace = true;
-                    o.spotsLeftGrid[checkX][checkY] = availableTile;
+                    o.spotsLeftGrid[checkY][checkX] = availableTile;
                     break;
                 }
             }
             if (!canPlace && previousCanPlace !== SPOTS_LEFT_ID.INITIAL) {
-                o.spotsLeftGrid[checkX][checkY] = SPOTS_LEFT_ID.INITIAL;
+                o.spotsLeftGrid[checkY][checkX] = SPOTS_LEFT_ID.INITIAL;
                 o.spotsLeftCount--;
             }
         }
@@ -679,7 +679,7 @@ function updateSpotsLeftAtSpot(x, y) {
 
 
 function zeroSpotsLeft() {
-    if (o.seed === 'Tutorial') tutorialOnGameEvent('color_complete', {});
+    if (o.seed === 'Tutorial') tutorialOnGameEvent('color_complete');
 
     if (o.futureAvailableTiles.length > 0) {
         o.availableTiles.push(o.futureAvailableTiles.shift());
@@ -720,7 +720,7 @@ function gridComplete() {
     }
 
 
-    if (o.seed === 'Tutorial') tutorialOnGameEvent('grid_complete', {});
+    if (o.seed === 'Tutorial') tutorialOnGameEvent('grid_complete');
     playSound('win');
     
     // cascade animation
@@ -729,7 +729,7 @@ function gridComplete() {
         const x = parseInt(tileElement.dataset.x);
         const y = parseInt(tileElement.dataset.y);
 
-        const distance = Math.hypot(x - lastX, y - lastY);
+        const distance = Math.hypot(y - lastY, x - lastX);
         const delay = (distance / maxDist) * 600;
 
         tileElement.style.animationDelay = `${delay}ms`;
@@ -755,29 +755,22 @@ function gridFail() {
 
 
 function advanceTutorial() {
-    const previousStep = TUTORIAL_STEPS[o.currentTutorialStep];
-    const step = TUTORIAL_STEPS[++o.currentTutorialStep];
+    const levelSteps = TUTORIAL_STEPS[o.level];
+    const step = levelSteps[++o.tutorialSubStep];
 
-    o.tutorialDissallowValidMoves = step.waitFor === 'invalid_move';
-
-    let waitingDelay;
-    if (o.currentTutorialStep === 0) {
-        waitingDelay = 0;
-        tutorialTextDisplay.innerHTML = step.text;  // literally no idea why this is neccessary
-    }
-    else if (previousStep?.waitFor === 'grid_complete') waitingDelay = o.winLooseTimeout;
-    else waitingDelay = 300;
-
+    // fade out
     tutorialTextDisplay.style.opacity = '0';
-    setTimeout(() => {
-        tutorialTextDisplay.classList = `tile-${step.color ?? 'red'}`;
-        tutorialTextDisplay.style.opacity = '';
+
+    if (step) setTimeout(() => {
+        // fade in
+        tutorialTextDisplay.classList = `tile-${step.textColor ?? 'red'}`;
+        tutorialTextDisplay.style.opacity = '1';
         tutorialTextDisplay.innerHTML = step.text;
-    }, waitingDelay);
+    }, (o.tutorialSubStep === 0) ? 0 : 300);
 }
 function tutorialOnGameEvent(eventName) {
-    const step = TUTORIAL_STEPS[o.currentTutorialStep];
-    if (step.waitFor === eventName) advanceTutorial();
+    const step = TUTORIAL_STEPS[o.level][o.tutorialSubStep];
+    if (step?.waitFor === eventName) advanceTutorial();
 }
 
 
@@ -903,23 +896,23 @@ export function camelToTitleCase(str) {
 
 
 
-function drawInvalidLines(x, y, tileId, invalidLinesList) {
+function drawInvalidLines(y, x, tileId, invalidLinesList) {
     const tileStaggerDelay = 50;
     const animationDuration = o.invalidMoveTimeout - (tileStaggerDelay * (o.lineLength - 1));
 
     // give the main tile the animation
-    const mainTile = getTileElement(x, y);
+    const mainTile = getTileElement(y, x);
     mainTile.style.setProperty('--tile-color', TILE_BLOCK_COLOR_MAP[tileId]);
 
-    for (const [lineIndex, [startX, startY, endX, endY]] of invalidLinesList.entries()) {
+    for (const [lineIndex, [startY, startX, endY, endX]] of invalidLinesList.entries()) {
         const lineStartDelay = lineIndex * o.invalidMoveTimeout;
-        const dx = Math.sign(endX - startX);
         const dy = Math.sign(endY - startY);
+        const dx = Math.sign(endX - startX);
 
         for (let i = 0; i < o.lineLength; i++) {
-            const tileX = startX + i * dx;
             const tileY = startY + i * dy;
-            const tileElement = getTileElement(tileX, tileY);
+            const tileX = startX + i * dx;
+            const tileElement = getTileElement(tileY, tileX);
             const tileStartDelay = lineStartDelay + i * tileStaggerDelay;
 
             // start animation
@@ -928,7 +921,7 @@ function drawInvalidLines(x, y, tileId, invalidLinesList) {
             }, tileStartDelay);
 
             // end animation
-            if (tileX !== x || tileY !== y || lineIndex === invalidLinesList.length - 1) setTimeout(() => {
+            if (tileY !== y || tileX !== x || lineIndex === invalidLinesList.length - 1) setTimeout(() => {
                 tileElement.classList.remove('animating-invalid-shake');
             }, tileStartDelay + animationDuration);
         }

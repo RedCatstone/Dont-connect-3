@@ -147,6 +147,7 @@
     color: color-mix(in oklab, var(--tile-color) 50%, var(--color-text) 50%);
     transition: opacity 300ms ease-in-out;
     z-index: 10;
+    opacity: 0;
 }
 #tutorial-text-display:not(:empty) {
     margin-bottom: 3vw;

@@ -41,8 +41,8 @@ export const ALL_TILE_BLOCKS = [...Object.keys(TILE_BLOCK_COLOR_MAP)];
 export const o = {
     // grid generated
     grid: null,
-    gridWidth: null,
     gridHeight: null,
+    gridWidth: null,
     availableTiles: null,
     futureAvailableTiles: null,
     botAmount: null,
@@ -73,7 +73,7 @@ export const o = {
     globalTimeDeathTime: null,
     activeCountdowns: {},
     tutorialDissallowValidMoves: false,
-    currentTutorialStep: null,
+    tutorialSubStep: null,
     previousBestLevel: null,
 
     STATS: null,
@@ -123,49 +123,32 @@ window.o = o;
 
 
 
-export const TUTORIAL_STEPS = [
-    { // Level 1
-        text: "Welcome! Tap an empty spot to place a tile.",
-        waitFor: 'tile_place',
-    },
-    {
-        text: "Alright, try to place another tile!",
-        waitFor: 'tile_place',
-    },
-    {
-        text: "The grid is complete if you can't place any more tiles.",
-        waitFor: 'grid_complete',
-    },
-    { // Level 2
-        text: "Nice! Let's try a larger grid.",
-        waitFor: 'grid_complete',
-    },
-    { // Level 3
-        text: "Neat! Now solve this one.",
-        waitFor: 'grid_complete',
-    },
-    { // Level 4
-        text: "Keep going!",
-        waitFor: 'color_complete',
-    },
-    {
-        text: "Blue unlocked. Select it!",
-        color: "blue",
-        waitFor: 'grid_complete',
-    },
-    { // Level 5
-        text: "If you ever get stuck, use a Hint.",
-        waitFor: 'grid_complete',
-    },
-    {
-        text: "Tutorial Complete!",
-    }
-];
+export const TUTORIAL_STEPS = {
+    1: [
+        { text: "Welcome! Tap an empty spot to place a tile.", waitFor: 'tile_place' },
+        { text: "Alright, try to place another tile!", waitFor: 'tile_place' },
+        { text: "The grid is complete if you can't place any more tiles.", waitFor: 'grid_complete' }
+    ],
+    2: [
+        { text: "Nice! Let's try a larger grid.", waitFor: 'grid_complete' }
+    ],
+    3: [
+        { text: "Neat! Now solve this one.", waitFor: 'grid_complete' }
+    ],
+    4: [
+        { text: "Keep going!", waitFor: 'color_complete' },
+        { text: "Blue unlocked. Select it!", textColor: "blue", waitFor: 'grid_complete' }
+    ],
+    5: [
+        { text: "If you ever get stuck, use a Hint.", waitFor: 'grid_complete' },
+        { text: "Tutorial Complete!" }
+    ],
+};
 
 
 export const HARDCODED_TUTORIAL_LEVELS = {
     1: {
-        grid: create2dGrid(5, 3, T.GRID),
+        grid: create2dGrid(3, 5, T.GRID),
         availableTiles: [T.RED],
         futureAvailableTiles: [],
         botAmount: 0,
@@ -178,13 +161,11 @@ export const HARDCODED_TUTORIAL_LEVELS = {
     },
     3: {
         grid: [
-            [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
-            [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
-            [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
-            [T.WALL,T.GRID,T.GRID,T.GRID,T.WALL],
-            [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
-            [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
-            [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
+            [T.GRID,T.GRID,T.GRID,T.WALL,T.GRID,T.GRID,T.GRID],
+            [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
+            [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
+            [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
+            [T.GRID,T.GRID,T.GRID,T.WALL,T.GRID,T.GRID,T.GRID],
         ],
         availableTiles: [T.RED],
         futureAvailableTiles: [],
@@ -192,11 +173,9 @@ export const HARDCODED_TUTORIAL_LEVELS = {
     },
     4: {
         grid: [
-            [T.GRID,T.GRID,T.GRID],
-            [T.WALL,T.GRID,T.GRID],
-            [T.GRID,T.GRID,T.GRID],
-            [T.GRID,T.GRID,T.WALL],
-            [T.GRID,T.GRID,T.GRID],
+            [T.GRID,T.WALL,T.GRID,T.GRID,T.GRID],
+            [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
+            [T.GRID,T.GRID,T.GRID,T.WALL,T.GRID],
         ],
         availableTiles: [T.RED],
         futureAvailableTiles: [T.BLUE],
@@ -204,11 +183,12 @@ export const HARDCODED_TUTORIAL_LEVELS = {
     },
     5: {
         grid: [
-            [T.WALL,T.GRID,T.GRID,T.GRID,T.GRID,T.WALL],
-            [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
-            [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
-            [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
-            [T.WALL,T.GRID,T.GRID,T.GRID,T.GRID,T.WALL],
+            [T.WALL,T.GRID,T.GRID,T.GRID,T.WALL],
+            [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
+            [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
+            [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
+            [T.GRID,T.GRID,T.GRID,T.GRID,T.GRID],
+            [T.WALL,T.GRID,T.GRID,T.GRID,T.WALL],
         ],
         availableTiles: [T.RED],
         futureAvailableTiles: [T.BLUE, T.PURPLE],

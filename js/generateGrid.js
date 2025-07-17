@@ -11,11 +11,11 @@ export function generateGrid(seed, level) {
     // grid size
     const total = (Math.log(level + 1) * o.levelSizeMultiplier);
     const randomSplit = rand() * total/4;
-    let gridWidth = 2 + Math.round(total/4 + randomSplit);
-    let gridHeight = 2 + Math.round(total/2 - randomSplit);
+    const gridHeight = 2 + Math.round(total/2 - randomSplit);
+    const gridWidth = 2 + Math.round(total/4 + randomSplit);
 
     // walls
-    const grid = generateWallsDrunkenWalk(gridWidth, gridHeight, rand);
+    const grid = generateWallsDrunkenWalk(gridHeight, gridWidth, rand);
     resizeGridToFit(grid);
 
     // symmetry
@@ -53,8 +53,8 @@ export function generateGrid(seed, level) {
 
 
 
-export function create2dGrid(width, height, fill) {
-    return Array(width).fill(null).map(() => Array(height).fill(fill));
+export function create2dGrid(height, width, fill) {
+    return Array(height).fill(null).map(() => Array(width).fill(fill));
 }
 
 
@@ -71,7 +71,7 @@ export function create2dGrid(width, height, fill) {
 
 
 
-export function randomTransformPattern(pattern, rand, gridWidth, gridHeight) {
+export function randomTransformPattern(pattern, rand, gridHeight, gridWidth) {
     let patternShape = pattern.shape
     let patternHeight = patternShape.length;
     let patternWidth = patternShape[0].length;
@@ -96,9 +96,9 @@ export function randomTransformPattern(pattern, rand, gridWidth, gridHeight) {
     }
 
     // scale randomly
-    const maxScaleX = Math.floor(gridWidth / patternWidth);
     const maxScaleY = Math.floor(gridHeight / patternHeight);
-    const maxScale = Math.min(maxScaleX, maxScaleY);
+    const maxScaleX = Math.floor(gridWidth / patternWidth);
+    const maxScale = Math.min(maxScaleY, maxScaleX);
     const scale = 1 + Math.floor((1 - rand()**2) * maxScale);
     patternShape = scaleMatrix(patternShape, scale);
 
@@ -139,8 +139,8 @@ function scaleMatrix(matrix, scale) {
     const newMatrix = Array(height).fill(null).map(() => Array(width));
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
-            const originalX = Math.floor(x / scale);
             const originalY = Math.floor(y / scale);
+            const originalX = Math.floor(x / scale);
             newMatrix[y][x] = matrix[originalY][originalX];
         }
     }
@@ -200,7 +200,7 @@ function placeRandomHolePatterns(numPatterns, grid, rand) {
     });
     if (filteredGenPatterns.length === 0) return;
     
-    const placementGrid = Array(gridWidth).fill(null).map(() => Array(gridHeight).fill(false));
+    const placementGrid = Array(gridHeight).fill(null).map(() => Array(gridWidth).fill(false));
 
     for (let i = 0; i < numPatterns; i++) {
         // Pick a random pattern
@@ -213,16 +213,16 @@ function placeRandomHolePatterns(numPatterns, grid, rand) {
         const invertGridAir = rand() < o.chanceHoleInvert;
 
         // randomly find a valid, non-overlapping position
-        const validXRange = gridWidth - patternWidth;
         const validYRange = gridHeight - patternHeight;
+        const validXRange = gridWidth - patternWidth;
         for (let posAttempt = 0; posAttempt < 10; posAttempt++) {
-            const startX = Math.floor(rand() * (validXRange + 1));
             const startY = Math.floor(rand() * (validYRange + 1));
+            const startX = Math.floor(rand() * (validXRange + 1));
 
-            if (canPlacePatternAt(placementGrid, grid, startX, startY, patternWidth, patternHeight)) {
+            if (canPlacePatternAt(placementGrid, grid, startY, startX, patternWidth, patternHeight)) {
                 const placeTiles = [TILE.AIR, TILE.GRID];
                 if (invertGridAir) placeTiles.reverse();
-                placePattern(grid, placementGrid, patternShape, startX, startY, ...placeTiles);
+                placePattern(grid, placementGrid, patternShape, startY, startX, ...placeTiles);
                 break;
             }
         }
@@ -235,16 +235,16 @@ function placeRandomHolePatterns(numPatterns, grid, rand) {
 
 
 
-function canPlacePatternAt(placementGrid, grid, startX, startY, width, height) {
+function canPlacePatternAt(placementGrid, grid, startY, startX, width, height) {
     const MAX_WALL_RATIO = 0.1;
 
     let wallCounter = 0;
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
-            if (placementGrid[startX + x]?.[startY + y]) {
+            if (placementGrid[startY + y]?.[startX + x]) {
                 return false;
             }
-            if (grid[startX + x]?.[startY + y] === TILE.WALL) wallCounter++;
+            if (grid[startY + y]?.[startX + x] === TILE.WALL) wallCounter++;
         }
     }
     return wallCounter / (width * height) <= MAX_WALL_RATIO;
@@ -253,14 +253,14 @@ function canPlacePatternAt(placementGrid, grid, startX, startY, width, height) {
 
 
 
-function placePattern(grid, placementGrid, patternShape, startX, startY, mainTile, paddingTile) {
+function placePattern(grid, placementGrid, patternShape, startY, startX, mainTile, paddingTile) {
     const patternHeight = patternShape.length;
     const patternWidth = patternShape[0].length;
 
-    const placePatternTile = (x, y, id, overwriteWalls) => {
-        if (grid[x]?.[y] !== undefined && (overwriteWalls || grid[x][y] !== TILE.WALL)) {
-            grid[x][y] = id;
-            placementGrid[x][y] = true;
+    const placePatternTile = (y, x, id, overwriteWalls) => {
+        if (grid[y]?.[x] !== undefined && (overwriteWalls || grid[y][x] !== TILE.WALL)) {
+            grid[y][x] = id;
+            placementGrid[y][x] = true;
         }
     };
 
@@ -269,25 +269,25 @@ function placePattern(grid, placementGrid, patternShape, startX, startY, mainTil
     for (let y = 0; y < patternHeight; y++) {
         for (let x = 0; x < patternWidth; x++) {
             if (patternShape[y][x] === 1) {
-                const gridX = startX + x;
                 const gridY = startY + y;
-                mainTileCoords.push([gridX, gridY]);
+                const gridX = startX + x;
+                mainTileCoords.push([gridY, gridX]);
                 // +
-                placePatternTile(gridX+1, gridY, paddingTile);
-                placePatternTile(gridX-1, gridY, paddingTile);
-                placePatternTile(gridX, gridY+1, paddingTile);
-                placePatternTile(gridX, gridY-1, paddingTile);
+                placePatternTile(gridY, gridX+1, paddingTile);
+                placePatternTile(gridY, gridX-1, paddingTile);
+                placePatternTile(gridY+1, gridX, paddingTile);
+                placePatternTile(gridY-1, gridX, paddingTile);
                 // x
-                placePatternTile(gridX+1, gridY+1, paddingTile);
-                placePatternTile(gridX-1, gridY+1, paddingTile);
-                placePatternTile(gridX+1, gridY-1, paddingTile);
-                placePatternTile(gridX-1, gridY-1, paddingTile);
+                placePatternTile(gridY+1, gridX+1, paddingTile);
+                placePatternTile(gridY+1, gridX-1, paddingTile);
+                placePatternTile(gridY-1, gridX+1, paddingTile);
+                placePatternTile(gridY-1, gridX-1, paddingTile);
             }
         }
     }
     // actually place the pattern
-    for (const [x, y] of mainTileCoords) {
-        placePatternTile(x, y, mainTile, true);
+    for (const [y, x] of mainTileCoords) {
+        placePatternTile(y, x, mainTile, true);
     }
 }
 
@@ -343,11 +343,11 @@ function generateWallsPattern(gridWidth, gridHeight, rand) {
     // Fallback in case of floating point issues or all weights being zero
     if (!chosenPatternData) chosenPatternData = scoredPatterns[scoredPatterns.length - 1].pattern;
 
-    const patternShape = randomTransformPattern(chosenPatternData, rand, gridWidth, gridHeight);
+    const patternShape = randomTransformPattern(chosenPatternData, rand, gridHeight, gridWidth);
     const patternHeight = patternShape.length;
     const patternWidth = patternShape[0].length;
 
-    const grid = Array(gridWidth).fill(null).map(() => Array(gridHeight).fill(TILE.WALL));
+    const grid = create2dGrid(gridHeight, gridWidth, TILE.WALL);
     // strech the pattern onto the grid
     for (let y = 0; y < gridHeight; y++) {
         for (let x = 0; x < gridWidth; x++) {
@@ -369,7 +369,7 @@ function generateWallsPattern(gridWidth, gridHeight, rand) {
 
             const top = p11 * (1 - xFrac) + p21 * xFrac;
             const bottom = p12 * (1 - xFrac) + p22 * xFrac;
-            if (top * (1 - yFrac) + bottom * yFrac > 0.5) grid[x][y] = TILE.GRID;
+            if (top * (1 - yFrac) + bottom * yFrac > 0.5) grid[y][x] = TILE.GRID;
         }
     }
     return grid;
@@ -385,33 +385,33 @@ function generateWallsPattern(gridWidth, gridHeight, rand) {
 
 
 
-function generateWallsDrunkenWalk(gridWidth, gridHeight, rand) {
+function generateWallsDrunkenWalk(gridHeight, gridWidth, rand) {
     const STEP_MULTIPLIER = 1.5 + 3.5 * rand();  // 1.5 to 5
     const RESPAWN_CHANCE = 0.02;
 
-    const grid = Array(gridWidth).fill(null).map(() => Array(gridHeight).fill(TILE.WALL));
+    const grid = create2dGrid(gridHeight, gridWidth, TILE.WALL);
 
-    const totalSteps = Math.floor((gridWidth * gridHeight) * STEP_MULTIPLIER);
+    const totalSteps = Math.floor((gridHeight * gridWidth) * STEP_MULTIPLIER);
     let stepsTaken = 0;
 
+    let centerY = Math.floor(gridHeight / 2);
     let centerX = Math.floor(gridWidth / 2);
-    let centerY = Math.floor(gridWidth / 2);
     
     // start in the center
-    let walkerX = centerX;
     let walkerY = centerY;
+    let walkerX = centerX;
 
     while (stepsTaken < totalSteps) {
-        grid[walkerX][walkerY] = TILE.GRID;
+        grid[walkerY][walkerX] = TILE.GRID;
 
         const direction = Math.floor(rand() * 4);
-        if (direction === 0 && walkerX > 0) walkerX--;
-        else if (direction === 1 && walkerX < gridWidth - 1) walkerX++;
-        else if (direction === 2 && walkerY > 0) walkerY--;
+        if (direction === 2 && walkerY > 0) walkerY--;
         else if (direction === 3 && walkerY < gridHeight - 1) walkerY++;
+        else if (direction === 0 && walkerX > 0) walkerX--;
+        else if (direction === 1 && walkerX < gridWidth - 1) walkerX++;
 
         // walker dies :((
-        if (rand() < RESPAWN_CHANCE) [walkerX, walkerY] = [centerX, centerY]
+        if (rand() < RESPAWN_CHANCE) [walkerY, walkerX] = [centerY, centerX];
         
         stepsTaken++;
     }
@@ -436,72 +436,72 @@ function generateWallsDrunkenWalk(gridWidth, gridHeight, rand) {
 
 
 function resizeGridToFit(grid) {
-    const gridWidth = grid.length;
-    const gridHeight = grid[0].length;
+    const gridHeight = grid.length;
+    const gridWidth = grid[0].length;
 
-    let minX = gridWidth;
-    let maxX = 0;
     let minY = gridHeight;
     let maxY = 0;
+    let minX = gridWidth;
+    let maxX = 0;
 
     for (let y = 0; y < gridHeight; y++) {
         for (let x = 0; x < gridWidth; x++) {
-            if (grid[x][y] !== TILE.WALL) {
-                if (x < minX) minX = x;
-                if (x > maxX) maxX = x;
+            if (grid[y][x] !== TILE.WALL) {
                 if (y < minY) minY = y;
                 if (y > maxY) maxY = y;
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
             }
         }
     }
     // modify in place
-    grid.splice(maxX + 1);
-    grid.splice(0, minX);
-    for (let x = 0; x < grid.length; x++) {
-        grid[x] = grid[x].slice(minY, maxY + 1);
+    grid.splice(maxY + 1);
+    grid.splice(0, minY);
+    for (let y = 0; y < grid.length; y++) {
+        grid[y] = grid[y].slice(minX, maxX + 1);
     }
     return grid;
 }
 
 
 function replaceSmallAreaTiles(grid, threshold, targetTileId, replaceTileId) {
-    const gridWidth = grid.length;
-    const gridHeight = grid[0].length;
-    const visited = Array(gridWidth).fill(null).map(() => Array(gridHeight).fill(false));
+    const gridHeight = grid.length;
+    const gridWidth = grid[0].length;
+    const visited = Array(gridHeight).fill(null).map(() => Array(gridWidth).fill(false));
 
-    for (let x = 0; x < gridWidth; x++) {
-        for (let y = 0; y < gridHeight; y++) {
-            if (visited[x][y] || grid[x][y] !== targetTileId) continue;
+    for (let y = 0; y < gridHeight; y++) {
+        for (let x = 0; x < gridWidth; x++) {
+            if (visited[y][x] || grid[y][x] !== targetTileId) continue;
             // new island :o
 
             const curIslandCoords = [];
-            const queue = [[x, y]];
-            visited[x][y] = true;
+            const queue = [[y, x]];
+            visited[y][x] = true;
 
             while (queue.length > 0) {
                 const current = queue.shift();
-                const [curX, curY] = current;
+                const [curY, curX] = current;
                 curIslandCoords.push(current);
 
                 // check all 4 neighbors
-                for (const neighbor of [[curX+1, curY], [curX-1, curY], [curX, curY+1], [curX, curY-1]]) {
-                    const [nx, ny] = neighbor;
-                    if (nx >= 0 && nx < gridWidth && ny >= 0 && ny < gridHeight &&
-                        !visited[nx][ny] && grid[nx][ny] === targetTileId) {
+                for (const neighbor of [[curY+1, curX], [curY-1, curX], [curY, curX+1], [curY, curX-1]]) {
+                    const [ny, nx] = neighbor;
+                    if (ny >= 0 && ny < gridHeight && nx >= 0 && nx < gridWidth &&
+                        !visited[ny][nx] && grid[ny][nx] === targetTileId) {
                         
-                        visited[nx][ny] = true;
+                        visited[ny][nx] = true;
                         queue.push(neighbor);
                     }
                 }
             }
             if (curIslandCoords.length <= threshold) {
-                const isTouchingBorder = curIslandCoords.some(([tileX, tileY]) => 
-                    tileX === 0 || tileX === gridWidth - 1 || tileY === 0 || tileY === gridHeight - 1
+                const isTouchingBorder = curIslandCoords.some(([tileY, tileX]) => 
+                    tileY === 0 || tileY === gridHeight - 1 || tileX === 0 || tileX === gridWidth - 1
                 );
                 // it either is NOT a wall OR it IS a wall but its NOT touching the border
                 if (targetTileId !== TILE.WALL || !isTouchingBorder) {
-                    for (const [curX, curY] of curIslandCoords) {
-                        grid[curX][curY] = replaceTileId;
+                    for (const [curY, curX] of curIslandCoords) {
+                        grid[curY][curX] = replaceTileId;
                     }
                 }
             }

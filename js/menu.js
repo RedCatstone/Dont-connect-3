@@ -350,7 +350,6 @@ function getDailySeed() {
 }
 
 function getModeLength(modeCategory, mode) {
-    return 2;
     if (modeCategory === 'daily') {
         const rand = getRandomFunction(getDailySeed() + mode[0]);
         return Math.floor(12 + 10 * rand());
