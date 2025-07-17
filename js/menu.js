@@ -93,14 +93,14 @@ const findlastSettings = { modeHintCount: 2, modeFindLast: true };
 const TABS_DATA = {
     normal: [
         tutorialMode,
-        { id: 'endless', title: 'Endless', settings: { ...endlessSettings, modeHintCount: 2, medalAuthor: 30, medalGold: 10 } },
-        { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, modeHintCount: 2 } },
-        { id: 'findlast', title: 'Find Last', settings: { ...findlastSettings, modeHintCount: 2 } },
+        { id: 'endless', title: 'Endless', settings: { ...endlessSettings, modeHintCount: 2, medalAuthor: 69, medalGold: 50 } },
+        { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, modeHintCount: 2, medalAuthor: 69, medalGold: 50 } },
+        { id: 'findlast', title: 'Find Last', settings: { ...findlastSettings, modeHintCount: 2, medalAuthor: 69, medalGold: 50 } },
     ],
     timed: [
-        { id: 'endless', title: 'Endless', settings: { ...endlessSettings, modeGlobalTimeGain: 10 } },
-        { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, modeLevelTime: 20 } },
-        { id: 'findlast', title: 'Find Last', settings: { ...findlastSettings, modeGlobalTimeGain: 3 } },
+        { id: 'endless', title: 'Endless', settings: { ...endlessSettings, modeGlobalTimeGain: 10, medalAuthor: 34, medalGold: 20 } },
+        { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, modeLevelTime: 20, medalAuthor: 30, medalGold: 20 } },
+        { id: 'findlast', title: 'Find Last', settings: { ...findlastSettings, modeGlobalTimeGain: 3, medalAuthor: 49, medalGold: 20 } },
     ],
     daily: [
         { id: 'endless', title: 'Endless', settings: { ...endlessSettings } },

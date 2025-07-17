@@ -34,7 +34,7 @@ export const TILE_BLOCK_COLOR_MAP = {
     [TILE.WHITE]: 'var(--tile-white-color)',
 };
 
-export const ALL_TILE_BLOCKS = [...Object.keys(TILE_BLOCK_COLOR_MAP)];
+export const ALL_TILE_BLOCKS = Object.keys(TILE_BLOCK_COLOR_MAP).map(Number);
 
 
 
