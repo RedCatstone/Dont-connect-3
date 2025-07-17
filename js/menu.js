@@ -181,7 +181,7 @@ function renderActiveTabContent() {
         card.dataset.mode = mode.id;
         
         const modeLength = mode.settings?.modeGoalLevel ?? getModeLength(activeTabId, mode.id);
-        card.querySelector('.mode-title').textContent = camelToTitleCase(mode.title) + (modeLength ? ` (${modeLength})`: '');
+        card.querySelector('.mode-title').textContent = camelToTitleCase(mode.title) + (activeTabId === 'daily' ? ` (${modeLength})`: '');
         
         const statsSaveLoc = getStatsSaveLoc(activeTabId, mode.id);
         if (statsSaveLoc.best) {
