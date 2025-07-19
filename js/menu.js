@@ -1,4 +1,4 @@
-import { HARDCODED_TUTORIAL_LEVELS, o } from './constants.js';
+import { HARDCODED_TUTORIAL_LEVELS, o, STATS } from './constants.js';
 import { camelToTitleCase, formatMinuteSeconds, startMode } from './game.js';
 import { getRandomFunction } from './generateGrid.js';
 
@@ -94,12 +94,12 @@ const TABS_DATA = {
     normal: [
         tutorialMode,
         { id: 'endless', title: 'Endless', settings: { ...endlessSettings, modeHintCount: 2, medalAuthor: 69, medalGold: 50 } },
-        { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, modeHintCount: 2, medalAuthor: 69, medalGold: 50 } },
+        { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, modeHintCount: 2, medalAuthor: 69, medalGold: 25 } },
         { id: 'findlast', title: 'Find Last', settings: { ...findlastSettings, modeHintCount: 2, medalAuthor: 69, medalGold: 50 } },
     ],
     timed: [
         { id: 'endless', title: 'Endless', settings: { ...endlessSettings, modeGlobalTimeGain: 10, medalAuthor: 34, medalGold: 20 } },
-        { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, modeLevelTime: 20, medalAuthor: 30, medalGold: 20 } },
+        { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, modeLevelTime: 30, medalAuthor: 30, medalGold: 15 } },
         { id: 'findlast', title: 'Find Last', settings: { ...findlastSettings, modeGlobalTimeGain: 3, medalAuthor: 49, medalGold: 20 } },
     ],
     daily: [
@@ -108,23 +108,30 @@ const TABS_DATA = {
         { id: 'findlast', title: 'Find Last', settings: { ...findlastSettings } },
     ],
     custom: [
-        { id: 'custom', title: 'Play' },
+        { id: 'custom', title: 'Play', settings: {} },
     ]
 };
 
 
 // setup tab buttons
-for (const tabId in TABS_DATA) {
+for (const [tabId, modes] of Object.entries(TABS_DATA)) {
     const button = document.createElement('button');
     button.className = 'mode-tab-button';
     button.textContent = camelToTitleCase(tabId);
     button.dataset.tabId = tabId;
     modeTabsContainer.appendChild(button);
+
+    // add statsSaveLoc to each modes settings
+    updateDailyModeSettings();
+    for (const mode of modes) {
+        mode.settings.statsSaveLoc = getStatsSaveLoc(tabId, mode);
+    }
 }
 
 modeTabsContainer.addEventListener('click', (e) => {
     if (e.target.matches('.mode-tab-button') && activeTabId !== e.target.dataset.tabId) {
         activeTabId = e.target.dataset.tabId;
+        if (activeTabId === 'daily') updateDailyModeSettings();
         renderActiveTabContent();
         modeSettingsGrid.classList.remove('advanced-mode');
     }
@@ -135,10 +142,10 @@ modeTabsContainer.addEventListener('click', (e) => {
 
 const CUSTOM_GAME_SETTINGS = [
     [
-        { label: 'Seed', type: 'text', placeholder: 'Random', maxLength: o.defaultSeedLength, allowedChars: 'A-Za-z0-9_-' },
-        { label: 'Level', type: 'number', placeholder: '1', value: 1, min: 1, max: 99 }
+     { label: 'Seed', type: 'text', placeholder: 'Random', maxLength: o.defaultSeedLength, allowedChars: 'A-Za-z0-9_-' },
+     { label: 'Level', type: 'number', placeholder: '1', value: 1, min: 1, max: 99 }
     ],
-    [{ label: 'Goal Level', type: 'number', placeholder: 'Disabled', min: 1, max: 999 }],
+    [{ label: 'Goal Level', type: 'number', placeholder: 'Infinite', min: 1, max: 999 }],
     [{ label: 'Find Last', type: 'checkbox' }],
     [{ label: 'Hints', type: 'number', placeholder: '0', value: 2, min: 0, max: 99 }],
     [{ label: 'Lives', type: 'number', placeholder: 'Disabled', min: 0, max: 15 }],
@@ -180,10 +187,10 @@ function renderActiveTabContent() {
         card.dataset.modeCategory = activeTabId;
         card.dataset.mode = mode.id;
         
-        const modeLength = mode.settings?.modeGoalLevel ?? getModeLength(activeTabId, mode.id);
+        const modeLength = mode.settings.modeGoalLevel;
         card.querySelector('.mode-title').textContent = camelToTitleCase(mode.title) + (activeTabId === 'daily' ? ` (${modeLength})`: '');
         
-        const statsSaveLoc = getStatsSaveLoc(activeTabId, mode.id);
+        const statsSaveLoc = mode.settings.statsSaveLoc;
         if (statsSaveLoc.best) {
             const bestLevel = statsSaveLoc.best.level;
             const bestTime = statsSaveLoc.best.time;
@@ -192,16 +199,16 @@ function renderActiveTabContent() {
             const bestLevelSpan = document.createElement('span');
             bestLevelSpan.textContent = bestLevel;
             bestStats.append(bestLevelSpan);
-            if (mode.settings?.modeLevelTime || mode.settings?.modeGlobalTimeGain || bestLevel === modeLength + 1) {
+            if (mode.settings.modeLevelTime || mode.settings.modeGlobalTimeGain || bestLevel === modeLength + 1) {
                 const bestTimeSpan = document.createElement('span');
                 bestTimeSpan.textContent = formatMinuteSeconds(bestTime, 2);
                 bestStats.append(bestTimeSpan);
             }
 
-            const goldMedal = mode.settings?.medalGold;
+            const goldMedal = mode.settings.medalGold;
             if (goldMedal) {
                 const authorMedal = mode.settings.medalAuthor;
-                if (mode.settings?.modeGoalLevel) {
+                if (mode.settings.modeGoalLevel) {
                     // time
                     if (bestLevel === mode.settings.modeGoalLevel + 1) {
                         if (bestTime <= authorMedal) card.dataset.medal = "author";
@@ -223,7 +230,7 @@ function renderActiveTabContent() {
         
         const playButton = card.querySelector('.mode-play-button');
         const continueButton = card.querySelector('.mode-continue-button');
-        if (mode.settings?.modeLevelTime || mode.settings?.modeGlobalTimeGain) {
+        if (mode.settings.modeLevelTime || mode.settings.modeGlobalTimeGain) {
             playButton.dataset.customIcon = 'timer';
         }
         continueButton.style.display = statsSaveLoc.continue ? '' : 'none';
@@ -306,13 +313,9 @@ function generateCustomSettingsGrid() {
 
 
 function handlePlay(mode, shouldContinue) {
-    const statsSaveLoc = getStatsSaveLoc(activeTabId, mode.id);
-    const modeSettings = { ...mode.settings, statsSaveLoc };
-    if (activeTabId === 'daily') {
-        modeSettings.seed = getDailySeed() + mode.id[0];
-        modeSettings.modeGoalLevel = getModeLength(activeTabId, mode.id);
-    }
-    if (shouldContinue) Object.assign(modeSettings, statsSaveLoc.continue);
+    const modeSettings = { ...mode.settings };
+    if (activeTabId === 'daily') updateDailyModeSettings();
+    if (shouldContinue) Object.assign(modeSettings, modeSettings.statsSaveLoc.continue);
     goToGame();
     startMode(modeSettings);
 }
@@ -331,30 +334,35 @@ function getNumber(input) {
 
 function getStatsSaveLoc(modeCategory, mode) {
     let base = STATS;
-    if (mode !== 'tutorial') {
+    if (mode.id !== 'tutorial') {
         if (!base[modeCategory]) base[modeCategory] = {};
         base = base[modeCategory];
         if (modeCategory === 'daily') {
-            const dailySeed = getDailySeed();
+            const dailySeed = mode.settings.seed.slice(0, -1);
             if (!base[dailySeed]) base[dailySeed] = {}
-            base = base[getDailySeed()];
+            base = base[dailySeed];
         }
     }
-    if (!base[mode]) base[mode] = {};
-    return base[mode];
+    if (!base[mode.id]) base[mode.id] = {};
+    return base[mode.id];
 }
 
-function getDailySeed() {
-    const date = new Date();
-    return `${date.getUTCDate()}-${date.getUTCMonth() + 1}-${date.getUTCFullYear()}`;
-}
+function updateDailyModeSettings() {
+    const now = new Date();
+    const dailySeed = `${now.getUTCDate()}-${now.getUTCMonth() + 1}-${now.getUTCFullYear()}`;
 
-function getModeLength(modeCategory, mode) {
-    if (modeCategory === 'daily') {
-        const rand = getRandomFunction(getDailySeed() + mode[0]);
-        return Math.floor(12 + 10 * rand());
+    for (const mode of TABS_DATA.daily) {
+        const rand = getRandomFunction(dailySeed + mode.id[0]);
+        const modeLength = Math.floor((12 + 10 * rand()) * (mode.id === 'hardcore' ? 0.5 : 1));
+
+        mode.settings.seed = dailySeed + mode.id[0];
+        mode.settings.modeGoalLevel = modeLength;
+        mode.settings.statsSaveLoc = getStatsSaveLoc('daily', mode);
     }
 }
+
+
+
 
 function updateDailyTimer() {
     clearInterval(dailyResetInInterval);
@@ -371,8 +379,8 @@ function setDailyTimerText() {
     
     const monthString = now.toLocaleString('en-us', { month: 'long', timeZone: 'UTC' });
     const dayNumber = now.getUTCDate();
-    const dayString = getDaySuffix(now.getUTCDate());
-    dailyResetsInDisplay.textContent = `${monthString} ${dayNumber}${dayString} - Resets in: ${h}h ${m}m ${s}s`;
+    const daySuffix = getDaySuffix(now.getUTCDate());
+    dailyResetsInDisplay.textContent = `${monthString} ${dayNumber}${daySuffix} - ${h}h ${m}m ${s}s`;
 }
 function getDaySuffix(day) {
     if (day > 3 && day < 21) return 'th';
@@ -499,30 +507,4 @@ export function playSound(name) {
     sounds[name].currentTime = 0;
     sounds[name].volume = o.volume;
     sounds[name].play().catch(error => console.error(`Error playing sound "${name}":`, error));
-}
-
-
-
-
-
-
-const STORAGE_KEY = 'dontConnect3';
-export const STATS = getStats();
-o.STATS = STATS;
-
-function getStats() {
-    try {
-        const rawStats = localStorage.getItem(STORAGE_KEY);
-        return rawStats ? JSON.parse(rawStats) : {};
-    } catch (error) {
-        console.error("Failed to parse stats from localStorage:", error);
-        return {};
-    }
-}
-export function saveStats() {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(STATS));
-    } catch (error) {
-        console.error("Failed to save stats to localStorage:", error);
-    }
 }

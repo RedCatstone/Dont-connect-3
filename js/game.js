@@ -1,6 +1,6 @@
-import { o, TILE, TILE_CLASS_MAP, TILE_BLOCK_COLOR_MAP, TUTORIAL_STEPS } from './constants.js';
+import { o, TILE, TILE_CLASS_MAP, TILE_BLOCK_COLOR_MAP, TUTORIAL_STEPS, saveStats } from './constants.js';
 import { create2dGrid, generateGrid, generateRandomB64String } from './generateGrid.js';
-import { goToMainMenu, playSound, saveStats } from './menu.js';
+import { goToMainMenu, playSound } from './menu.js';
 
 
 const gameWrapper = document.getElementById('game-wrapper');
@@ -33,12 +33,9 @@ const endRetryButton = document.getElementById('end-retry-button');
 
 
 
-
-let modeSettings = null;
 export function startMode(customSettings) {
-    modeSettings = customSettings;
-
     const defaultSettings = {
+        modeSettings: customSettings,
         seed: generateRandomB64String(o.defaultSeedLength),
         modeSaveLoc: null,
         level: 1,
@@ -188,7 +185,7 @@ window.addEventListener('unload', () => {
     goToMainMenu();
 }));
 endHideButton.addEventListener('click', () => levelEndScreen.classList.toggle('moveup'));
-endRetryButton.addEventListener('click', () => startMode(modeSettings));
+endRetryButton.addEventListener('click', () => startMode(o.modeSettings));
 
 
 
@@ -803,7 +800,7 @@ function saveCurrentGameStats(gridWasSuccess) {
         if (!o.endScreen && !(o.modeGlobalTimeGain || o.modeLevelTime)) {
             const toSave = { ...gameStats };
             if (o.mode === 'custom') {
-                Object.assign(toSave, modeSettings);
+                Object.assign(toSave, o.modeSettings);
                 delete toSave.statsSaveLoc;
             }
             toSave.hintsLeft = o.hintsLeft;

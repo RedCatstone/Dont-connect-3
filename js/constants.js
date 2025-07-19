@@ -38,6 +38,35 @@ export const ALL_TILE_BLOCKS = Object.keys(TILE_BLOCK_COLOR_MAP).map(Number);
 
 
 
+
+
+const STORAGE_KEY = 'dontConnect3';
+export const STATS = getStats();
+
+function getStats() {
+    try {
+        const rawStats = localStorage.getItem(STORAGE_KEY);
+        return rawStats ? JSON.parse(rawStats) : {};
+    } catch (error) {
+        console.error("Failed to parse stats from localStorage:", error);
+        return {};
+    }
+}
+export function saveStats() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(STATS));
+    } catch (error) {
+        console.error("Failed to save stats to localStorage:", error);
+    }
+}
+
+
+
+
+
+
+
+
 export const o = {
     // grid generated
     grid: null,
@@ -75,8 +104,9 @@ export const o = {
     tutorialDissallowValidMoves: false,
     tutorialSubStep: null,
     previousBestLevel: null,
+    modeSettings: null,
 
-    STATS: null,
+    STATS,
     modeSaveLoc: null,
 
     // mode specifics

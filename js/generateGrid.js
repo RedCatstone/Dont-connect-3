@@ -22,9 +22,9 @@ export function generateGrid(seed, level) {
     if (rand() > o.chanceSymmetry) matrixSymmetrieLeftRight(grid);
     if (rand() > o.chanceSymmetry) matrixSymmetrieUpDown(grid);
 
-    resizeGridToFit(grid);
     replaceSmallAreaTiles(grid, 2, TILE.WALL, TILE.GRID);
     replaceSmallAreaTiles(grid, 2, TILE.GRID, TILE.WALL);
+    resizeGridToFit(grid);
     
     
     // holes (patterns)
@@ -189,8 +189,8 @@ function matrixSymmetrieUpDown(matrix) {
 
 
 function placeRandomHolePatterns(numPatterns, grid, rand) {
-    const gridWidth = grid.length;
-    const gridHeight = grid[0].length;
+    const gridHeight = grid.length;
+    const gridWidth = grid[0].length;
 
     const filteredGenPatterns = holePatterns.filter(pattern => {
         const patternHeight = pattern.shape.length;
