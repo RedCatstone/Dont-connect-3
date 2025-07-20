@@ -155,7 +155,7 @@ window.o = o;
 
 export const TUTORIAL_STEPS = {
     1: [
-        { text: "Welcome! Tap an empty spot to place a tile.", waitFor: 'tile_place' },
+        { text: "Tap an empty spot to place a tile.", waitFor: 'tile_place' },
         { text: "Alright, try to place another tile!", waitFor: 'tile_place' },
         { text: "The grid is complete if you can't place any more tiles.", waitFor: 'grid_complete' }
     ],

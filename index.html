@@ -6,6 +6,7 @@
     <title>Don't connect 2.5</title>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/game.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <!--
     <link rel="preload" href="svg/arrowhead.svg" as="image" crossorigin="anonymous">
     <link rel="preload" href="svg/eye.svg" as="image" crossorigin="anonymous">
@@ -18,9 +19,9 @@
     -->
     <link rel="icon" href="favicon.ico" type="image/x-icon">
 </head>
-<body>
+<body class="menu-active">
     <div id="menus">
-        <div id="menu-main" class="menu">
+        <div id="menu-main" class="menu active">
             <h1>Don't connect 2.5</h1>
             <button id="main-play-button" class="big">Play</button>
             <button id="main-settings-button">Settings</button>
@@ -52,7 +53,7 @@
     </div>
 
     <div id="game-wrapper">
-        <div id="game-info">
+        <div id="info-area">
             <div id="level-timer-info">
                 <span id="level-display">Level 1</span><span class="dot">•</span><span id="timer-display">00:00</span>
             </div>
@@ -63,14 +64,16 @@
                 <span id="lives-display"></span>
             </div>
         </div>
-        <div id="gamegrid-sizer-height">
+        <div id="grid-area">
             <span id="tutorial-text-display"></span>
-            <div id="gamegrid-sizer-width">
-                <div id="gamegrid-grid"><!-- JS --></div>
-                <svg id="gamegrid-border-svg"></svg>
+            <div id="gamegrid-sizer-height">
+                <div id="gamegrid-sizer-width">
+                    <div id="gamegrid-grid"><!-- JS --></div>
+                    <svg id="gamegrid-border-svg"></svg>
+                </div>
             </div>
         </div>
-        <div id="bottom-controls-wrapper">
+        <div id="controls-area">
             <button id="home-button" class="icon"></button>
             <div id="tile-selector"><!-- JS --></div>
             <button id="hint-button" class="icon"><span class="button-counter"></span></button>

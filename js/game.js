@@ -178,7 +178,7 @@ function clearHint() {
 }
 
 window.addEventListener('unload', () => {
-    if (!o.endScreen && body.classList.contains('game-active')) saveCurrentGameStats(false);
+    if (!o.endScreen && document.body.classList.contains('game-active')) saveCurrentGameStats(false);
 });
 [homeButton, endHomeButton].forEach(x => x.addEventListener('click', () => {
     if (!o.endScreen) saveCurrentGameStats(false);
@@ -340,18 +340,21 @@ function createGridDisplay() {
     gameGridContainer.append(fragment);
     gameGridSizerContainer.style.setProperty('--grid-column-count', o.gridWidth);
     gameGridSizerContainer.style.setProperty('--grid-row-count', o.gridHeight);
-    drawCustomGridBorder();
+    updateGridLayout();
 }
 
 
-new ResizeObserver(() => drawCustomGridBorder()).observe(gameGridGrid);
+
+const gridLayoutObserver = new ResizeObserver(() => updateGridLayout());
+gridLayoutObserver.observe(gameGridGrid);
+gridLayoutObserver.observe(tutorialTextDisplay);
 
 
 
 
 
-
-function drawCustomGridBorder() {
+function updateGridLayout() {
+    // -- grid border svg ---
     gameGridBorderSvg.innerHTML = '';
 
     const tileSize = gameGridContainer.clientHeight / o.gridHeight;
@@ -386,11 +389,16 @@ function drawCustomGridBorder() {
             }
         }
     }
-
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('id', 'gamegrid-border-path');
     path.setAttribute('d', pathData);
     gameGridBorderSvg.appendChild(path);
+
+
+    // --- tutorial text offset ---
+    const fixOffset = gameGridSizerContainer.offsetTop - (tutorialTextDisplay.offsetTop + tutorialTextDisplay.offsetHeight);
+    const marginBottom = parseInt(window.getComputedStyle(tutorialTextDisplay).marginBottom);
+    tutorialTextDisplay.style.translate = `0 ${fixOffset - marginBottom}px`;
 }
 
 

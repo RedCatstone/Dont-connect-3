@@ -16,21 +16,18 @@ const modeSettingsGrid = document.getElementById('custom-settings-grid');
 const modeCardTemplate = document.getElementById('mode-card-template');
 const dailyResetsInDisplay = document.getElementById('daily-resets-in-display');
 
-const style = window.getComputedStyle(document.documentElement);
 
 
 
 
 
-
-export let currentMenu = null;
+export let currentMenu = menuMain;
 let activeTabId = 'normal';
 let dailyResetInInterval = null;
 
 
 
 
-goToMainMenu();
 document.addEventListener('keydown', (event) => {
     if (currentMenu && event.key === 'Escape') switchMenu(menuMain);
 });
