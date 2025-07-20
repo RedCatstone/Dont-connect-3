@@ -185,18 +185,21 @@ function renderActiveTabContent() {
         card.dataset.mode = mode.id;
         
         const modeLength = mode.settings.modeGoalLevel;
-        card.querySelector('.mode-title').textContent = camelToTitleCase(mode.title) + (activeTabId === 'daily' ? ` (${modeLength})`: '');
+        card.querySelector('.mode-title').textContent = camelToTitleCase(mode.title) + (modeLength ? ` (${modeLength})`: '');
         
         const statsSaveLoc = mode.settings.statsSaveLoc;
         if (statsSaveLoc.best) {
+            const bestStats = card.querySelector('.best-stats');
             const bestLevel = statsSaveLoc.best.level;
             const bestTime = statsSaveLoc.best.time;
 
-            const bestStats = card.querySelector('.best-stats');
-            const bestLevelSpan = document.createElement('span');
-            bestLevelSpan.textContent = bestLevel;
-            bestStats.append(bestLevelSpan);
-            if (mode.settings.modeLevelTime || mode.settings.modeGlobalTimeGain || bestLevel === modeLength + 1) {
+            if (bestLevel !== modeLength + 1) {
+                const bestLevelSpan = document.createElement('span');
+                bestLevelSpan.textContent = `Level ${bestLevel}`;
+                bestStats.append(bestLevelSpan);
+            }
+
+            if (bestLevel === modeLength + 1 || mode.settings.modeLevelTime || mode.settings.modeGlobalTimeGain) {
                 const bestTimeSpan = document.createElement('span');
                 bestTimeSpan.textContent = formatMinuteSeconds(bestTime, 2);
                 bestStats.append(bestTimeSpan);
@@ -286,6 +289,7 @@ function generateCustomSettingsGrid() {
     modeSettingsGrid.addEventListener('input', () => {
         // save new settings
         TABS_DATA.custom[0].settings = Object.fromEntries(Object.entries({
+            statsSaveLoc: TABS_DATA.custom[0].settings.statsSaveLoc,
             seed: document.getElementById('custom-seed-input').value || undefined,
             level: getNumber(document.getElementById('custom-level-input').value),
             modeGoalLevel: getNumber(document.getElementById('custom-goal-level-input').value),

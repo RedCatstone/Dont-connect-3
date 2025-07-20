@@ -533,12 +533,13 @@ body:not(.menu-active) #menus {
     color: var(--level-timer-color);
 }
 .best-stats:not(:empty)::before {
-    content: 'Best: ';
+    content: '★';
+    margin-right: 6px;
 }
 .best-stats > :not(:empty):not(:last-child)::after {
-    content: '•';
+    content: '·';
     font-weight: 900;
-    margin: 4px;
+    margin: 5px;
 }
 
 

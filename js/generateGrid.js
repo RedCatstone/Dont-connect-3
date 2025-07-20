@@ -19,7 +19,10 @@ export function generateGrid(seed, level) {
     resizeGridToFit(grid);
 
     // symmetry
-    if (rand() > o.chanceSymmetry) matrixSymmetrieLeftRight(grid);
+    if (rand() > o.chanceSymmetry) {
+        matrixSymmetrieLeftRight(grid);
+        resizeGridToFit(grid);
+    }
     if (rand() > o.chanceSymmetry) matrixSymmetrieUpDown(grid);
 
     replaceSmallAreaTiles(grid, 2, TILE.WALL, TILE.GRID);
@@ -460,6 +463,7 @@ function resizeGridToFit(grid) {
     for (let y = 0; y < grid.length; y++) {
         grid[y] = grid[y].slice(minX, maxX + 1);
     }
+    if (grid.length === 0) grid.push([]);
     return grid;
 }
 

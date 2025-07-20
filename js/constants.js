@@ -102,7 +102,8 @@ export const o = {
     globalTimeDeathTime: null,
     activeCountdowns: {},
     tutorialDissallowValidMoves: false,
-    tutorialSubStep: null,
+    levelDialogue: null,
+    levelDialogueStep: null,
     previousBestLevel: null,
     modeSettings: null,
 
@@ -149,45 +150,24 @@ window.o = o;
 
 
 
-
-
-
-
-export const TUTORIAL_STEPS = {
-    1: [
-        { text: "Tap an empty spot to place a tile.", waitFor: 'tile_place' },
-        { text: "Alright, try to place another tile!", waitFor: 'tile_place' },
-        { text: "The grid is complete if you can't place any more tiles.", waitFor: 'grid_complete' }
-    ],
-    2: [
-        { text: "Nice! Let's try a larger grid.", waitFor: 'grid_complete' }
-    ],
-    3: [
-        { text: "Neat! Now solve this one.", waitFor: 'grid_complete' }
-    ],
-    4: [
-        { text: "Keep going!", waitFor: 'color_complete' },
-        { text: "Blue unlocked. Select it!", textColor: "blue", waitFor: 'grid_complete' }
-    ],
-    5: [
-        { text: "If you ever get stuck, use a Hint.", waitFor: 'grid_complete' },
-        { text: "Tutorial Complete!" }
-    ],
-};
-
-
 export const HARDCODED_TUTORIAL_LEVELS = {
     1: {
         grid: create2dGrid(3, 5, T.GRID),
         availableTiles: [T.RED],
         futureAvailableTiles: [],
-        botAmount: 0,
+        levelDialogue: [
+            { text: "Tap an empty spot to place a tile.", waitFor: 'tile_place' },
+            { text: "Alright, try to place another tile!", waitFor: 'tile_place' },
+            { text: "The grid is complete if you can't place any more tiles.", waitFor: 'grid_complete' }
+        ],
     },
     2: {
         grid: create2dGrid(6, 6, T.GRID),
         availableTiles: [T.RED],
         futureAvailableTiles: [],
-        botAmount: 0,
+        levelDialogue: [
+            { text: "Nice! Let's try a larger grid.", waitFor: 'grid_complete' }
+        ],
     },
     3: {
         grid: [
@@ -199,7 +179,9 @@ export const HARDCODED_TUTORIAL_LEVELS = {
         ],
         availableTiles: [T.RED],
         futureAvailableTiles: [],
-        botAmount: 0,
+        levelDialogue: [
+            { text: "Neat! Now solve this one.", waitFor: 'grid_complete' }
+        ],
     },
     4: {
         grid: [
@@ -209,7 +191,10 @@ export const HARDCODED_TUTORIAL_LEVELS = {
         ],
         availableTiles: [T.RED],
         futureAvailableTiles: [T.BLUE],
-        botAmount: 0,
+        levelDialogue: [
+            { text: "Keep going!", waitFor: 'color_complete' },
+            { text: "Blue unlocked. Select it!", textColor: "blue", waitFor: 'grid_complete' }
+        ],
     },
     5: {
         grid: [
@@ -222,7 +207,10 @@ export const HARDCODED_TUTORIAL_LEVELS = {
         ],
         availableTiles: [T.RED],
         futureAvailableTiles: [T.BLUE, T.PURPLE],
-        botAmount: 0,
+        levelDialogue: [
+            { text: "If you ever get stuck, use a Hint.", waitFor: 'grid_complete' },
+            { text: "Tutorial Complete!" }
+        ],
     },
 };
 

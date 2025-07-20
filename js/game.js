@@ -1,4 +1,4 @@
-import { o, TILE, TILE_CLASS_MAP, TILE_BLOCK_COLOR_MAP, TUTORIAL_STEPS, saveStats } from './constants.js';
+import { o, TILE, TILE_CLASS_MAP, TILE_BLOCK_COLOR_MAP, saveStats } from './constants.js';
 import { create2dGrid, generateGrid, generateRandomB64String } from './generateGrid.js';
 import { goToMainMenu, playSound } from './menu.js';
 
@@ -76,9 +76,10 @@ function startGrid() {
     o.grid = generatedGrid.grid.map(x => [...x]);
     o.gridHeight = generatedGrid.grid.length;
     o.gridWidth = generatedGrid.grid[0].length;
-    o.botAmount = generatedGrid.botAmount;
+    o.botAmount = generatedGrid.botAmount || 0;
     o.availableTiles = [...generatedGrid.availableTiles];
     o.futureAvailableTiles = [...generatedGrid.futureAvailableTiles];
+    o.levelDialogue = generatedGrid.levelDialogue; // only defined in the tutorial for now
 
     o.selectedAvailableTile = 0;
 
@@ -98,7 +99,7 @@ function startGrid() {
     
     if (o.seed === 'Tutorial') {
         levelTimerInfoDisplay.style.display = 'none';
-        o.tutorialSubStep = -1;
+        o.levelDialogueStep = -1;
         advanceTutorial();
     }
 }
@@ -400,6 +401,36 @@ function updateGridLayout() {
     const marginBottom = parseInt(window.getComputedStyle(tutorialTextDisplay).marginBottom);
     tutorialTextDisplay.style.translate = `0 ${fixOffset - marginBottom}px`;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+function advanceTutorial() {
+    const step = o.levelDialogue[++o.levelDialogueStep];
+
+    // fade out
+    tutorialTextDisplay.style.opacity = '0';
+
+    if (step) setTimeout(() => {
+        // fade in
+        tutorialTextDisplay.classList = `tile-${step.textColor ?? 'red'}`;
+        tutorialTextDisplay.style.opacity = '1';
+        tutorialTextDisplay.innerHTML = step.text;
+    }, (o.levelDialogueStep === 0) ? 0 : 300);
+}
+function tutorialOnGameEvent(eventName) {
+    const step = o.levelDialogue[o.levelDialogueStep];
+    if (step?.waitFor === eventName) advanceTutorial();
+}
+
 
 
 
@@ -748,34 +779,6 @@ function gridFail() {
 
     showEndScreen('lose', o.winLooseTimeout / 2);
     playSound('error');
-}
-
-
-
-
-
-
-
-
-
-
-function advanceTutorial() {
-    const levelSteps = TUTORIAL_STEPS[o.level];
-    const step = levelSteps[++o.tutorialSubStep];
-
-    // fade out
-    tutorialTextDisplay.style.opacity = '0';
-
-    if (step) setTimeout(() => {
-        // fade in
-        tutorialTextDisplay.classList = `tile-${step.textColor ?? 'red'}`;
-        tutorialTextDisplay.style.opacity = '1';
-        tutorialTextDisplay.innerHTML = step.text;
-    }, (o.tutorialSubStep === 0) ? 0 : 300);
-}
-function tutorialOnGameEvent(eventName) {
-    const step = TUTORIAL_STEPS[o.level][o.tutorialSubStep];
-    if (step?.waitFor === eventName) advanceTutorial();
 }
 
 
