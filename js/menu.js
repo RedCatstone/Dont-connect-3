@@ -13,7 +13,7 @@ const mainAboutButton = document.getElementById('main-about-button');
 const modeTabsContainer = document.getElementById('mode-tabs');
 const modeSelectionGrid = document.querySelector('#menu-mode .mode-selection-grid');
 const modeSettingsGrid = document.getElementById('custom-settings-grid');
-const modeCardTemplate = document.getElementById('mode-card-template');
+const modeCardTemplate = document.getElementById('modecard-template');
 const dailyResetsInDisplay = document.getElementById('daily-resets-in-display');
 
 
@@ -78,9 +78,11 @@ const tutorialMode = {
         hardcodedLevels: HARDCODED_TUTORIAL_LEVELS,
         modeGoalLevel: Object.keys(HARDCODED_TUTORIAL_LEVELS).length,
         modeHintCount: 5,
-        medalAuthor: 17000,
-        medalGold: 30000,
     },
+    medals: {
+        author: 17000,
+        gold: 30000,
+    }
 };
 
 const endlessSettings = { modeHintCount: 2 };
@@ -90,14 +92,14 @@ const findlastSettings = { modeHintCount: 2, modeFindLast: true };
 const TABS_DATA = {
     normal: [
         tutorialMode,
-        { id: 'endless', title: 'Endless', settings: { ...endlessSettings, modeHintCount: 2, medalAuthor: 69, medalGold: 50 } },
-        { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, modeHintCount: 2, medalAuthor: 69, medalGold: 25 } },
-        { id: 'findlast', title: 'Find Last', settings: { ...findlastSettings, modeHintCount: 2, medalAuthor: 69, medalGold: 50 } },
+        { id: 'endless', title: 'Endless', settings: { ...endlessSettings, modeHintCount: 2 }, medals: { author: 187, gold: 100 } },
+        { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, modeHintCount: 2, }, medals: { author: 38, gold: 20 } },
+        { id: 'findlast', title: 'Find Last', settings: { ...findlastSettings, modeHintCount: 2, }, medals: { author: 200, gold: 100 } },
     ],
     timed: [
-        { id: 'endless', title: 'Endless', settings: { ...endlessSettings, modeGlobalTimeGain: 10, medalAuthor: 34, medalGold: 20 } },
-        { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, modeLevelTime: 20, medalAuthor: 30, medalGold: 15 } },
-        { id: 'findlast', title: 'Find Last', settings: { ...findlastSettings, modeGlobalTimeGain: 3, medalAuthor: 49, medalGold: 20 } },
+        { id: 'endless', title: 'Endless', settings: { ...endlessSettings, modeGlobalTimeGain: 10, }, medals: { author: 43, gold: 25 } },
+        { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, modeLevelTime: 20, }, medals: { author: 30, gold: 15 } },
+        { id: 'findlast', title: 'Find Last', settings: { ...findlastSettings, modeGlobalTimeGain: 3, }, medals: { author: 58, gold: 30 } },
     ],
     daily: [
         { id: 'endless', title: 'Endless', settings: { ...endlessSettings } },
@@ -111,6 +113,7 @@ const TABS_DATA = {
 
 
 // setup tab buttons
+updateDailyModeSettings();
 for (const [tabId, modes] of Object.entries(TABS_DATA)) {
     const button = document.createElement('button');
     button.className = 'mode-tab-button';
@@ -118,12 +121,26 @@ for (const [tabId, modes] of Object.entries(TABS_DATA)) {
     button.dataset.tabId = tabId;
     modeTabsContainer.appendChild(button);
 
-    // add statsSaveLoc to each modes settings
-    updateDailyModeSettings();
-    for (const mode of modes) {
+    if (tabId !== 'daily') for (const mode of modes) {
+        // add statsSaveLoc to all modes
         mode.settings.statsSaveLoc = getStatsSaveLoc(tabId, mode);
+        // add bronze/silver medals to all modes
+        const medals = mode.medals;
+        if (medals) {
+            if (mode.settings.modeGoalLevel) { // time
+                medals.silver = medals.gold*2;
+                medals.bronze = medals.gold*5;
+            }
+            else { // level
+                medals.silver = Math.floor(medals.gold/2);
+                medals.bronze = Math.floor(medals.gold/5);
+            }
+        }
     }
 }
+
+
+
 
 modeTabsContainer.addEventListener('click', (e) => {
     if (e.target.matches('.mode-tab-button') && activeTabId !== e.target.dataset.tabId) {
@@ -180,7 +197,7 @@ function renderActiveTabContent() {
     // --- Generate Mode Cards ---
     for (const mode of TABS_DATA[activeTabId]) {
         const cardClone = modeCardTemplate.content.cloneNode(true);
-        const card = cardClone.querySelector('.mode-card');
+        const card = cardClone.querySelector('.modecard');
         card.dataset.modeCategory = activeTabId;
         card.dataset.mode = mode.id;
         
@@ -194,38 +211,32 @@ function renderActiveTabContent() {
             const bestStats = card.querySelector('.best-stats');
             const bestLevel = statsSaveLoc.best.level;
             const bestTime = statsSaveLoc.best.time;
+            const medals = mode.medals;
 
             if (bestLevel !== modeLength + 1) {
                 const bestLevelSpan = document.createElement('span');
                 bestLevelSpan.textContent = `Level ${bestLevel}`;
+                if (medals) {
+                    if (bestLevel >= medals.author) card.classList.add("author");
+                    else if (bestLevel >= medals.gold) card.classList.add("gold"), bestLevelSpan.dataset.afterText = ` / ${medals.author}`;
+                    else if (bestLevel >= medals.silver) card.classList.add("silver"), bestLevelSpan.dataset.afterText = ` / ${medals.gold}`;
+                    else if (bestLevel >= medals.bronze) card.classList.add("bronze"), bestLevelSpan.dataset.afterText = ` / ${medals.silver}`;
+                    else bestLevelSpan.dataset.afterText = ` / ${medals.bronze}`;
+                }
                 bestStats.append(bestLevelSpan);
             }
 
             if (bestLevel === modeLength + 1 || mode.settings.modeLevelTime || mode.settings.modeGlobalTimeGain) {
                 const bestTimeSpan = document.createElement('span');
                 bestTimeSpan.textContent = formatMinuteSeconds(bestTime, 2);
+                if (medals && bestLevel === modeLength + 1) {
+                    if (bestTime <= medals.author) card.classList.add("author");
+                    else if (bestTime <= medals.gold) card.classList.add("gold"), bestTimeSpan.dataset.afterText = ` / ${formatMinuteSeconds(medals.author, 2)}`;
+                    else if (bestTime <= medals.silver) card.classList.add("silver"), bestTimeSpan.dataset.afterText = ` / ${formatMinuteSeconds(medals.gold, 2)}`;
+                    else if (bestTime <= medals.bronze) card.classList.add("bronze"), bestTimeSpan.dataset.afterText = ` / ${formatMinuteSeconds(medals.silver, 2)}`;
+                    else bestTimeSpan.dataset.afterText = `/ ${formatMinuteSeconds(medals.bronze, 2)}`;
+                }
                 bestStats.append(bestTimeSpan);
-            }
-
-            const goldMedal = mode.settings.medalGold;
-            if (goldMedal) {
-                const authorMedal = mode.settings.medalAuthor;
-                if (mode.settings.modeGoalLevel) {
-                    // time
-                    if (bestLevel === mode.settings.modeGoalLevel + 1) {
-                        if (bestTime <= authorMedal) card.dataset.medal = "author";
-                        else if (bestTime <= goldMedal) card.dataset.medal = "gold";
-                        else if (bestTime <= goldMedal*2) card.dataset.medal = "silver";
-                        else if (bestTime <= goldMedal*5) card.dataset.medal = "bronze";
-                    }
-                }
-                else {
-                    // level
-                    if (bestLevel >= authorMedal) card.dataset.medal = "author";
-                    else if (bestLevel >= goldMedal) card.dataset.medal = "gold";
-                    else if (bestLevel >= goldMedal/2) card.dataset.medal = "silver";
-                    else if (bestLevel >= goldMedal/5) card.dataset.medal = "bronze";
-                }
             }
         }
         card.classList.toggle('completed', statsSaveLoc.best?.level > modeLength);
@@ -354,11 +365,30 @@ function updateDailyModeSettings() {
 
     for (const mode of TABS_DATA.daily) {
         const rand = getRandomFunction(dailySeed + mode.id[0]);
-        const modeLength = Math.floor((12 + 10 * rand()) * (mode.id === 'hardcore' ? 2/3 : 1));
+        const modeLengthMultiplier = {
+            endless: 1,
+            hardcore: 2/3,
+            findlast: 1
+        };
+        const modeLength = Math.floor((12 + 10 * rand()) * modeLengthMultiplier[mode.id]);
 
         mode.settings.seed = dailySeed + mode.id[0];
         mode.settings.modeGoalLevel = modeLength;
         mode.settings.statsSaveLoc = getStatsSaveLoc('daily', mode);
+
+        const timeForOneLevel = {
+            endless: 24_000,
+            hardcore: 9_000,
+            findlast: 9_000
+        };
+        const author = modeLength * timeForOneLevel[mode.id];
+        mode.medals = {
+            author,
+            gold: author * 1.5,
+            silver: author * 2,
+            bronze: author * 5
+        };
+        console.log(formatMinuteSeconds(mode.medals.author, 2))
     }
 }
 

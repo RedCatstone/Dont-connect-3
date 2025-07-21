@@ -474,11 +474,11 @@ body:not(.menu-active) #menus {
 
 
 #main-play-button { --button-bg: var(--theme-accent); }
-.mode-card[data-mode="endless"] { --button-bg: var(--button-bg-endless); }
-.mode-card[data-mode="hardcore"] { --button-bg: var(--button-bg-hardcore); }
-.mode-card[data-mode="findlast"] { --button-bg: var(--button-bg-findlast); }
-.mode-card[data-mode="custom"] { --button-bg: var(--button-bg-custom); }
-.mode-card[data-mode="tutorial"] { --button-bg: var(--button-bg-tutorial); }
+.modecard[data-mode="endless"] { --button-bg: var(--button-bg-endless); }
+.modecard[data-mode="hardcore"] { --button-bg: var(--button-bg-hardcore); }
+.modecard[data-mode="findlast"] { --button-bg: var(--button-bg-findlast); }
+.modecard[data-mode="custom"] { --button-bg: var(--button-bg-custom); }
+.modecard[data-mode="tutorial"] { --button-bg: var(--button-bg-tutorial); }
 #custom-play-button { --button-bg: var(--button-bg-custom); }
 
 
@@ -513,7 +513,7 @@ body:not(.menu-active) #menus {
     width: 100%;
     margin-bottom: 15px;
 }
-.mode-card {
+.modecard {
     display: flex;
     justify-content: space-between;
     gap: 15px;
@@ -521,6 +521,7 @@ body:not(.menu-active) #menus {
     padding: 15px 20px;
     border-radius: 12px;
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    position: relative;
 }
 
 
@@ -538,16 +539,15 @@ body:not(.menu-active) #menus {
 .mode-title-length {
     color: var(--theme-text-tertiary);
 }
-.mode-card.completed .mode-title::after {
+.modecard.completed .mode-title::after {
     content: ' ✔️';
 }
 
 
-.mode-card[data-medal="author"] { border: 3px solid var(--medal-color-author); }
-.mode-card[data-medal="gold"] { border: 2px solid var(--medal-color-gold); }
-.mode-card[data-medal="silver"] { border: 2px solid var(--medal-color-silver); }
-.mode-card[data-medal="bronze"] { border: 2px solid var(--medal-color-bronze); }
-
+.modecard.bronze { border: 2px solid var(--medal-color-bronze); }
+.modecard.silver { border: 2px solid var(--medal-color-silver); }
+.modecard.gold { border: 2px solid var(--medal-color-gold); }
+.modecard.author { border: 3px solid var(--medal-color-author); }
 
 
 
@@ -565,11 +565,25 @@ body:not(.menu-active) #menus {
     content: '★';
     margin-right: 6px;
 }
-.best-stats > :not(:empty):not(:last-child)::after {
+.best-stats > :not(:empty):not(:first-child)::before {
     content: '·';
     font-weight: 900;
     margin: 5px;
 }
+
+.best-stats > ::after {
+    color: var(--theme-text-tertiary);
+    content: attr(data-after-text);
+}
+
+
+
+
+
+
+
+
+
 
 
 
