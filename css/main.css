@@ -1,50 +1,79 @@
 :root {
-    --tile-red-color: crimson;
-    --tile-blue-color: aquamarine;
-    --tile-yellow-color: gold;
-    --tile-purple-color: mediumslateblue;
-    --tile-white-color: white;
-    --tile-future-color: gray;
-    --tile-wall-color: dimgray;
-
-    --button-color: #555;
-
-    --countdown-color: red;
-    --global-time-color: cyan;
-    --level-timer-color: #ccc;
-
-    --mistake-color: red;
-    --tutorial-color: rgb(204, 105, 105);
-
-
-    --color-bg: #202020;
-    --color-grid-cell: #333;
-    --color-border: black;
-    --font-size: 1.1rem;
+    /* Raw color values */
+    --color-pink: #b936ae;
+    --color-red: crimson;
+    --color-deep-red: #bb3531;
+    --color-dark-red: #d10700;
+    --color-tutorial-red: #cc6969;
+    --color-orange: chocolate;
+    --color-yellow: gold;
+    --color-green: #4CAF50;
+    --color-cyan: cyan;
+    --color-aqua: aquamarine;
+    --color-teal: #00A395;
+    --color-blue: #2196F3;
+    --color-purple: mediumslateblue;
     
-    --color-text: white;
-    --color-seed-text: color-mix(in oklab, var(--color-bg) 70%, var(--color-text) 30%);
-    --color-new-record: gold;
-
-    --selected-outline-color: white;
-
-    --color-accent: #00A395;
-
-    --color-author: firebrick;
-    --color-gold: gold;
+    --color-white: white;
     --color-silver: silver;
-    --color-bronze: chocolate;
+    --color-gray-light: #ccc;
+    --color-gray-medium: gray;
+    --color-gray-dark: dimgray;
+    --color-bg-light: #555;
+    --color-bg-medium: #333;
+    --color-bg-dark: #202020;
+    --color-black: black;
+    
+    /* -- General UI -- */
+    --theme-bg: var(--color-bg-dark);
+    --theme-surface: var(--color-bg-medium); /* cards, menus, grid-cells */
+    --theme-text-primary: var(--color-white);
+    --theme-text-secondary: var(--color-gray-light);
+    --theme-text-tertiary: var(--color-gray-dark);
+    --theme-border: var(--color-black);
+    --theme-accent: var(--color-teal);
 
+    /* -- Game Elements -- */
+    --tile-color-red: var(--color-red);
+    --tile-color-blue: var(--color-aqua);
+    --tile-color-yellow: var(--color-yellow);
+    --tile-color-purple: var(--color-purple);
+    --tile-color-white: var(--color-white);
+    --tile-color-future: var(--color-gray-medium);
+    --tile-color-wall: var(--color-gray-dark);
+    --selected-outline-color: var(--color-white);
+    
+    /* -- Buttons -- */
+    --button-bg: var(--color-bg-light);
+    --button-bg-play: var(--theme-accent);
+    --button-bg-endless: var(--color-green);
+    --button-bg-hardcore: var(--color-deep-red);
+    --button-bg-findlast: var(--color-blue);
+    --button-bg-custom: var(--color-pink);
+    --button-bg-tutorial: var(--color-tutorial-red);
 
+    /* -- Status -- */
+    --status-mistake: var(--color-dark-red);
+    --status-timer-countdown: var(--color-dark-red);
+    --status-timer-global: var(--color-cyan);
+    --status-new-record: var(--color-yellow);
 
+    /* -- Medals -- */
+    --medal-color-author: var(--color-red);
+    --medal-color-gold: var(--color-yellow);
+    --medal-color-silver: var(--color-silver);
+    --medal-color-bronze: var(--color-orange);
+
+    /* Layout / Animation */
+    --font-size: 1.1rem;
     --animation-speed: 400ms;
     --menu-speed: 200ms;
 }
 
 
 body {
-    background-color: var(--color-bg);
-    color: var(--color-text);
+    background-color: var(--theme-bg);
+    color: var(--theme-text-primary);
     font-size: var(--font-size);
     user-select: none;
     -webkit-user-select: none;
@@ -102,10 +131,10 @@ button {
     padding: 12px 27px;
     border-radius: 12px;
     font-size: var(--font-size);
-    color: var(--color-text);
-    background: var(--button-color);
+    color: var(--theme-text-primary);
+    background: var(--button-bg);
 
-    --button-shadow-color: color-mix(in oklab, var(--button-color) 80%, black 30%);
+    --button-shadow-color: color-mix(in oklab, var(--button-bg) 80%, black 30%);
     --button-depth: 6px;
 
     transition:
@@ -177,6 +206,29 @@ button.icon::before {
 button.icon::after {
     background-color: rgba(0, 0, 0, 0.5);
 }
+button > .button-counter {
+    position: absolute;
+    bottom: -15%;
+    right: -5%;
+
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Poppins', 'Arial Black', sans-serif;
+    font-weight: 700;
+    color: rgba(0, 0, 0, 0.5);
+    text-shadow: 2px 2px rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    background: inherit;
+    box-shadow: inherit;
+}
+
+
+
+
+
 
 
 
@@ -226,41 +278,6 @@ button.icon::after {
 
 
 
-button > .button-counter {
-    position: absolute;
-    bottom: -15%;
-    right: -5%;
-
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Poppins', 'Arial Black', sans-serif;
-    font-weight: 700;
-    color: rgba(0, 0, 0, 0.5);
-    text-shadow: 2px 2px rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    background: inherit;
-    box-shadow: inherit;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #custom-settings-grid {
     display: grid;
@@ -269,7 +286,7 @@ button > .button-counter {
     width: 100%;
 }
 .setting-item {
-    background-color: var(--color-grid-cell);
+    background-color: var(--theme-surface);
     border-radius: 12px;
     padding: 12px;
     display: flex;
@@ -283,7 +300,7 @@ button > .button-counter {
 .setting-item label {
     font-size: 1rem;
     font-weight: 600;
-    color: var(--level-timer-color);
+    color: var(--theme-text-secondary);
     text-align: left;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
 }
@@ -300,7 +317,7 @@ button > .button-counter {
 #custom-settings-grid .advanced { display: none; }
 #custom-settings-grid.advanced-mode .advanced {
     display: flex;
-    background: color-mix(in oklab, var(--color-grid-cell) 80%, red 20%);
+    background: color-mix(in oklab, var(--theme-surface) 70%, var(--status-mistake) 30%);
 }
 
 
@@ -309,14 +326,14 @@ button > .button-counter {
     font-family: 'Poppins', sans-serif;
     font-size: 1.2rem;
     font-weight: 600;
-    color: var(--color-text);
+    color: var(--theme-text-primary);
     text-align: center;
     letter-spacing: 2px;
     
     width: 100%;
     box-sizing: border-box;
     padding: 10px 15px;
-    background-color: var(--color-bg);
+    background-color: var(--theme-bg);
     border: none;
     border-radius: 12px;
     box-shadow: inset 0 4px 8px rgba(0,0,0,0.4);
@@ -324,12 +341,12 @@ button > .button-counter {
 }
 
 .setting-item input::placeholder {
-    color: var(--color-seed-text);
+    color: var(--theme-text-tertiary);
     letter-spacing: normal;
 }
 .setting-item input:focus {
     outline: none;
-    box-shadow: inset 0 4px 8px rgba(0,0,0,0.4), 0 0 15px var(--color-accent);
+    box-shadow: inset 0 4px 8px rgba(0,0,0,0.4), 0 0 15px var(--theme-accent);
 }
 .setting-item input[type="number"] {
     appearance: textfield;
@@ -357,8 +374,8 @@ button > .button-counter {
     width: 24px;
     height: 24px;
     border-radius: 6px;
-    background-color: var(--color-bg);
-    border: 2px solid var(--color-grid-cell);
+    background-color: var(--theme-bg);
+    border: 2px solid var(--theme-surface);
     box-shadow: inset 0 3px 6px rgba(0,0,0,0.4);
     transition: all 100ms ease-out;
 }
@@ -367,7 +384,7 @@ button > .button-counter {
     content: '✔';
     font-size: 18px;
     font-weight: 900;
-    color: var(--color-accent);
+    color: var(--theme-accent);
 
     position: absolute;
     translate: 7px 0px;
@@ -377,8 +394,8 @@ button > .button-counter {
 }
 
 .setting-item:has(input[type="checkbox"]:checked)::before {
-    border-color: var(--color-accent);
-    box-shadow: inset 0 3px 6px rgba(0,0,0,0.4), 0 0 15px var(--color-accent);
+    border-color: var(--theme-accent);
+    box-shadow: inset 0 3px 6px rgba(0,0,0,0.4), 0 0 15px var(--theme-accent);
 }
 .setting-item:has(input[type="checkbox"]:checked)::after {
     opacity: 1;
@@ -456,14 +473,23 @@ body:not(.menu-active) #menus {
 }
 
 
-#main-play-button { --button-color: var(--color-accent); }
-.mode-card[data-mode="endless"] { --button-color: #4CAF50; }
-.mode-card[data-mode="hardcore"] { --button-color: #b9302b; }
-.mode-card[data-mode="findlast"] { --button-color: #2196F3; }
-.mode-card[data-mode="custom"] { --button-color: #cf08bf; }
-.mode-card[data-mode="tutorial"] { --button-color: var(--tutorial-color); }
-#custom-play-button { --button-color: #cf08bf; }
+#main-play-button { --button-bg: var(--theme-accent); }
+.mode-card[data-mode="endless"] { --button-bg: var(--button-bg-endless); }
+.mode-card[data-mode="hardcore"] { --button-bg: var(--button-bg-hardcore); }
+.mode-card[data-mode="findlast"] { --button-bg: var(--button-bg-findlast); }
+.mode-card[data-mode="custom"] { --button-bg: var(--button-bg-custom); }
+.mode-card[data-mode="tutorial"] { --button-bg: var(--button-bg-tutorial); }
+#custom-play-button { --button-bg: var(--button-bg-custom); }
 
+
+.mode-buttons {
+    display: flex;
+    gap: 10px;
+}
+.mode-continue-button {
+    --button-bg: var(--color-gray-dark);
+    padding: 10px 15px;
+}
 
 
 
@@ -491,7 +517,7 @@ body:not(.menu-active) #menus {
     display: flex;
     justify-content: space-between;
     gap: 15px;
-    background-color: var(--color-grid-cell);
+    background-color: var(--theme-surface);
     padding: 15px 20px;
     border-radius: 12px;
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
@@ -509,15 +535,18 @@ body:not(.menu-active) #menus {
     font-size: 1.2rem;
     font-weight: 700;
 }
+.mode-title-length {
+    color: var(--theme-text-tertiary);
+}
 .mode-card.completed .mode-title::after {
     content: ' ✔️';
 }
 
 
-.mode-card[data-medal="author"] { border: 3px solid var(--color-author); }
-.mode-card[data-medal="gold"] { border: 2px solid var(--color-gold); }
-.mode-card[data-medal="silver"] { border: 2px solid var(--color-silver); }
-.mode-card[data-medal="bronze"] { border: 2px solid var(--color-bronze); }
+.mode-card[data-medal="author"] { border: 3px solid var(--medal-color-author); }
+.mode-card[data-medal="gold"] { border: 2px solid var(--medal-color-gold); }
+.mode-card[data-medal="silver"] { border: 2px solid var(--medal-color-silver); }
+.mode-card[data-medal="bronze"] { border: 2px solid var(--medal-color-bronze); }
 
 
 
@@ -530,7 +559,7 @@ body:not(.menu-active) #menus {
 .best-stats {
     font-size: 0.9rem;
     font-weight: 600;
-    color: var(--level-timer-color);
+    color: var(--theme-text-secondary);
 }
 .best-stats:not(:empty)::before {
     content: '★';
@@ -541,23 +570,6 @@ body:not(.menu-active) #menus {
     font-weight: 900;
     margin: 5px;
 }
-
-
-
-.mode-buttons {
-    display: flex;
-    gap: 10px;
-}
-
-.mode-continue-button {
-    --button-color: #6c757d;
-    padding: 10px 15px;
-}
-
-
-
-
-
 
 
 
@@ -576,12 +588,12 @@ body:not(.menu-active) #menus {
     font-weight: 600;
 }
 .mode-tab-button.active {
-    --button-color: var(--color-accent);
+    --button-bg: var(--theme-accent);
 }
 
 
 
 #daily-resets-in-display {
-    color: var(--level-timer-color);
+    color: var(--theme-text-secondary);
     font-weight: 600;
 }

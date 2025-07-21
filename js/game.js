@@ -97,11 +97,9 @@ function startGrid() {
     if (o.modeFindLast) placeRandomTiles(Infinity, true);
     if (o.modeGlobalTimeGain) incrementGlobalTimeLeft();
     
-    if (o.seed === 'Tutorial') {
-        levelTimerInfoDisplay.style.display = 'none';
-        o.levelDialogueStep = -1;
-        advanceTutorial();
-    }
+    if (o.seed === 'Tutorial') levelTimerInfoDisplay.style.display = 'none';
+    o.levelDialogueStep = -1;
+    advanceTutorial();
 }
 
 
@@ -172,6 +170,7 @@ function showHint(timeout, colored=false) {
 function clearHint() {
     clearTimeout(hintTimeout);
     gameGridContainer.classList.remove('hint-active');
+    hintUsesDisplay.classList.remove('using-hint');
     for (const tileElement of gameGridContainer.children) {
         tileElement.classList.remove('animating-hint-breathe');
         tileElement.style.setProperty('--tile-color', '');
@@ -183,6 +182,7 @@ window.addEventListener('unload', () => {
 });
 [homeButton, endHomeButton].forEach(x => x.addEventListener('click', () => {
     if (!o.endScreen) saveCurrentGameStats(false);
+    resetDisplaysAndIntervals();
     goToMainMenu();
 }));
 endHideButton.addEventListener('click', () => levelEndScreen.classList.toggle('moveup'));
@@ -233,7 +233,7 @@ export function formatMinuteSeconds(time, fixed) {
     const minutes = Math.floor(time / 60_000).toString().padStart(2, '0');
     const seconds = (time / 1000 % 60).toFixed(fixed).padStart(2, '0');
     const [integerPart, decimalPart] = seconds.split('.');
-    return `${minutes}:${integerPart.padStart(2, '0')}${decimalPart ? `.${decimalPart}` : ''}`;
+    return `${minutes}:${integerPart.padStart(2, '0')}${decimalPart ? '.'+decimalPart : ''}`;
 }
 
 function startCountdown(name, durationInSeconds, timerDisplayElement) {
@@ -414,7 +414,7 @@ function updateGridLayout() {
 
 
 function advanceTutorial() {
-    const step = o.levelDialogue[++o.levelDialogueStep];
+    const step = o.levelDialogue?.[++o.levelDialogueStep];
 
     // fade out
     tutorialTextDisplay.style.opacity = '0';
@@ -423,7 +423,7 @@ function advanceTutorial() {
         // fade in
         tutorialTextDisplay.classList = `tile-${step.textColor ?? 'red'}`;
         tutorialTextDisplay.style.opacity = '1';
-        tutorialTextDisplay.innerHTML = step.text;
+        tutorialTextDisplay.textContent = step.text;
     }, (o.levelDialogueStep === 0) ? 0 : 300);
 }
 function tutorialOnGameEvent(eventName) {

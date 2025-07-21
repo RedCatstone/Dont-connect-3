@@ -96,7 +96,7 @@ const TABS_DATA = {
     ],
     timed: [
         { id: 'endless', title: 'Endless', settings: { ...endlessSettings, modeGlobalTimeGain: 10, medalAuthor: 34, medalGold: 20 } },
-        { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, modeLevelTime: 30, medalAuthor: 30, medalGold: 15 } },
+        { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, modeLevelTime: 20, medalAuthor: 30, medalGold: 15 } },
         { id: 'findlast', title: 'Find Last', settings: { ...findlastSettings, modeGlobalTimeGain: 3, medalAuthor: 49, medalGold: 20 } },
     ],
     daily: [
@@ -185,7 +185,9 @@ function renderActiveTabContent() {
         card.dataset.mode = mode.id;
         
         const modeLength = mode.settings.modeGoalLevel;
-        card.querySelector('.mode-title').textContent = camelToTitleCase(mode.title) + (modeLength ? ` (${modeLength})`: '');
+        const modeTitleElement = card.querySelector('.mode-title');
+        modeTitleElement.querySelector('.mode-title-text').textContent = camelToTitleCase(mode.title);
+        if (modeLength) modeTitleElement.querySelector('.mode-title-length').textContent =  `(${modeLength})`;
         
         const statsSaveLoc = mode.settings.statsSaveLoc;
         if (statsSaveLoc.best) {
@@ -230,9 +232,7 @@ function renderActiveTabContent() {
         
         const playButton = card.querySelector('.mode-play-button');
         const continueButton = card.querySelector('.mode-continue-button');
-        if (mode.settings.modeLevelTime || mode.settings.modeGlobalTimeGain) {
-            playButton.dataset.customIcon = 'timer';
-        }
+        if (mode.settings.modeLevelTime || mode.settings.modeGlobalTimeGain) playButton.dataset.customIcon = 'timer';
         continueButton.style.display = statsSaveLoc.continue ? '' : 'none';
         continueButton.querySelector('.button-counter').textContent = statsSaveLoc.continue?.level;
         playButton.addEventListener('click', () => handlePlay(mode));
@@ -354,7 +354,7 @@ function updateDailyModeSettings() {
 
     for (const mode of TABS_DATA.daily) {
         const rand = getRandomFunction(dailySeed + mode.id[0]);
-        const modeLength = Math.floor((12 + 10 * rand()) * (mode.id === 'hardcore' ? 0.5 : 1));
+        const modeLength = Math.floor((12 + 10 * rand()) * (mode.id === 'hardcore' ? 2/3 : 1));
 
         mode.settings.seed = dailySeed + mode.id[0];
         mode.settings.modeGoalLevel = modeLength;

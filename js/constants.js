@@ -27,11 +27,11 @@ export const TILE_CLASS_MAP = {
 };
 
 export const TILE_BLOCK_COLOR_MAP = {
-    [TILE.RED]: 'var(--tile-red-color)',
-    [TILE.BLUE]: 'var(--tile-blue-color)',
-    [TILE.YELLOW]: 'var(--tile-yellow-color)',
-    [TILE.PURPLE]: 'var(--tile-purple-color)',
-    [TILE.WHITE]: 'var(--tile-white-color)',
+    [TILE.RED]: 'var(--tile-color-red)',
+    [TILE.BLUE]: 'var(--tile-color-blue)',
+    [TILE.YELLOW]: 'var(--tile-color-yellow)',
+    [TILE.PURPLE]: 'var(--tile-color-purple)',
+    [TILE.WHITE]: 'var(--tile-color-white)',
 };
 
 export const ALL_TILE_BLOCKS = Object.keys(TILE_BLOCK_COLOR_MAP).map(Number);
