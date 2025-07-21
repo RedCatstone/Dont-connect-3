@@ -114,7 +114,7 @@ function startGrid() {
 
 
 
-gameGridContainer.addEventListener('click', (event) => {
+gameGridContainer.addEventListener('mousedown', (event) => {
     if (o.inputDisabled) return;
     const target = event.target;
     if (target.className.includes(TILE_CLASS_MAP[TILE.GRID])) {
@@ -125,7 +125,7 @@ gameGridContainer.addEventListener('click', (event) => {
 });
 
 
-tileSelectorContainer.addEventListener('click', (event) => {
+tileSelectorContainer.addEventListener('mousedown', (event) => {
     const target = event.target;
     const index = target.dataset.i;
     if (index) switchToAvailableTile(parseInt(index));
@@ -159,7 +159,7 @@ function showHint(timeout, colored=false) {
         if (canPlaceSpot !== SPOTS_LEFT_ID.INITIAL && canPlaceSpot !== SPOTS_LEFT_ID.IMPOSSIBLE) {
             tileElement.classList.add('animating-hint-breathe');
             if (colored) {
-                tileElement.style.setProperty('--tile-color', TILE_BLOCK_COLOR_MAP[canPlaceSpot]);
+                tileElement.style.setProperty('background-color', `color-mix(in oklab, var(--theme-surface) 70%, ${TILE_BLOCK_COLOR_MAP[canPlaceSpot]} 30%)`);
             }
         }
     }
@@ -173,7 +173,7 @@ function clearHint() {
     hintUsesDisplay.classList.remove('using-hint');
     for (const tileElement of gameGridContainer.children) {
         tileElement.classList.remove('animating-hint-breathe');
-        tileElement.style.setProperty('--tile-color', '');
+        tileElement.style.setProperty('background-color', '');
     }
 }
 

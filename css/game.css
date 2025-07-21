@@ -263,7 +263,7 @@
 
 
 .tile.grid {
-    background-color: color-mix(in oklab, var(--theme-surface) 70%, var(--tile-color) 30%);
+    background-color: rgb(from var(--theme-surface) r g b / 0.7);
     box-shadow: var(--grid-tile-shadow) var(--grid-tile-shadow) black;
 }
 /* disabled on mobile */
@@ -630,7 +630,7 @@
 
 
 .animating-hint-breathe {
-    translate: 0 calc(-0.2 * var(--grid-tile-size));
+    translate: 0 calc(-0.1 * var(--grid-tile-size));
     filter: brightness(1.3);
     animation: hint-breathe 1.5s infinite cubic-bezier(0.4, 0, 0.6, 1);
 }
