@@ -112,9 +112,8 @@ const TABS_DATA = {
 };
 
 
-// setup tab buttons
-updateDailyModeSettings();
 for (const [tabId, modes] of Object.entries(TABS_DATA)) {
+    // setup tab buttons
     const button = document.createElement('button');
     button.className = 'mode-tab-button';
     button.textContent = camelToTitleCase(tabId);
@@ -216,7 +215,7 @@ function renderActiveTabContent() {
             if (bestLevel !== modeLength + 1) {
                 const bestLevelSpan = document.createElement('span');
                 bestLevelSpan.textContent = `Level ${bestLevel}`;
-                if (medals) {
+                if (medals && !modeLength) {
                     if (bestLevel >= medals.author) card.classList.add("author");
                     else if (bestLevel >= medals.gold) card.classList.add("gold"), bestLevelSpan.dataset.afterText = ` / ${medals.author}`;
                     else if (bestLevel >= medals.silver) card.classList.add("silver"), bestLevelSpan.dataset.afterText = ` / ${medals.gold}`;
@@ -388,7 +387,6 @@ function updateDailyModeSettings() {
             silver: author * 2,
             bronze: author * 5
         };
-        console.log(formatMinuteSeconds(mode.medals.author, 2))
     }
 }
 

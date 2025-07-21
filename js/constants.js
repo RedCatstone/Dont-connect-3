@@ -158,7 +158,7 @@ export const HARDCODED_TUTORIAL_LEVELS = {
         levelDialogue: [
             { text: "Tap an empty spot to place a tile.", waitFor: 'tile_place' },
             { text: "Alright, try to place another tile!", waitFor: 'tile_place' },
-            { text: "The grid is complete if you can't place any more tiles.", waitFor: 'grid_complete' }
+            { text: "The grid is complete if you can't place anything anymore.", waitFor: 'grid_complete' }
         ],
     },
     2: {
@@ -166,7 +166,7 @@ export const HARDCODED_TUTORIAL_LEVELS = {
         availableTiles: [T.RED],
         futureAvailableTiles: [],
         levelDialogue: [
-            { text: "Nice! Let's try a larger grid.", waitFor: 'grid_complete' }
+            { text: "Nice! Let's do a bigger grid.", waitFor: 'grid_complete' }
         ],
     },
     3: {
@@ -208,7 +208,7 @@ export const HARDCODED_TUTORIAL_LEVELS = {
         availableTiles: [T.RED],
         futureAvailableTiles: [T.BLUE, T.PURPLE],
         levelDialogue: [
-            { text: "If you ever get stuck, use a Hint.", waitFor: 'grid_complete' },
+            { text: "If you get stuck, use a Hint.", waitFor: 'grid_complete' },
             { text: "Tutorial Complete!" }
         ],
     },

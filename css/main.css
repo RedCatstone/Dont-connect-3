@@ -561,14 +561,15 @@ body:not(.menu-active) #menus {
     font-weight: 600;
     color: var(--theme-text-secondary);
 }
-.best-stats:not(:empty)::before {
-    content: '★';
-    margin-right: 6px;
-}
-.best-stats > :not(:empty):not(:first-child)::before {
+.best-stats > ::before {
     content: '·';
     font-weight: 900;
     margin: 5px;
+}
+.best-stats > :first-child::before {
+    content: '★';
+    margin-right: 6px;
+    margin-left: 0;
 }
 
 .best-stats > ::after {
