@@ -1,4 +1,4 @@
-import { placeRandomTiles } from "./game.js";
+import { placeRandomTiles, TimerManager } from "./game.js";
 import { create2dGrid } from "./generateGrid.js";
 
 // Tile Ids
@@ -12,7 +12,6 @@ export const TILE = {
     PURPLE: 8,
     WHITE: 9,
 }
-const T = TILE;
 
 // Map tile IDs to CSS classes
 export const TILE_CLASS_MAP = {
@@ -100,13 +99,14 @@ export const o = {
     hintsUsed: null,
     levelTimeDeathTime: null,
     globalTimeDeathTime: null,
-    activeCountdowns: {},
     tutorialDissallowValidMoves: false,
     levelDialogue: null,
     levelDialogueStep: null,
     previousBestLevel: null,
+    customMode: false,
     modeSettings: null,
-
+    
+    timerManager: TimerManager,
     STATS,
     modeSaveLoc: null,
 
@@ -148,8 +148,7 @@ window.o = o;
 
 
 
-
-
+const T = TILE;
 export const HARDCODED_TUTORIAL_LEVELS = {
     1: {
         grid: create2dGrid(3, 5, T.GRID),

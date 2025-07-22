@@ -77,29 +77,29 @@ const tutorialMode = {
         seed: 'Tutorial',
         hardcodedLevels: HARDCODED_TUTORIAL_LEVELS,
         modeGoalLevel: Object.keys(HARDCODED_TUTORIAL_LEVELS).length,
-        modeHintCount: 5,
+        hintCount: 5,
     },
     medals: {
-        author: 17000,
+        author: 15000,
         gold: 30000,
     }
 };
 
-const endlessSettings = { modeHintCount: 2 };
-const hardcoreSettings = { modeHintCount: 2, modeLivesCount: 1 };
-const findlastSettings = { modeHintCount: 2, modeFindLast: true };
+const endlessSettings = { hintCount: 2 };
+const hardcoreSettings = { hintCount: 2, liveCount: 1 };
+const findlastSettings = { hintCount: 2, modeFindLast: true };
 
 const TABS_DATA = {
     normal: [
         tutorialMode,
-        { id: 'endless', title: 'Endless', settings: { ...endlessSettings, modeHintCount: 2 }, medals: { author: 187, gold: 100 } },
-        { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, modeHintCount: 2, }, medals: { author: 38, gold: 20 } },
-        { id: 'findlast', title: 'Find Last', settings: { ...findlastSettings, modeHintCount: 2, }, medals: { author: 200, gold: 100 } },
+        { id: 'endless', title: 'Endless', settings: { ...endlessSettings, hintCount: 2 }, medals: { author: 200, gold: 100 } },
+        { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, hintCount: 2, }, medals: { author: 40, gold: 20 } },
+        { id: 'findlast', title: 'Find Last', settings: { ...findlastSettings, hintCount: 2, }, medals: { author: 200, gold: 100 } },
     ],
     timed: [
-        { id: 'endless', title: 'Endless', settings: { ...endlessSettings, modeGlobalTimeGain: 10, }, medals: { author: 43, gold: 25 } },
+        { id: 'endless', title: 'Endless', settings: { ...endlessSettings, modeGlobalTimeGain: 10, }, medals: { author: 40, gold: 25 } },
         { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, modeLevelTime: 20, }, medals: { author: 30, gold: 15 } },
-        { id: 'findlast', title: 'Find Last', settings: { ...findlastSettings, modeGlobalTimeGain: 3, }, medals: { author: 58, gold: 30 } },
+        { id: 'findlast', title: 'Find Last', settings: { ...findlastSettings, modeGlobalTimeGain: 3, }, medals: { author: 60, gold: 30 } },
     ],
     daily: [
         { id: 'endless', title: 'Endless', settings: { ...endlessSettings } },
@@ -122,7 +122,7 @@ for (const [tabId, modes] of Object.entries(TABS_DATA)) {
 
     if (tabId !== 'daily') for (const mode of modes) {
         // add statsSaveLoc to all modes
-        mode.settings.statsSaveLoc = getStatsSaveLoc(tabId, mode);
+        mode.statsSaveLoc = getStatsSaveLoc(tabId, mode);
         // add bronze/silver medals to all modes
         const medals = mode.medals;
         if (medals) {
@@ -205,7 +205,7 @@ function renderActiveTabContent() {
         modeTitleElement.querySelector('.mode-title-text').textContent = camelToTitleCase(mode.title);
         if (modeLength) modeTitleElement.querySelector('.mode-title-length').textContent =  `(${modeLength})`;
         
-        const statsSaveLoc = mode.settings.statsSaveLoc;
+        const statsSaveLoc = mode.statsSaveLoc;
         if (statsSaveLoc.best) {
             const bestStats = card.querySelector('.best-stats');
             const bestLevel = statsSaveLoc.best.level;
@@ -216,7 +216,7 @@ function renderActiveTabContent() {
                 const bestLevelSpan = document.createElement('span');
                 bestLevelSpan.textContent = `Level ${bestLevel}`;
                 if (medals && !modeLength) {
-                    if (bestLevel >= medals.author) card.classList.add("author");
+                    if (bestLevel >= medals.author) card.classList.add("author"), bestLevelSpan.dataset.afterText = ` / ${medals.author}`;
                     else if (bestLevel >= medals.gold) card.classList.add("gold"), bestLevelSpan.dataset.afterText = ` / ${medals.author}`;
                     else if (bestLevel >= medals.silver) card.classList.add("silver"), bestLevelSpan.dataset.afterText = ` / ${medals.gold}`;
                     else if (bestLevel >= medals.bronze) card.classList.add("bronze"), bestLevelSpan.dataset.afterText = ` / ${medals.silver}`;
@@ -229,7 +229,7 @@ function renderActiveTabContent() {
                 const bestTimeSpan = document.createElement('span');
                 bestTimeSpan.textContent = formatMinuteSeconds(bestTime, 2);
                 if (medals && bestLevel === modeLength + 1) {
-                    if (bestTime <= medals.author) card.classList.add("author");
+                    if (bestTime <= medals.author) card.classList.add("author"), bestTimeSpan.dataset.afterText = ` / ${formatMinuteSeconds(medals.author, 2)}`;
                     else if (bestTime <= medals.gold) card.classList.add("gold"), bestTimeSpan.dataset.afterText = ` / ${formatMinuteSeconds(medals.author, 2)}`;
                     else if (bestTime <= medals.silver) card.classList.add("silver"), bestTimeSpan.dataset.afterText = ` / ${formatMinuteSeconds(medals.gold, 2)}`;
                     else if (bestTime <= medals.bronze) card.classList.add("bronze"), bestTimeSpan.dataset.afterText = ` / ${formatMinuteSeconds(medals.silver, 2)}`;
@@ -299,18 +299,19 @@ function generateCustomSettingsGrid() {
     modeSettingsGrid.addEventListener('input', () => {
         // save new settings
         TABS_DATA.custom[0].settings = Object.fromEntries(Object.entries({
-            statsSaveLoc: TABS_DATA.custom[0].settings.statsSaveLoc,
+            statsSaveLoc: TABS_DATA.custom[0].statsSaveLoc,
             seed: document.getElementById('custom-seed-input').value || undefined,
             level: getNumber(document.getElementById('custom-level-input').value),
             modeGoalLevel: getNumber(document.getElementById('custom-goal-level-input').value),
             modeFindLast: document.getElementById('custom-find-last-input').checked,
-            modeHintCount: getNumber(document.getElementById('custom-hints-input').value),
-            modeLivesCount: getNumber(document.getElementById('custom-lives-input').value),
+            hintCount: getNumber(document.getElementById('custom-hints-input').value),
+            liveCount: getNumber(document.getElementById('custom-lives-input').value),
             modeGlobalTimeGain: getNumber(document.getElementById('custom-time-limit-gain-input').value),
             botAmountMultiplier: getNumber(document.getElementById('custom-bot-multiplier-input').value),
             // advanced settings
             modeLevelTime: getNumber(document.getElementById('custom-level-time-limit-input').value),
             lineLength: getNumber(document.getElementById('custom-line-length-input').value),
+            customMode: true,
         }).filter(([_, value]) => value !== undefined));
         // refresh play mode card
         renderActiveTabContent();
@@ -324,11 +325,11 @@ function generateCustomSettingsGrid() {
 
 
 function handlePlay(mode, shouldContinue) {
-    const modeSettings = { ...mode.settings };
     if (activeTabId === 'daily') updateDailyModeSettings();
-    if (shouldContinue) Object.assign(modeSettings, modeSettings.statsSaveLoc.continue);
+    const modeSettings = { ...mode.settings, modeSettings: mode.settings };
+    if (shouldContinue) Object.assign(modeSettings, mode.statsSaveLoc.continue);
     goToGame();
-    startMode(modeSettings);
+    startMode(modeSettings, mode.statsSaveLoc);
 }
 
 
@@ -373,12 +374,12 @@ function updateDailyModeSettings() {
 
         mode.settings.seed = dailySeed + mode.id[0];
         mode.settings.modeGoalLevel = modeLength;
-        mode.settings.statsSaveLoc = getStatsSaveLoc('daily', mode);
+        mode.statsSaveLoc = getStatsSaveLoc('daily', mode);
 
         const timeForOneLevel = {
             endless: 24_000,
-            hardcore: 9_000,
-            findlast: 9_000
+            hardcore: 11_000,
+            findlast: 7_000
         };
         const author = modeLength * timeForOneLevel[mode.id];
         mode.medals = {

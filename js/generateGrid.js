@@ -49,7 +49,7 @@ export function generateGrid(seed, level) {
     }
 
     // bot amount
-    const botAmount = Math.floor(rand() * Math.log(level) * o.botAmountMultiplier) || 0;
+    const botAmount = Math.floor(0.25 + rand() * Math.log(level) * o.botAmountMultiplier) || 0;
 
     return { grid, availableTiles, futureAvailableTiles, botAmount };
 }

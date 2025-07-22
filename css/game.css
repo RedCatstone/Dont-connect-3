@@ -48,8 +48,14 @@
     font-size: 50px;
     font-family: math;
     text-align: center;
-    min-width: 7.5ch;
+    width: 10ch;
 }
+
+#bots-display {
+    font-family: math;
+    font-size: 20px;
+}
+
 
 #timer-displays {
     display: flex;
@@ -69,6 +75,7 @@
 }
 #level-display {
     white-space: nowrap;
+    padding-left: 10px;
 }
 
 
@@ -255,23 +262,33 @@
 
 .tile {
     position: relative;
-    border-radius: 10%;
-    margin: 4%;
     transition: translate 0.1s cubic-bezier(0.25, 0.1, 0.25, 1);
-    --tile-color: transparent;
+    border-radius: 10%;
+    --tile-outline-color: unset;
 }
 
-
+.tile:not(.grid) {
+    scale: 0.92;
+    outline: var(--tile-outline-color);
+}
 .tile.grid {
-    background-color: rgb(from var(--theme-surface) r g b / 0.7);
+    cursor: pointer;
+}
+
+.tile.grid::before {
+    content: '';
+    position: absolute;
+    inset: 4%;
+    border-radius: inherit;
     box-shadow: var(--grid-tile-shadow) var(--grid-tile-shadow) black;
+    outline: var(--tile-outline-color);
+    background-color: var(--theme-surface);
 }
 /* disabled on mobile */
 @media (pointer: fine) {
-    #gamegrid-grid:not(.input-disabled) .tile.grid:hover {
+    #gamegrid-grid:not(.input-disabled) .tile.grid:hover::before {
         background-color: color-mix(in oklab, var(--theme-surface) 93%, var(--selected-tile-color) 7%);
         outline: calc(0.02 * var(--grid-tile-size)) solid var(--selected-outline-color);
-        cursor: pointer;
     }
 }
 
@@ -293,6 +310,7 @@
     background: var(--tile-color);
     border-radius: inherit;
     transform: translateY(-30%);
+    pointer-events: none;
 }
 .tile.transparent {
     opacity: 0.3;
@@ -348,6 +366,9 @@
     height: var(--block-size);
     margin: 0;
 }
+#tile-selector .tile.block::before {
+    pointer-events: unset;
+}
 #tile-selector .tile.block.selected::before {
     outline: 3px solid var(--selected-outline-color);
     outline-offset: calc(0.1 * var(--block-size));
@@ -370,7 +391,7 @@
     mask-size: contain;
     mask-repeat: no-repeat;
     mask-position: center;
-    mask-image: url('../svg/question-mark.svg');
+    mask-image: url('svg/question-mark.svg');
     background-color: rgba(0, 0, 0, 0.5);
 }
 
@@ -443,7 +464,7 @@
 
 #end-hide-button::before,
 #end-hide-button::after {
-    mask-image: url('../svg/arrowhead.svg');
+    mask-image: url('svg/arrowhead.svg');
     transition: rotate var(--animation-speed) ease-in-out;
     transform-origin: 0% 0%;
 }
@@ -638,7 +659,7 @@
 .animating-invalid-shake {
     translate: 0 calc(-0.2 * var(--grid-tile-size));
     filter: brightness(1.2) !important;
-    outline: 3px solid var(--status-mistake);
+    --tile-outline-color: 3px solid var(--status-mistake);
     animation: invalid-shake 150ms infinite cubic-bezier(0.5, 0, 0.2, 1);
 }
 .animating-win {

@@ -18,6 +18,7 @@ export const tutorialTextDisplay = document.getElementById('tutorial-text-displa
 const levelDisplay = document.getElementById('level-display');
 const timerDisplay = document.getElementById('timer-display');
 const spotsLeftDisplay = document.getElementById('spots-display');
+const botsDisplay = document.getElementById('bots-display');
 const levelTimeDisplay = document.getElementById('level-time-display');
 const globalTimeWrapper = document.getElementById('global-time-wrapper');
 const globalTimeDisplay = document.getElementById('global-time-display');
@@ -33,18 +34,17 @@ const endRetryButton = document.getElementById('end-retry-button');
 
 
 
-export function startMode(customSettings) {
+export function startMode(customSettings, statsSaveLoc) {
     const defaultSettings = {
         modeSettings: customSettings,
         seed: generateRandomB64String(o.defaultSeedLength),
-        modeSaveLoc: null,
         level: 1,
         hardcodedLevels: {},
         time: 0,
         modeGoalLevel: 0,
         modeFindLast: false,
-        modeHintCount: 0,
-        modeLivesCount: 0,
+        hintCount: 0,
+        liveCount: 0,
         modeGlobalTimeGain: 0,
         botAmountMultiplier: 1,
         modeLevelTime: 0,
@@ -52,18 +52,28 @@ export function startMode(customSettings) {
         blocksPlaced: 0,
         mistakes: 0,
         hintsUsed: 0,
-        hintsLeft: customSettings.modeHintCount ?? 0,
-        lives: customSettings.modeLivesCount ?? 0,
-        previousBestLevel: customSettings.statsSaveLoc.best?.level ?? 0,
+        customMode: false,
+        statsSaveLoc,
+        previousBestLevel: statsSaveLoc.best?.level ?? 0,
     };
 
     Object.assign(o, defaultSettings, customSettings);
 
     resetDisplaysAndIntervals();
-    if (o.lives) updateLivesDisplay();
-    if (o.modeGlobalTimeGain) startCountdown('global', 0, globalTimeDisplay);
+    if (o.liveCount) updateLivesDisplay();
+    if (o.modeGlobalTimeGain) {
+        o.timerManager.start('global', {
+            element: globalTimeDisplay,
+            isCountdown: true,
+            durationMs: o.modeGlobalTimeGain * 1000,
+            onEnd: () => gridFail()
+        });
+    }
+    o.timerManager.start('main', { 
+        element: timerDisplay,
+        initialTimeMs: o.time
+    });
     startGrid();
-    startTimer();
 }
 
 
@@ -85,21 +95,28 @@ function startGrid() {
 
     calculateSpotsLeft();
     levelDisplay.textContent = `Level ${o.level}${o.modeGoalLevel ? `/${o.modeGoalLevel}` : ''}`;
+    botsDisplay.textContent = (o.botAmount && !o.modeFindLast) ? `${o.botAmount} Bot${o.botAmount !== 1 ? 's' : ''}` : '';
     seedDisplay.textContent = o.seed;
-    hintUsesDisplay.textContent = o.hintsLeft;
+    hintUsesDisplay.textContent = o.hintCount;
     createGridDisplay();
     updateTileSelectorDisplay();
 
+    o.timerManager.resume('main');
     if (o.modeLevelTime) {
         const factor = (o.availableTiles.length + o.futureAvailableTiles.length) / 2 + 0.5;
-        startCountdown('level', o.modeLevelTime * factor, levelTimeDisplay);
+        o.timerManager.start('level', {
+            element: levelTimeDisplay,
+            isCountdown: true,
+            durationMs: o.modeLevelTime * factor * 1000,
+            onEnd: () => gridFail()
+        });
     }
     if (o.modeFindLast) placeRandomTiles(Infinity, true);
-    if (o.modeGlobalTimeGain) incrementGlobalTimeLeft();
+    if (o.modeGlobalTimeGain && o.level > 1) incrementGlobalTimeLeft();
     
     if (o.seed === 'Tutorial') levelTimerInfoDisplay.style.display = 'none';
     o.levelDialogueStep = -1;
-    advanceTutorial();
+    advanceDialogue();
 }
 
 
@@ -143,7 +160,9 @@ let hintTimeout = null;
 let noHintTimeout = null;
 let hintUsed = false;
 hintButton.addEventListener('click', () => {
-    if (o.hintsLeft > 0) showHint(1500);
+    if (o.hintCount > 0) {
+        if (o.spotsLeftCount > 0) showHint(1500);
+    }
     else {
         hintUsesDisplay.classList.add('no-hints');
         clearTimeout(noHintTimeout);
@@ -151,16 +170,13 @@ hintButton.addEventListener('click', () => {
     }
 }, true);
     
-function showHint(timeout, colored=false) {
+function showHint(timeout) {
     hintUsed = true;
     if (timeout) hintUsesDisplay.classList.add('using-hint');
     for (const tileElement of gameGridContainer.children) {
         const canPlaceSpot = o.spotsLeftGrid[tileElement.dataset.y][tileElement.dataset.x];
         if (canPlaceSpot !== SPOTS_LEFT_ID.INITIAL && canPlaceSpot !== SPOTS_LEFT_ID.IMPOSSIBLE) {
             tileElement.classList.add('animating-hint-breathe');
-            if (colored) {
-                tileElement.style.setProperty('background-color', `color-mix(in oklab, var(--theme-surface) 70%, ${TILE_BLOCK_COLOR_MAP[canPlaceSpot]} 30%)`);
-            }
         }
     }
     gameGridContainer.classList.add('hint-active');
@@ -170,10 +186,8 @@ function showHint(timeout, colored=false) {
 function clearHint() {
     clearTimeout(hintTimeout);
     gameGridContainer.classList.remove('hint-active');
-    hintUsesDisplay.classList.remove('using-hint');
     for (const tileElement of gameGridContainer.children) {
         tileElement.classList.remove('animating-hint-breathe');
-        tileElement.style.setProperty('background-color', '');
     }
 }
 
@@ -186,14 +200,14 @@ window.addEventListener('unload', () => {
     goToMainMenu();
 }));
 endHideButton.addEventListener('click', () => levelEndScreen.classList.toggle('moveup'));
-endRetryButton.addEventListener('click', () => startMode(o.modeSettings));
+endRetryButton.addEventListener('click', () => {
+    startMode(o.modeSettings, o.statsSaveLoc);
+});
 
 
 
 function resetDisplaysAndIntervals() {
-    clearInterval(timerInterval);
-    clearTimeout(gridCompleteTimeout);
-    for (const name in o.activeCountdowns) stopCountdown(name);
+    o.timerManager.stopAll();
     timerDisplay.textContent = '';
     levelTimeDisplay.textContent = '';
     globalTimeDisplay.textContent = '';
@@ -218,17 +232,89 @@ function resetDisplaysAndIntervals() {
 
 
 
-let timerInterval = null;
-function startTimer() {
-    o.time = performance.now() - o.time;
-    clearTimeout(timerInterval);
-    timerInterval = setInterval(updateTimerDisplay, 1000);
-    updateTimerDisplay();
-}
-function updateTimerDisplay() {
-    const time = performance.now() - o.time;
-    timerDisplay.textContent = formatMinuteSeconds(time, 0);
-}
+
+
+
+
+export const TimerManager = {
+    _timers: {},
+    _frameId: null,
+
+    _loop() {
+        const now = performance.now();
+        let hasActiveTimers = false;
+
+        for (const [name, timer] of Object.entries(this._timers)) {
+            if (timer.isPaused) continue;
+            hasActiveTimers = true;
+            
+            if (timer.isCountdown) {
+                const remaining = timer.endTime - now;
+                if (remaining <= 0) {
+                    timer.element.textContent = '0.0';
+                    timer.onEnd();
+                    this.stop(name);
+                }
+                else timer.element.textContent = (remaining / 1000).toFixed(1)
+            }
+            else timer.element.textContent = formatMinuteSeconds(now - timer.startTime, 0);
+        }
+        if (hasActiveTimers) this._frameId = requestAnimationFrame(() => this._loop());
+        else this._frameId = null;
+    },
+
+    start(name, options) {
+        const now = performance.now();
+
+        this._timers[name] = {
+            element: options.element,
+            isCountdown: Boolean(options.isCountdown),
+            onEnd: options.onEnd,
+            startTime: now - (options.initialTimeMs || 0),
+            endTime: now + (options.durationMs || 0)
+        };
+        if (!this._frameId) this._loop();
+    },
+
+    resume(name) {
+        const now = performance.now();
+        const timer = this._timers[name];
+        if (timer.isPaused) { // Resume
+            const pauseDuration = now - timer.pauseTime;
+            timer.startTime += pauseDuration;
+            if (timer.isCountdown) timer.endTime += pauseDuration;
+            timer.isPaused = false;
+        }
+        if (!this._frameId) this._loop();
+    },
+
+    pause(name) {
+        const timer = this._timers[name];
+        if (timer && !timer.isPaused) {
+            timer.pauseTime = performance.now();
+            timer.isPaused = true;
+        }
+    },
+
+    stop(name) {
+        delete this._timers[name];
+    },
+
+    stopAll() {
+        this._timers = {};
+        this._frameId = null;
+        cancelAnimationFrame(this._frameId);
+    },
+
+    addTime(name, ms) {
+        const timer = this._timers[name];
+        if (timer.isCountdown) timer.endTime += ms;
+        else timer.startTime -= ms;
+    }
+};
+
+
+
 export function formatMinuteSeconds(time, fixed) {
     const minutes = Math.floor(time / 60_000).toString().padStart(2, '0');
     const seconds = (time / 1000 % 60).toFixed(fixed).padStart(2, '0');
@@ -236,42 +322,33 @@ export function formatMinuteSeconds(time, fixed) {
     return `${minutes}:${integerPart.padStart(2, '0')}${decimalPart ? '.'+decimalPart : ''}`;
 }
 
-function startCountdown(name, durationInSeconds, timerDisplayElement) {
-    stopCountdown(name);
-    const deathTime = performance.now() + durationInSeconds * 1000;
-
-    function update() {
-        const remainingMs = o.activeCountdowns[name].deathTime - performance.now();
-        if (remainingMs > 0) timerDisplayElement.textContent = (remainingMs / 1000).toFixed(1);
-        else {
-            timerDisplayElement.textContent = '0.0';
-            gridFail();
-            delete o.activeCountdowns[name];
-        }
-    }
-    o.activeCountdowns[name] = { deathTime, id: setInterval(() => update(), 100) };
-    timerDisplayElement.textContent = durationInSeconds.toFixed(1);
-}
-
-function stopCountdown(name) {
-    if (o.activeCountdowns[name]) {
-        clearInterval(o.activeCountdowns[name].id);
-        delete o.activeCountdowns[name];
-    }
-}
 function incrementGlobalTimeLeft() {
     const factor = !o.modeFindLast ? 1 : o.availableTiles.length / 2 + 0.5;   // 1->1  2->1.5  3->2  4->2.5  5->3
     const timeGainedSec = o.modeGlobalTimeGain * factor;
-    o.activeCountdowns['global'].deathTime += timeGainedSec * 1000;
+    o.timerManager.addTime('global', timeGainedSec * 1000);
+    o.timerManager.resume('global');
 
     const popup = document.createElement('span');
     popup.className = 'time-gained-popup';
     popup.textContent = `+${timeGainedSec.toFixed(1)}s`;
     globalTimeWrapper.appendChild(popup);
-    setTimeout(() => {
-        popup.remove();
-    }, 1500);
+    setTimeout(() => popup.remove(), 1500);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -299,7 +376,7 @@ function updateTileSelectorDisplay() {
 
 function updateLivesDisplay() {
     livesDisplay.innerHTML = '';
-    const numHearts = o.lives;
+    const numHearts = o.liveCount;
     const heartsPerRow = 5;
     const fragment = document.createDocumentFragment();
 
@@ -317,11 +394,11 @@ function updateLivesDisplay() {
     livesDisplay.appendChild(fragment);
 }
 function loseLife() {
-    o.lives--;
+    o.liveCount--;
     const lastHeart = livesDisplay.lastChild.lastChild;
     lastHeart.classList.add('heart-lost');
     setTimeout(() => updateLivesDisplay(), o.invalidMoveTimeout);
-    if (o.lives === 0) gridFail();
+    if (o.liveCount === 0) gridFail();
 }
 
 
@@ -413,7 +490,7 @@ function updateGridLayout() {
 
 
 
-function advanceTutorial() {
+function advanceDialogue() {
     const step = o.levelDialogue?.[++o.levelDialogueStep];
 
     // fade out
@@ -428,7 +505,7 @@ function advanceTutorial() {
 }
 function tutorialOnGameEvent(eventName) {
     const step = o.levelDialogue[o.levelDialogueStep];
-    if (step?.waitFor === eventName) advanceTutorial();
+    if (step?.waitFor === eventName) advanceDialogue();
 }
 
 
@@ -495,7 +572,7 @@ function userPlaceTile(y, x, tileId) {
             o.blocksPlaced++;
             if (hintUsed) {
                 hintUsed = false;
-                hintUsesDisplay.textContent = --o.hintsLeft;
+                hintUsesDisplay.textContent = --o.hintCount;
                 o.hintsUsed++;
                 clearHint();
                 hintUsesDisplay.classList.remove('using-hint');
@@ -533,7 +610,7 @@ function placeTileVisual(y, x, tileId, spotsLeft) {
     tileElement.className = TILE_CLASS_MAP[tileId];
     createBlockPlaceParticles(tileElement);
     playSound('pOp');
-    spotsLeftDisplay.textContent = `${spotsLeft} spot${spotsLeft !== 1 ? 's' : ''}`;
+    spotsLeftDisplay.textContent = `${spotsLeft} spot${spotsLeft !== 1 ? 's' : ''}${o.seed === 'Tutorial' ? ' left' : ''}`;
 }
 
 
@@ -585,7 +662,7 @@ function canPlaceTile(y, x, tileId, drawLine) {
         disableGridInput();
         playSound('error');
         o.mistakes++;
-        if (o.lives > 0) loseLife();
+        if (o.liveCount > 0) loseLife();
         return false;
     }
     return true;
@@ -655,7 +732,7 @@ function calculateSpotsLeft() {
             else o.spotsLeftGrid[y][x] = SPOTS_LEFT_ID.IMPOSSIBLE;
         }
     }
-    spotsLeftDisplay.textContent = `${o.spotsLeftCount} spot${o.spotsLeftCount !== 1 ? 's' : ''}`;
+    spotsLeftDisplay.textContent = `${o.spotsLeftCount} spot${o.spotsLeftCount !== 1 ? 's' : ''}${o.seed === 'Tutorial' ? ' left' : ''}`;
     if (o.spotsLeftCount === 0) zeroSpotsLeft();
 }
 
@@ -734,22 +811,20 @@ function zeroSpotsLeft() {
 
 
 
-let gridCompleteTimeout = null;
 function gridComplete() {
     disableGridInput();
-    stopCountdown('level');
-    const globalTimeLeft = o.activeCountdowns['global']?.deathTime - performance.now();
-    stopCountdown('global');
+    o.timerManager.stop('level');
+    o.timerManager.pause('global');
+    o.timerManager.pause('main');
     
     if (o.level === o.modeGoalLevel) {
         showEndScreen('win', o.winLooseTimeout);
     }
     else {
         saveCurrentGameStats(true);
-        gridCompleteTimeout = setTimeout(() => {
+        setTimeout(() => {
             o.level++;
-            if (o.hintsLeft < 99 && o.level % o.gainHintEveryLevel === 0) hintUsesDisplay.textContent = ++o.hintsLeft;
-            if (o.modeGlobalTimeGain) startCountdown('global', (globalTimeLeft + o.winLooseTimeout) / 1000, globalTimeDisplay);
+            if (o.hintCount < 99 && o.level % o.gainHintEveryLevel === 0) hintUsesDisplay.textContent = ++o.hintCount;
             enableGridInput();
             startGrid();
         }, o.winLooseTimeout);
@@ -774,9 +849,6 @@ function gridComplete() {
 }
 
 function gridFail() {
-    disableGridInput();
-    for (const name in o.activeCountdowns) stopCountdown(name);
-
     showEndScreen('lose', o.winLooseTimeout / 2);
     playSound('error');
 }
@@ -792,7 +864,7 @@ function gridFail() {
 function saveCurrentGameStats(gridWasSuccess) {
     const gameStats = {
         level: o.level + gridWasSuccess,   // +1 level if grid was completed successfully
-        time: Math.round(performance.now() - o.time),
+        time: Math.round(performance.now() - o.timerManager._timers['main'].startTime),
         blocksPlaced: o.blocksPlaced,
         mistakes: o.mistakes,
         hintsUsed: o.hintsUsed,
@@ -810,13 +882,10 @@ function saveCurrentGameStats(gridWasSuccess) {
     if (gameStats.level > 1) {
         if (!o.endScreen && !(o.modeGlobalTimeGain || o.modeLevelTime)) {
             const toSave = { ...gameStats };
-            if (o.mode === 'custom') {
-                Object.assign(toSave, o.modeSettings);
-                delete toSave.statsSaveLoc;
-            }
-            toSave.hintsLeft = o.hintsLeft;
+            if (o.customMode) toSave.modeSettings = o.modeSettings;
+            toSave.hintCount = o.hintCount;
             toSave.previousBestLevel = o.previousBestLevel;
-            if (o.modeLivesCount > 1) toSave.lives = o.lives;
+            if (o.liveCount > 1) toSave.liveCount = o.liveCount;
             o.statsSaveLoc.continue = toSave;
         }
         else delete o.statsSaveLoc.continue;
@@ -834,16 +903,12 @@ function saveCurrentGameStats(gridWasSuccess) {
 
 
 
-
-
 function showEndScreen(status, timeout) {
-    updateTimerDisplay();
-    clearInterval(timerInterval);
-    clearTimeout(gridCompleteTimeout);
-    for (const name in o.activeCountdowns) stopCountdown(name);
+    disableGridInput();
     o.endScreen = true;
-
+    
     const { gameStats, newLevelRecord, newTimeRecord } = saveCurrentGameStats(status === 'win');
+    o.timerManager.stopAll();
 
     setTimeout(() => {
         endScreenTitle.textContent = `You ${status}!`;
@@ -869,7 +934,7 @@ function showEndScreen(status, timeout) {
             endScreenStats.appendChild(statItem);
         }
 
-        showHint(0, true);
+        showHint(0);
         levelEndScreen.classList.add('visible');
         setTimeout(() => levelEndScreen.classList.add('moveup'), 30);
     }, timeout);

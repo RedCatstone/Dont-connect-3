@@ -5,7 +5,7 @@
     --color-deep-red: #bb3531;
     --color-dark-red: #d10700;
     --color-tutorial-red: #cc6969;
-    --color-orange: chocolate;
+    --color-brown: saddlebrown;
     --color-yellow: gold;
     --color-green: #4CAF50;
     --color-cyan: cyan;
@@ -20,7 +20,7 @@
     --color-gray-medium: gray;
     --color-gray-dark: dimgray;
     --color-bg-light: #555;
-    --color-bg-medium: #333;
+    --color-bg-medium: #303030;
     --color-bg-dark: #202020;
     --color-black: black;
     
@@ -62,7 +62,7 @@
     --medal-color-author: var(--color-red);
     --medal-color-gold: var(--color-yellow);
     --medal-color-silver: var(--color-silver);
-    --medal-color-bronze: var(--color-orange);
+    --medal-color-bronze: var(--color-brown);
 
     /* Layout / Animation */
     --font-size: 1.1rem;
@@ -236,34 +236,34 @@ button > .button-counter {
 #home-button::after,
 #end-home-button::before,
 #end-home-button::after {
-    mask-image: url('../svg/home.svg');
+    mask-image: url('svg/home.svg');
 }
 
 #hint-button::before,
 #hint-button::after {
-    mask-image: url('../svg/eye.svg');
+    mask-image: url('svg/eye.svg');
 }
 
 #end-retry-button::before,
 #end-retry-button::after {
-    mask-image: url('../svg/retry.svg');
+    mask-image: url('svg/retry.svg');
 }
 
 .mode-play-button::before,
 .mode-play-button::after {
-    mask-image: url('../svg/play.svg');
+    mask-image: url('svg/play.svg');
     scale: 70%;
     transform-origin: 10% 0%;
 }
 
 .mode-play-button[data-custom-icon="timer"]::before,
 .mode-play-button[data-custom-icon="timer"]::after {
-    mask-image: url('../svg/timer.svg');
+    mask-image: url('svg/timer.svg');
 }
 
 .mode-continue-button::before,
 .mode-continue-button::after {
-    mask-image: url('../svg/save.svg');
+    mask-image: url('svg/save.svg');
 }
 
 
