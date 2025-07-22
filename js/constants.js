@@ -88,8 +88,7 @@ export const o = {
     seed: null,
     level: null,
     hardcodedLevels: null,
-    time: performance.now(),
-    selectedAvailableTile: 0,
+    selectedAvailableTile: null,
     inputDisabled: false,
     spotsLeftCount: null,
     lives: null,
@@ -97,9 +96,6 @@ export const o = {
     blocksPlaced: null,
     mistakes: null,
     hintsUsed: null,
-    levelTimeDeathTime: null,
-    globalTimeDeathTime: null,
-    tutorialDissallowValidMoves: false,
     levelDialogue: null,
     levelDialogueStep: null,
     previousBestLevel: null,
@@ -111,11 +107,9 @@ export const o = {
     modeSaveLoc: null,
 
     // mode specifics
-    modeGoalLevel: false,
+    modeGoalLevel: 0,
     modeFindLast: false,
-    modeHintCount: 0,
     modeLevelTime: 0,
-    modeLivesCount: 0,
     modeGlobalTimeGain: 0,
     
     // settings
@@ -125,7 +119,6 @@ export const o = {
     botAnimationSpeed: 100,  // ms
     invalidMoveTimeout: 600,
     defaultSeedLength: 3,
-    volume: 1,
     winLooseTimeout: 1500,
 
     placeRandomTiles

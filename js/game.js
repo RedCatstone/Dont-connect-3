@@ -283,7 +283,7 @@ export const TimerManager = {
     resume(name) {
         const now = performance.now();
         const timer = this._timers[name];
-        if (timer.isPaused) { // Resume
+        if (timer?.isPaused) { // Resume
             const pauseDuration = now - timer.pauseTime;
             timer.startTime += pauseDuration;
             if (timer.isCountdown) timer.endTime += pauseDuration;
@@ -565,22 +565,20 @@ function switchToAvailableTile(index) {
 let lastX, lastY;
 function userPlaceTile(y, x, tileId) {
     if (canPlaceTile(y, x, tileId, true)) {
-        if (!o.tutorialDissallowValidMoves) {
-            if (o.seed === 'Tutorial') tutorialOnGameEvent('tile_place');
-            
-            lastX = x;
-            lastY = y
-            const { endBots } = placeTile(y, x, tileId);
-            
-            if (!endBots) placeRandomTiles(o.botAmount);
-            o.blocksPlaced++;
-            if (hintUsed) {
-                hintUsed = false;
-                hintUsesDisplay.textContent = --o.hintCount;
-                o.hintsUsed++;
-                clearHint();
-                hintUsesDisplay.classList.remove('using-hint');
-            }
+        if (o.seed === 'Tutorial') tutorialOnGameEvent('tile_place');
+        
+        lastX = x;
+        lastY = y
+        const { endBots } = placeTile(y, x, tileId);
+        
+        if (!endBots) placeRandomTiles(o.botAmount);
+        o.blocksPlaced++;
+        if (hintUsed) {
+            hintUsed = false;
+            hintUsesDisplay.textContent = --o.hintCount;
+            o.hintsUsed++;
+            clearHint();
+            hintUsesDisplay.classList.remove('using-hint');
         }
     }
     else if (o.seed === 'Tutorial') tutorialOnGameEvent('invalid_move');

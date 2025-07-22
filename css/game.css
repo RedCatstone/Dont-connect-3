@@ -296,6 +296,7 @@
 
 
 .tile.block {
+    background-color: var(--theme-border); /* fall back for old browser */
     background-color: color-mix(in oklab, var(--tile-color) 70%, black 30%);
     filter: drop-shadow(0px var(--grid-tile-shadow) 2px rgba(0, 0, 0, 0.4));
 }
