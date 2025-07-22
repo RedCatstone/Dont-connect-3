@@ -1,10 +1,13 @@
-import { HARDCODED_TUTORIAL_LEVELS, o, STATS } from './constants.js';
-import { camelToTitleCase, formatMinuteSeconds, startMode } from './game.js';
+import { HARDCODED_TUTORIAL_LEVELS, o, saveStats, STATS } from './constants.js';
+import { camelToTitleCase, saveAndGoHome, formatMinuteSeconds, startMode } from './game.js';
 import { getRandomFunction } from './generateGrid.js';
 
 
 const menuMain = document.getElementById('menu-main');
+const menuSettings = document.getElementById('menu-settings');
 const menuPlay = document.getElementById('menu-mode');
+
+const settingsSettingsGrid = document.getElementById('settings-settings-grid');
 
 const mainPlayButton = document.getElementById('main-play-button');
 const mainSettingsButton = document.getElementById('main-settings-button');
@@ -15,6 +18,8 @@ const modeSelectionGrid = document.querySelector('#menu-mode .mode-selection-gri
 const modeSettingsGrid = document.getElementById('custom-settings-grid');
 const modeCardTemplate = document.getElementById('modecard-template');
 const dailyResetsInDisplay = document.getElementById('daily-resets-in-display');
+
+const menuHomeButtons = document.querySelectorAll('.menu-home-button');
 
 
 
@@ -32,6 +37,9 @@ document.addEventListener('keydown', (event) => {
     if (currentMenu && event.key === 'Escape') switchMenu(menuMain);
 });
 
+menuHomeButtons.forEach(x => {
+    x.addEventListener('click', () => switchMenu(menuMain));
+})
 
 
 
@@ -52,6 +60,9 @@ mainPlayButton.addEventListener('click', () => {
         renderActiveTabContent();
         switchMenu(menuPlay);
     }
+});
+mainSettingsButton.addEventListener('click', () => {
+    switchMenu(menuSettings);
 });
 
 
@@ -153,9 +164,44 @@ modeTabsContainer.addEventListener('click', (e) => {
 
 
 
+
+document.addEventListener('input', (event) => {
+    const target = event.target;
+    if (target.type === 'number' && target && target.max) {
+        const min = parseFloat(target.min, 10);
+        const max = parseFloat(target.max, 10);
+        const value = parseFloat(target.value, 10);
+
+        if (value > max) target.value = max;
+        if (value < min) target.value = min;
+    }
+    if (target.type === 'text' && (target.dataset.allowedChars || target.maxLength)) {
+        const originalValue = target.value;
+        const originalCursorPos = target.selectionStart;
+        const invalidCharsRegex = new RegExp(`[^${target.dataset.allowedChars ?? ''}]`, 'g');
+        const finalValue = originalValue.replace(invalidCharsRegex, '');
+
+        if (originalValue !== finalValue) {
+            const originalSliceBeforeCursor = originalValue.slice(0, originalCursorPos);
+            const sanitizedSliceBeforeCursor = originalSliceBeforeCursor.replace(invalidCharsRegex, '');
+            const charsRemoved = originalSliceBeforeCursor.length - sanitizedSliceBeforeCursor.length;
+            const newCursorPos = originalCursorPos - charsRemoved;
+
+            target.value = finalValue;
+            target.setSelectionRange(newCursorPos, newCursorPos);
+        }
+    }
+}, true);
+
+
+
+
+
+
+
 const CUSTOM_GAME_SETTINGS = [
     [
-     { label: 'Seed', type: 'text', placeholder: 'Random', maxLength: o.defaultSeedLength, allowedChars: 'A-Za-z0-9_-' },
+     { label: 'Seed', type: 'text', placeholder: 'Random', maxLength: o.defaultSeedLength, allowedChars: 'A-Za-z0-9_-', big: true },
      { label: 'Level', type: 'number', placeholder: '1', value: 1, min: 1, max: 99 }
     ],
     [{ label: 'Goal Level', type: 'number', placeholder: 'Infinite', min: 1, max: 999 }],
@@ -168,7 +214,129 @@ const CUSTOM_GAME_SETTINGS = [
     [{ label: 'Line Length', type: 'number', placeholder: '3', value: 3, min: 3, max: 5, advanced: true }],
 ];
 
-generateCustomSettingsGrid();
+generateCustomSettingsGrid(modeSettingsGrid, CUSTOM_GAME_SETTINGS, 'custom');
+const customSeedInput = document.getElementById('custom-seed-input');
+const customLevelInput = document.getElementById('custom-level-input');
+const customGoalLevelInput = document.getElementById('custom-goal-level-input');
+const customFindLastInput = document.getElementById('custom-find-last-input');
+const customHintsInput = document.getElementById('custom-hints-input');
+const customLivesInput = document.getElementById('custom-lives-input');
+const customTimeLimitGainInput = document.getElementById('custom-time-limit-gain-input');
+const customBotMultiplierInput = document.getElementById('custom-bot-multiplier-input');
+const customLevelTimeLimitInput = document.getElementById('custom-level-time-limit-input');
+const customLineLengthInput = document.getElementById('custom-line-length-input');
+
+
+modeSettingsGrid.addEventListener('input', () => {
+    // save new settings
+    TABS_DATA.custom[0].settings = Object.fromEntries(Object.entries({
+        // General settings
+        seed: customSeedInput.value || undefined,
+        level: getNumber(customLevelInput.value),
+        modeGoalLevel: getNumber(customGoalLevelInput.value),
+        modeFindLast: customFindLastInput.checked,
+        hintCount: getNumber(customHintsInput.value),
+        liveCount: getNumber(customLivesInput.value),
+        modeGlobalTimeGain: getNumber(customTimeLimitGainInput.value),
+        botAmountMultiplier: getNumber(customBotMultiplierInput.value),
+
+        // Advanced settings
+        modeLevelTime: getNumber(customLevelTimeLimitInput.value),
+        lineLength: getNumber(customLineLengthInput.value),
+
+        customMode: true,
+    }).filter(([_, value]) => value !== undefined));
+    // refresh play mode card
+    renderActiveTabContent();
+});
+
+
+
+
+
+
+if (!STATS.settings) {
+    STATS.settings = {
+        volume: 1,
+        animatedBackground: true,
+    };
+}
+
+const SETTINGS_SETTINGS = [
+    [{ big: true, label: 'Volume', type: 'range', value: STATS.settings.volume, step: 0.05, min: 0, max: 1 }],
+    [{ big: true, label: 'Animated Background', value: STATS.settings.animatedBackground, type: 'checkbox' }],
+];
+
+generateCustomSettingsGrid(settingsSettingsGrid, SETTINGS_SETTINGS, 'setting');
+const settingsVolumeInput = document.getElementById('setting-volume-input');
+const settingsAnimatedBackgroundInput = document.getElementById('setting-animated-background-input');
+
+settingsSettingsGrid.addEventListener('input', () => updateSettings());
+settingsVolumeInput.addEventListener('input', () => {
+    requestAnimationFrame(() => playSound('pOp'));
+    settingsVolumeInput.style.setProperty('--value', settingsVolumeInput.value);    
+});
+updateSettings();
+
+function updateSettings() {
+    STATS.settings.volume = getNumber(settingsVolumeInput.value, true) ?? 1;
+    STATS.settings.animatedBackground = settingsAnimatedBackgroundInput.checked;
+    document.body.classList.toggle('animated-background', STATS.settings.animatedBackground);
+    saveStats();
+}
+
+
+
+
+
+
+function generateCustomSettingsGrid(container, customSettings, prefix) {
+    for (const settings of customSettings) {
+        const settingItem = document.createElement('label');
+        settingItem.classList.add('setting-item');
+
+        for (const setting of settings) {
+            if (setting.big) settingItem.classList.add('big');
+
+            const settingId = `${prefix}-${setting.label.toLowerCase().replaceAll(' ', '-')}-input`;
+            if (settings.length === 1) settingItem.htmlFor = settingId;
+            if (setting.advanced) settingItem.classList.add('advanced');
+
+            const settingLabel = document.createElement('label');
+            settingLabel.textContent = setting.label;
+            settingLabel.htmlFor = settingId;
+
+            const input = document.createElement('input');
+            const inputHtml = {
+                id: settingId,
+                type: setting.type,
+                checked: setting.type === 'checkbox' ? setting.value : undefined,
+                value: setting.type !== 'checkbox' ? setting.value : undefined,
+                placeholder: setting.placeholder,
+                min: setting.min,
+                max: setting.max,
+                step: setting.step,
+                maxLength: setting.maxLength,
+            };
+            for (const key in inputHtml) {
+                if (inputHtml[key] === undefined) delete inputHtml[key];
+            }
+            Object.assign(input, inputHtml);
+            if (setting.allowedChars) input.dataset.allowedChars = setting.allowedChars;
+
+            
+            const wrapperDiv = document.createElement('div');
+            wrapperDiv.classList.add('setting-wrapper-div');
+            wrapperDiv.append(settingLabel, input);
+            settingItem.append(wrapperDiv);
+        }
+        container.append(settingItem);
+    }
+    container.display = 'none';
+}
+
+
+
 
 
 
@@ -255,71 +423,6 @@ function renderActiveTabContent() {
 
 
 
-function generateCustomSettingsGrid() {
-    for (const settings of CUSTOM_GAME_SETTINGS) {
-        const settingItem = document.createElement('label');
-        settingItem.classList.add('setting-item');
-        if (settings.length > 1) settingItem.classList.add('big');
-
-        for (const setting of settings) {
-            const settingId = `custom-${setting.label.toLowerCase().replaceAll(' ', '-')}-input`;
-            if (settings.length === 1) settingItem.htmlFor = settingId;
-            if (setting.advanced) settingItem.classList.add('advanced');
-
-            const settingLabel = document.createElement('label');
-            settingLabel.textContent = setting.label;
-            settingLabel.htmlFor = settingId;
-
-            const input = document.createElement('input');
-            const inputHtml = {
-                id: settingId,
-                type: setting.type,
-                checked: setting.type === 'checkbox' ? setting.value : undefined,
-                value: setting.type !== 'checkbox' ? setting.value : undefined,
-                placeholder: setting.placeholder,
-                min: setting.min,
-                max: setting.max,
-                maxLength: setting.maxLength,
-            };
-            for (const key in inputHtml) {
-                if (inputHtml[key] === undefined) delete inputHtml[key];
-            }
-            Object.assign(input, inputHtml);
-            if (setting.allowedChars) input.dataset.allowedChars = setting.allowedChars;
-
-            
-            const wrapperDiv = document.createElement('div');
-            wrapperDiv.classList.add('setting-wrapper-div');
-            wrapperDiv.append(settingLabel, input);
-            settingItem.append(wrapperDiv);
-        }
-        modeSettingsGrid.append(settingItem);
-    }
-    modeSettingsGrid.display = 'none';
-    modeSettingsGrid.addEventListener('input', () => {
-        // save new settings
-        TABS_DATA.custom[0].settings = Object.fromEntries(Object.entries({
-            seed: document.getElementById('custom-seed-input').value || undefined,
-            level: getNumber(document.getElementById('custom-level-input').value),
-            modeGoalLevel: getNumber(document.getElementById('custom-goal-level-input').value),
-            modeFindLast: document.getElementById('custom-find-last-input').checked,
-            hintCount: getNumber(document.getElementById('custom-hints-input').value),
-            liveCount: getNumber(document.getElementById('custom-lives-input').value),
-            modeGlobalTimeGain: getNumber(document.getElementById('custom-time-limit-gain-input').value),
-            botAmountMultiplier: getNumber(document.getElementById('custom-bot-multiplier-input').value),
-            // advanced settings
-            modeLevelTime: getNumber(document.getElementById('custom-level-time-limit-input').value),
-            lineLength: getNumber(document.getElementById('custom-line-length-input').value),
-            customMode: true,
-        }).filter(([_, value]) => value !== undefined));
-        // refresh play mode card
-        renderActiveTabContent();
-    });
-}
-
-
-
-
 
 
 
@@ -332,8 +435,8 @@ function handlePlay(mode, shouldContinue) {
 }
 
 
-function getNumber(input) {
-    const result = parseInt(input, 10);
+function getNumber(input, float=false) {
+    const result = float ? parseFloat(input, 10) : parseInt(input, 10);
     return Number.isNaN(result) ? undefined : result;
 }
 
@@ -422,37 +525,6 @@ function getDaySuffix(day) {
 }
 
 
-
-
-document.addEventListener('input', (event) => {
-    const target = event.target;
-    if (target.type === 'number' && target && target.max) {
-        const min = parseInt(target.min);
-        const max = parseInt(target.max);
-        const value = parseInt(target.value);
-
-        if (value > max) target.value = max;
-        if (value < min) target.value = min;
-    }
-    if (target.type === 'text' && (target.dataset.allowedChars || target.maxLength)) {
-        const originalValue = target.value;
-        const originalCursorPos = target.selectionStart;
-        const invalidCharsRegex = new RegExp(`[^${target.dataset.allowedChars ?? ''}]`, 'g');
-        const finalValue = originalValue.replace(invalidCharsRegex, '');
-
-        if (originalValue !== finalValue) {
-            const originalSliceBeforeCursor = originalValue.slice(0, originalCursorPos);
-            const sanitizedSliceBeforeCursor = originalSliceBeforeCursor.replace(invalidCharsRegex, '');
-            const charsRemoved = originalSliceBeforeCursor.length - sanitizedSliceBeforeCursor.length;
-            const newCursorPos = originalCursorPos - charsRemoved;
-
-            target.value = finalValue;
-            target.setSelectionRange(newCursorPos, newCursorPos);
-        }
-    }
-});
-
-
 let advancedModeCounter = 0;
 let advancedModeLastClickTimeout = 0;
 document.addEventListener('click', (event) => {
@@ -509,8 +581,33 @@ function switchMenu(menu) {
     if (menu) {
         menu.classList.add('active');
         currentMenu = menu;
+
+        if (menu !== menuMain && window.location.hash !== '#app') {
+            history.pushState({ app_state: true }, '', '#app');
+        }
     }
 }
+
+
+
+
+
+
+window.addEventListener('popstate', (event) => {
+    // fires when pressing the browsers back button
+    // If in game, save first.
+    if (!currentMenu) saveAndGoHome();
+    else goToMainMenu();
+});
+
+
+
+
+
+
+
+
+
 
 
 
@@ -534,6 +631,6 @@ function loadSound(name, fileName) {
 }
 export function playSound(name) {
     sounds[name].currentTime = 0;
-    sounds[name].volume = o.volume;
+    sounds[name].volume = STATS.settings.volume;
     sounds[name].play().catch(error => console.error(`Error playing sound "${name}":`, error));
 }

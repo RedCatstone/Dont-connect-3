@@ -149,9 +149,10 @@ tileSelectorContainer.addEventListener('mousedown', (event) => {
 });
 document.addEventListener('keydown', (event) => {
     if (document.body.classList.contains('game-active')) {
-        const key = event.key;
-        const num = parseInt(key);
+        const num = parseInt(event.key);
         if (num && num <= o.availableTiles.length) switchToAvailableTile(num - 1);
+
+        if (event.key === 'Escape') requestAnimationFrame(saveAndGoHome);
     }
 });
 
@@ -194,11 +195,14 @@ function clearHint() {
 window.addEventListener('unload', () => {
     if (!o.endScreen && document.body.classList.contains('game-active')) saveCurrentGameStats(false);
 });
-[homeButton, endHomeButton].forEach(x => x.addEventListener('click', () => {
+[homeButton, endHomeButton].forEach(x => x.addEventListener('click', saveAndGoHome));
+export function saveAndGoHome() {
     if (!o.endScreen) saveCurrentGameStats(false);
     resetDisplaysAndIntervals();
-    goToMainMenu();
-}));
+    requestAnimationFrame(() => goToMainMenu());
+}
+
+
 endHideButton.addEventListener('click', () => levelEndScreen.classList.toggle('moveup'));
 endRetryButton.addEventListener('click', () => {
     startMode(o.modeSettings, o.statsSaveLoc);
@@ -920,6 +924,7 @@ function showEndScreen(status, timeout) {
             statItem.className = 'stat-item';
 
             if (key === 'level' && newLevelRecord) statItem.classList.add('new-record');
+            if (key === 'level') value = o.level;
             if (key === 'time' && newTimeRecord) statItem.classList.add('new-record');
             if (key === 'time') value = formatMinuteSeconds(value, 2);
 
