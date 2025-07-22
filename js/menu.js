@@ -299,7 +299,6 @@ function generateCustomSettingsGrid() {
     modeSettingsGrid.addEventListener('input', () => {
         // save new settings
         TABS_DATA.custom[0].settings = Object.fromEntries(Object.entries({
-            statsSaveLoc: TABS_DATA.custom[0].statsSaveLoc,
             seed: document.getElementById('custom-seed-input').value || undefined,
             level: getNumber(document.getElementById('custom-level-input').value),
             modeGoalLevel: getNumber(document.getElementById('custom-goal-level-input').value),

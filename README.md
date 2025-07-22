@@ -16,4 +16,4 @@ The main focus is just being fun and relaxing. You can also try to beat the high
 
 
 ## License
-This project is open-source and available under the **MIT License**.
+This project is open-source and available under the **GNU General Public License (GPLv3)**.
