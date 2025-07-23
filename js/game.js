@@ -903,8 +903,9 @@ function saveCurrentGameStats(gridWasSuccess) {
 
 
 function showEndScreen(status, timeout) {
-    disableGridInput();
+    if (o.endScreen) return;
     o.endScreen = true;
+    disableGridInput();
     
     const { gameStats, newLevelRecord, newTimeRecord } = saveCurrentGameStats(status === 'win');
     o.timerManager.stopAll();

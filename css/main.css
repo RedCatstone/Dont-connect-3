@@ -461,7 +461,8 @@ body:not(.menu-active) #menus {
 #menus h1 {
     font-size: 5rem;
     font-weight: 700;
-    padding: 15px;
+    padding-top: 15px;
+    padding-bottom: 15px;
     margin: 0;
     line-height: 1.1;
 

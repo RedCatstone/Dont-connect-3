@@ -207,51 +207,53 @@ const CUSTOM_GAME_SETTINGS = [
      { label: 'Seed', type: 'text', placeholder: 'Random', maxLength: o.defaultSeedLength, allowedChars: 'A-Za-z0-9_-', big: true },
      { label: 'Level', type: 'number', placeholder: '1', value: 1, min: 1, max: 99 }
     ],
-    [{ label: 'Goal Level', type: 'number', placeholder: 'Infinite', min: 1, max: 999 }],
+    [{ label: 'Infinite', type: 'checkbox' }],
     [{ label: 'Find Last', type: 'checkbox' }],
-    [{ label: 'Hints', type: 'number', placeholder: '0', value: 2, min: 0, max: 99 }],
+    [{ label: 'Hints', type: 'number', placeholder: '0', value: 5, min: 0, max: 99 }],
     [{ label: 'Lives', type: 'number', placeholder: 'Disabled', min: 0, max: 15 }],
-    [{ label: 'Time Limit Gain', type: 'number', placeholder: 'Disabled', min: 0, max: 60 }],
-    [{ label: 'Bot Multiplier', type: 'number', placeholder: 'Normal', min: 0, max: 10 }],
-    [{ label: 'Level Time Limit', type: 'number', placeholder: 'Disabled', min: 0, max: 99, advanced: true }],
+    [{ label: 'Blue Timer', type: 'number', placeholder: 'Disabled', min: 0, max: 999 }],
+    [{ label: 'Red Timer', type: 'number', placeholder: 'Disabled', min: 0, max: 999 }],
+    [{ label: 'Bot Multiplier', type: 'number', placeholder: 'Normal', min: 0, max: 10, advanced: true }],
     [{ label: 'Line Length', type: 'number', placeholder: '3', value: 3, min: 3, max: 5, advanced: true }],
 ];
 
 generateCustomSettingsGrid(modeSettingsGrid, CUSTOM_GAME_SETTINGS, 'custom');
 const customSeedInput = document.getElementById('custom-seed-input');
 const customLevelInput = document.getElementById('custom-level-input');
-const customGoalLevelInput = document.getElementById('custom-goal-level-input');
+const customInfiniteInput = document.getElementById('custom-infinite-input');
 const customFindLastInput = document.getElementById('custom-find-last-input');
 const customHintsInput = document.getElementById('custom-hints-input');
 const customLivesInput = document.getElementById('custom-lives-input');
-const customTimeLimitGainInput = document.getElementById('custom-time-limit-gain-input');
+const customBlueTimerInput = document.getElementById('custom-blue-timer-input');
+const customRedTimerInput = document.getElementById('custom-red-timer-input');
 const customBotMultiplierInput = document.getElementById('custom-bot-multiplier-input');
-const customLevelTimeLimitInput = document.getElementById('custom-level-time-limit-input');
 const customLineLengthInput = document.getElementById('custom-line-length-input');
 
 
-modeSettingsGrid.addEventListener('input', () => {
+modeSettingsGrid.addEventListener('input', updateCustomSettings);
+updateCustomSettings();
+function updateCustomSettings() {
     // save new settings
     TABS_DATA.custom[0].settings = Object.fromEntries(Object.entries({
         // General settings
         seed: customSeedInput.value || undefined,
         level: getNumber(customLevelInput.value),
-        modeGoalLevel: getNumber(customGoalLevelInput.value),
+        modeGoalLevel: customInfiniteInput.checked ? 0 : getNumber(customLevelInput.value) + 4,
         modeFindLast: customFindLastInput.checked,
         hintCount: getNumber(customHintsInput.value),
         liveCount: getNumber(customLivesInput.value),
-        modeGlobalTimeGain: getNumber(customTimeLimitGainInput.value),
-        botAmountMultiplier: getNumber(customBotMultiplierInput.value),
-
+        modeGlobalTimeGain: getNumber(customBlueTimerInput.value),
+        modeLevelTime: getNumber(customRedTimerInput.value),
+        
         // Advanced settings
-        modeLevelTime: getNumber(customLevelTimeLimitInput.value),
+        botAmountMultiplier: getNumber(customBotMultiplierInput.value),
         lineLength: getNumber(customLineLengthInput.value),
 
         customMode: true,
     }).filter(([_, value]) => value !== undefined));
     // refresh play mode card
     renderActiveTabContent();
-});
+}
 
 
 
