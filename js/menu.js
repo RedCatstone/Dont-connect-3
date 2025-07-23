@@ -58,7 +58,7 @@ homeButtons.forEach(x => {
 
 // --- MAIN MENU ---
 mainPlayButton.addEventListener('click', () => {
-    if (!STATS.tutorial) handlePlay(tutorialMode);
+    if (!STATS.tutorial.best) handlePlay(tutorialMode);
     else {
         renderActiveTabContent();
         switchMenu(menuPlay);
@@ -276,18 +276,18 @@ generateCustomSettingsGrid(settingsSettingsGrid, SETTINGS_SETTINGS, 'setting');
 const settingsVolumeInput = document.getElementById('setting-volume-input');
 const settingsAnimatedBackgroundInput = document.getElementById('setting-animated-background-input');
 
-settingsSettingsGrid.addEventListener('input', () => updateSettings());
+settingsSettingsGrid.addEventListener('input', () => updateSettings(true));
 settingsVolumeInput.addEventListener('input', () => {
     requestAnimationFrame(() => playSound('pOp'));
     settingsVolumeInput.style.setProperty('--value', settingsVolumeInput.value);    
 });
-updateSettings();
+updateSettings(false);
 
-function updateSettings() {
+function updateSettings(save) {
     STATS.settings.volume = getNumber(settingsVolumeInput.value, true) ?? 1;
     STATS.settings.animatedBackground = settingsAnimatedBackgroundInput.checked;
     document.body.classList.toggle('animated-background', STATS.settings.animatedBackground);
-    saveStats();
+    if (save) saveStats();
 }
 
 

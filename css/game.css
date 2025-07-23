@@ -155,7 +155,7 @@
 
 #tutorial-text-display {
     font-family: 'Poppins', sans-serif;
-    font-size: clamp(1rem, 5vw, 2rem);
+    font-size: clamp(1rem, 5vmin, 2rem);
     font-weight: 400;
     max-width: 90%;
     color: color-mix(in oklab, var(--tile-color) 50%, var(--theme-text-primary) 50%);
