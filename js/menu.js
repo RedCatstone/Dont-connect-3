@@ -19,7 +19,7 @@ const modeSettingsGrid = document.getElementById('custom-settings-grid');
 const modeCardTemplate = document.getElementById('modecard-template');
 const dailyResetsInDisplay = document.getElementById('daily-resets-in-display');
 
-const menuHomeButtons = document.querySelectorAll('.menu-home-button');
+const homeButtons = document.querySelectorAll('.home-button');
 
 
 
@@ -37,8 +37,11 @@ document.addEventListener('keydown', (event) => {
     if (currentMenu && event.key === 'Escape') switchMenu(menuMain);
 });
 
-menuHomeButtons.forEach(x => {
-    x.addEventListener('click', () => switchMenu(menuMain));
+homeButtons.forEach(x => {
+    x.addEventListener('click', () => {
+        if (currentMenu) switchMenu(menuMain);
+        else saveAndGoHome();
+});
 })
 
 
@@ -91,26 +94,26 @@ const tutorialMode = {
         hintCount: 5,
     },
     medals: {
-        author: 15000,
+        author: 13000,
         gold: 30000,
     }
 };
 
-const endlessSettings = { hintCount: 2 };
-const hardcoreSettings = { hintCount: 2, liveCount: 1 };
-const findlastSettings = { hintCount: 2, modeFindLast: true };
+const endlessSettings = { };
+const hardcoreSettings = { liveCount: 1 };
+const findlastSettings = { modeFindLast: true };
 
 const TABS_DATA = {
     normal: [
         tutorialMode,
         { id: 'endless', title: 'Endless', settings: { ...endlessSettings, hintCount: 2 }, medals: { author: 200, gold: 100 } },
-        { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, hintCount: 2, }, medals: { author: 40, gold: 20 } },
+        { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, hintCount: 2, }, medals: { author: 35, gold: 20 } },
         { id: 'findlast', title: 'Find Last', settings: { ...findlastSettings, hintCount: 2, }, medals: { author: 200, gold: 100 } },
     ],
     timed: [
-        { id: 'endless', title: 'Endless', settings: { ...endlessSettings, modeGlobalTimeGain: 10, }, medals: { author: 40, gold: 25 } },
-        { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, modeLevelTime: 20, }, medals: { author: 30, gold: 15 } },
-        { id: 'findlast', title: 'Find Last', settings: { ...findlastSettings, modeGlobalTimeGain: 3, }, medals: { author: 60, gold: 30 } },
+        { id: 'endless', title: 'Endless', settings: { ...endlessSettings, hintCount: 1, modeGlobalTimeGain: 10, }, medals: { author: 40, gold: 25 } },
+        { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, hintCount: 1, modeLevelTime: 20, }, medals: { author: 25, gold: 15 } },
+        { id: 'findlast', title: 'Find Last', settings: { ...findlastSettings, hintCount: 1, modeGlobalTimeGain: 3, }, medals: { author: 55, gold: 30 } },
     ],
     daily: [
         { id: 'endless', title: 'Endless', settings: { ...endlessSettings } },
@@ -479,8 +482,8 @@ function updateDailyModeSettings() {
         mode.statsSaveLoc = getStatsSaveLoc('daily', mode);
 
         const timeForOneLevel = {
-            endless: 24_000,
-            hardcore: 11_000,
+            endless: 21_000,
+            hardcore: 14_000,
             findlast: 7_000
         };
         const author = modeLength * timeForOneLevel[mode.id];

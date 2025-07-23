@@ -79,7 +79,7 @@ export const o = {
     // generation settings
     levelSizeMultiplier: 6,
     botAmountMultiplier: 1,
-    chanceHoles: 0.5,
+    chanceHoles: 0.6,
     chanceHoleInvert: 0.3,
     chanceLockedTile: 0.5,
     chanceSymmetry: 0.5,

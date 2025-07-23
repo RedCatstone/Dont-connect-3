@@ -168,24 +168,11 @@ button.big {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 button.icon {
     height: 60px;
     width: 60px;
     position: relative;
 }
-
 button.icon::before,
 button.icon::after {
     content: '';
@@ -200,14 +187,11 @@ button.icon::after {
     mask-repeat: no-repeat;
     mask-position: center;
 }
-
-/* shadow icon layer */
-button.icon::before {
+button.icon::before { /* shadow icon layer */
     background-color: rgba(255, 255, 255, 0.2);
     transform: translate(calc(-50% + 2px), calc(-50% + 2px));
 }
-/* main icon layer */
-button.icon::after {
+button.icon::after { /* main icon layer */
     background-color: rgba(0, 0, 0, 0.5);
 }
 button > .button-counter {
@@ -233,45 +217,17 @@ button > .button-counter {
 
 
 
-.menu-home-button::before,
-.menu-home-button::after {
-    mask-image: url('svg/home.svg');
-}
-
-
-#home-button::before,
-#home-button::after,
-#end-home-button::before,
-#end-home-button::after {
-    mask-image: url('svg/home.svg');
-}
-
-#hint-button::before,
-#hint-button::after {
-    mask-image: url('svg/eye.svg');
-}
-
-#end-retry-button::before,
-#end-retry-button::after {
-    mask-image: url('svg/retry.svg');
-}
-
-.mode-play-button::before,
-.mode-play-button::after {
+.home-button::before,      .home-button::after      { mask-image: url('svg/home.svg'); }
+#hint-button::before,      #hint-button::after      { mask-image: url('svg/eye.svg'); }
+#end-retry-button::before, #end-retry-button::after { mask-image: url('svg/retry.svg'); }
+.mode-play-button::before, .mode-play-button::after {
     mask-image: url('svg/play.svg');
     scale: 70%;
     transform-origin: 10% 0%;
 }
-
 .mode-play-button[data-custom-icon="timer"]::before,
-.mode-play-button[data-custom-icon="timer"]::after {
-    mask-image: url('svg/timer.svg');
-}
-
-.mode-continue-button::before,
-.mode-continue-button::after {
-    mask-image: url('svg/save.svg');
-}
+.mode-play-button[data-custom-icon="timer"]::after { mask-image: url('svg/timer.svg'); }
+.mode-continue-button::before, .mode-continue-button::after { mask-image: url('svg/save.svg'); }
 
 
 
@@ -286,6 +242,7 @@ button > .button-counter {
 
 
 
+/* --- General & Layout --- */
 .settings-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -297,9 +254,9 @@ button > .button-counter {
     border-radius: 12px;
     padding: 12px;
     display: flex;
+    align-items: center;
     gap: 10px;
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
-    align-items: center;
 }
 .setting-item.big {
     grid-column: span 2;
@@ -308,11 +265,7 @@ button > .button-counter {
     font-size: 1rem;
     font-weight: 600;
     color: var(--theme-text-secondary);
-    text-align: left;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-}
-.setting-item:has(input[type="number"], input[type="text"]) {
-    flex-direction: row;
 }
 
 .setting-wrapper-div {
@@ -320,23 +273,25 @@ button > .button-counter {
     text-align: left;
 }
 
-
-.settings-grid .advanced { display: none; }
+.settings-grid .advanced { 
+    display: none; 
+}
 .settings-grid.advanced-mode .advanced {
     display: flex;
     background: color-mix(in oklab, var(--theme-surface) 70%, var(--status-mistake) 30%);
 }
 
-
-.setting-item input[type="text"],
-.setting-item input[type="number"] {
+/* --- Text & Number Inputs (Grouped) --- */
+.setting-item:has(input[type="number"], input[type="text"]) {
+    flex-direction: row;
+}
+.setting-item input:is([type="text"], [type="number"]) {
     font-family: 'Poppins', sans-serif;
     font-size: 1.2rem;
     font-weight: 600;
     color: var(--theme-text-primary);
     text-align: center;
     letter-spacing: 2px;
-    
     width: 100%;
     box-sizing: border-box;
     padding: 10px 15px;
@@ -346,12 +301,11 @@ button > .button-counter {
     box-shadow: inset 0 4px 8px rgba(0,0,0,0.4);
     transition: all 100ms ease-out;
 }
-
-.setting-item input::placeholder {
+.setting-item input:is([type="text"], [type="number"])::placeholder {
     color: var(--theme-text-tertiary);
     letter-spacing: normal;
 }
-.setting-item input:focus {
+.setting-item input:is([type="text"], [type="number"]):focus {
     outline: none;
     box-shadow: inset 0 4px 8px rgba(0,0,0,0.4), 0 0 15px var(--theme-accent);
 }
@@ -364,20 +318,17 @@ button > .button-counter {
     margin: 0;
 }
 
-
+/* --- Custom Checkbox --- */
 .setting-item:has(input[type="checkbox"]) {
     justify-content: flex-start;
 }
-
 .setting-item:has(input[type="checkbox"]) input[type="checkbox"] {
     display: none;
 }
-
 .setting-item:has(input[type="checkbox"])::before {
     content: '';
     order: -1;
     flex-shrink: 0;
-    
     width: 24px;
     height: 24px;
     border-radius: 6px;
@@ -386,20 +337,16 @@ button > .button-counter {
     box-shadow: inset 0 3px 6px rgba(0,0,0,0.4);
     transition: all 100ms ease-out;
 }
-
 .setting-item:has(input[type="checkbox"])::after {
     content: '✔';
     font-size: 18px;
     font-weight: 900;
     color: var(--theme-accent);
-
     position: absolute;
     translate: 7px 0px;
-    
     opacity: 0;
     transition: all 100ms cubic-bezier(.3, .7, .4, 1);
 }
-
 .setting-item:has(input[type="checkbox"]:checked)::before {
     border-color: var(--theme-accent);
     box-shadow: inset 0 3px 6px rgba(0,0,0,0.4), 0 0 15px var(--theme-accent);
@@ -408,21 +355,26 @@ button > .button-counter {
     opacity: 1;
 }
 
-
-
+/* --- Custom Range Slider --- */
 .setting-item input[type="range"] {
     appearance: none;
     width: 100%;
-    height: 10px; /* Height of the track */
-    background: var(--theme-bg);
-    border-radius: 5px;
+    height: 10px;
     outline: none;
     cursor: pointer;
+    border-radius: 5px;
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+    --progress-percent: calc(var(--value, 1) * 100%);
+    background: linear-gradient(to right, 
+        var(--theme-accent) 0%, 
+        var(--theme-accent) var(--progress-percent), 
+        var(--theme-bg) var(--progress-percent), 
+        var(--theme-bg) 100%
+    );
 }
 
 /* --- Slider Thumb (the handle) --- */
-/* Chrome, Safari, Opera, Edge */
+/* Chromium */
 .setting-item input[type="range"]::-webkit-slider-thumb {
     appearance: none;
     width: 24px;
@@ -440,7 +392,6 @@ button > .button-counter {
 .setting-item input[type="range"]:active::-webkit-slider-thumb {
     box-shadow: 0 0 0 6px color-mix(in oklab, var(--theme-accent) 40%, transparent);
 }
-
 /* Firefox */
 .setting-item input[type="range"]::-moz-range-thumb {
     appearance: none;
@@ -459,27 +410,6 @@ button > .button-counter {
 .setting-item input[type="range"]:active::-moz-range-thumb {
     box-shadow: 0 0 0 6px color-mix(in oklab, var(--theme-accent) 40%, transparent);
 }
-
-
-/* --- Slider Track Fill (the colored part of the track) --- */
-.setting-item input[type="range"] {
-    --progress-percent: calc(var(--value, 1) * 100%);
-
-    background: linear-gradient(to right, 
-        var(--theme-accent) 0%, 
-        var(--theme-accent) var(--progress-percent), 
-        var(--theme-bg) var(--progress-percent), 
-        var(--theme-bg) 100%
-    );
-}
-
-
-
-
-
-
-
-
 
 
 
@@ -546,10 +476,10 @@ body:not(.menu-active) #menus {
 
 
 #main-play-button { --button-bg: var(--theme-accent); }
-.modecard[data-mode="endless"] { --button-bg: var(--button-bg-endless); }
+.modecard[data-mode="endless"]  { --button-bg: var(--button-bg-endless); }
 .modecard[data-mode="hardcore"] { --button-bg: var(--button-bg-hardcore); }
 .modecard[data-mode="findlast"] { --button-bg: var(--button-bg-findlast); }
-.modecard[data-mode="custom"] { --button-bg: var(--button-bg-custom); }
+.modecard[data-mode="custom"]   { --button-bg: var(--button-bg-custom); }
 .modecard[data-mode="tutorial"] { --button-bg: var(--button-bg-tutorial); }
 #custom-play-button { --button-bg: var(--button-bg-custom); }
 
@@ -647,16 +577,6 @@ body:not(.menu-active) #menus {
     color: var(--theme-text-tertiary);
     content: attr(data-after-text);
 }
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -31,7 +31,7 @@ export function generateGrid(seed, level) {
     
     
     // holes (patterns)
-    if (level > 9 && rand() < o.chanceHoles) {
+    if (level > 7 && rand() < o.chanceHoles) {
         const numPatterns = Math.ceil(rand() * Math.log(level)) ?? 0;
         placeRandomHolePatterns(numPatterns, grid, rand);
     }

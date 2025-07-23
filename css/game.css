@@ -462,7 +462,6 @@
     width: 100px;
     height: 40px;
 }
-
 #end-hide-button::before,
 #end-hide-button::after {
     mask-image: url('svg/arrowhead.svg');
@@ -472,8 +471,6 @@
 #level-end-screen.moveup #end-hide-button::before {
     transform: translate(calc(-50% - 2px), calc(-50% - 2px));
 }
-
-
 #level-end-screen.moveup #end-hide-button::before,
 #level-end-screen.moveup #end-hide-button::after {
     rotate: 180deg;

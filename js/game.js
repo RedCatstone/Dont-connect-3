@@ -9,7 +9,6 @@ const gameGridSizerContainer = document.getElementById('gamegrid-sizer-height');
 const gameGridGrid = document.getElementById('gamegrid-grid');
 const gameGridBorderSvg = document.getElementById('gamegrid-border-svg');
 const tileSelectorContainer = document.getElementById('tile-selector');
-const homeButton = document.getElementById('home-button');
 const hintButton = document.getElementById('hint-button');
 
 const hintUsesDisplay = hintButton.querySelector('.button-counter');
@@ -29,7 +28,6 @@ const levelEndScreen = document.getElementById('level-end-screen');
 const endScreenTitle = document.getElementById('end-screen-title');
 const endScreenStats = document.getElementById('end-screen-stats');
 const endHideButton = document.getElementById('end-hide-button');
-const endHomeButton = document.getElementById('end-home-button');
 const endRetryButton = document.getElementById('end-retry-button');
 
 
@@ -195,7 +193,6 @@ function clearHint() {
 window.addEventListener('unload', () => {
     if (!o.endScreen && document.body.classList.contains('game-active')) saveCurrentGameStats(false);
 });
-[homeButton, endHomeButton].forEach(x => x.addEventListener('click', saveAndGoHome));
 export function saveAndGoHome() {
     if (!o.endScreen) saveCurrentGameStats(false);
     resetDisplaysAndIntervals();
