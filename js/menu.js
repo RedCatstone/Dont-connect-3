@@ -106,7 +106,7 @@ const findlastSettings = { modeFindLast: true };
 const TABS_DATA = {
     normal: [
         tutorialMode,
-        { id: 'endless', title: 'Endless', settings: { ...endlessSettings, hintCount: 2 }, medals: { author: 200, gold: 100 } },
+        { id: 'endless', title: 'Endless', settings: { ...endlessSettings, hintCount: 2 }, medals: { author: 150, gold: 80 } },
         { id: 'hardcore', title: 'Hardcore', settings: { ...hardcoreSettings, hintCount: 2, }, medals: { author: 35, gold: 20 } },
         { id: 'findlast', title: 'Find Last', settings: { ...findlastSettings, hintCount: 2, }, medals: { author: 200, gold: 100 } },
     ],
@@ -492,9 +492,9 @@ function updateDailyModeSettings() {
         mode.statsSaveLoc = getStatsSaveLoc('daily', mode);
 
         const timeForOneLevel = {
-            endless: 21_000,
-            hardcore: 14_000,
-            findlast: 7_000
+            endless: 18_000,
+            hardcore: 11_000,
+            findlast: 5_000
         };
         const author = modeLength * timeForOneLevel[mode.id];
         mode.medals = {
