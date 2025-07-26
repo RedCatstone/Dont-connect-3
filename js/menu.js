@@ -205,9 +205,9 @@ document.addEventListener('input', (event) => {
 const CUSTOM_GAME_SETTINGS = [
     [
      { label: 'Seed', type: 'text', placeholder: 'Random', maxLength: o.defaultSeedLength, allowedChars: 'A-Za-z0-9_-', big: true },
-     { label: 'Level', type: 'number', placeholder: '1', value: 1, min: 1, max: 99 }
+     { label: 'Start Level', type: 'number', placeholder: '1', value: 1, min: 1, max: 99 },
+     { label: 'End Level', type: 'number', placeholder: 'None', min: 1, max: 99 }
     ],
-    [{ label: 'Infinite', type: 'checkbox' }],
     [{ label: 'Find Last', type: 'checkbox' }],
     [{ label: 'Hints', type: 'number', placeholder: '0', value: 5, min: 0, max: 99 }],
     [{ label: 'Lives', type: 'number', placeholder: 'Disabled', min: 0, max: 15 }],
@@ -219,8 +219,8 @@ const CUSTOM_GAME_SETTINGS = [
 
 generateCustomSettingsGrid(modeSettingsGrid, CUSTOM_GAME_SETTINGS, 'custom');
 const customSeedInput = document.getElementById('custom-seed-input');
-const customLevelInput = document.getElementById('custom-level-input');
-const customInfiniteInput = document.getElementById('custom-infinite-input');
+const customStartLevelInput = document.getElementById('custom-start-level-input');
+const customEndLevelInput = document.getElementById('custom-end-level-input');
 const customFindLastInput = document.getElementById('custom-find-last-input');
 const customHintsInput = document.getElementById('custom-hints-input');
 const customLivesInput = document.getElementById('custom-lives-input');
@@ -231,14 +231,22 @@ const customLineLengthInput = document.getElementById('custom-line-length-input'
 
 
 modeSettingsGrid.addEventListener('input', updateCustomSettings);
+customEndLevelInput.addEventListener('focusout', () => {
+    const end = getNumber(customEndLevelInput.value);
+    const start = getNumber(customStartLevelInput.value);
+    if (end < start) {
+        customEndLevelInput.value = start;
+        updateCustomSettings();
+    }
+});
 updateCustomSettings();
 function updateCustomSettings() {
     // save new settings
     TABS_DATA.custom[0].settings = Object.fromEntries(Object.entries({
         // General settings
         seed: customSeedInput.value || undefined,
-        level: getNumber(customLevelInput.value),
-        modeGoalLevel: customInfiniteInput.checked ? 0 : getNumber(customLevelInput.value) + 4,
+        level: getNumber(customStartLevelInput.value),
+        modeGoalLevel: getNumber(customEndLevelInput.value),
         modeFindLast: customFindLastInput.checked,
         hintCount: getNumber(customHintsInput.value),
         liveCount: getNumber(customLivesInput.value),
