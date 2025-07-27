@@ -493,8 +493,8 @@ function updateDailyModeSettings() {
 
         const timeForOneLevel = {
             endless: 18_000,
-            hardcore: 11_000,
-            findlast: 5_000
+            hardcore: 12_000,
+            findlast: 6_000
         };
         const author = modeLength * timeForOneLevel[mode.id];
         mode.medals = {

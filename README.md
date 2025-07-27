@@ -9,11 +9,11 @@ The main focus is just being fun and relaxing. You can also try to beat the high
 
 ## Features
 - **Multiple Gamemodes:** Endless, Hardcore (no mistakes) and Find Last.
-- **Daily Challenges** for each Mode!
-- All grids are completely **randomly generated**. If you liked a set of levels, you can play them again by replaying the same Seed!
+- **Daily Challenges** for each Mode.
+- **Medals** for each mode. Earn them by getting faster times, or further levels!
 - **Custom games**
-- This is a web game build fully **without any frameworks**, which means that its fast and lightweight.
+- All grids are **randomly generated** (procedual). If you liked a set of levels, you can play them again by replaying the same Seed!
+- This is a web game build fully without any frameworks, which means that it should be very fast and lightweight ~300kb.
 
 
-## License
-This project is open-source and available under the **GNU General Public License (GPLv3)**.
+licensed under the **MIT License**.
