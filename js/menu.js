@@ -231,7 +231,7 @@ const customLineLengthInput = document.getElementById('custom-line-length-input'
 
 
 modeSettingsGrid.addEventListener('input', updateCustomSettings);
-customEndLevelInput.addEventListener('focusout', () => {
+modeSettingsGrid.addEventListener('focusout', () => {
     const end = getNumber(customEndLevelInput.value);
     const start = getNumber(customStartLevelInput.value);
     if (end < start) {
