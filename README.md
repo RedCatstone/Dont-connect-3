@@ -9,11 +9,10 @@ The main focus is just being fun and relaxing. You can also try to beat the high
 
 ## Features
 - **Multiple Gamemodes:** Endless, Hardcore (no mistakes) and Find Last.
-- **Daily Challenges** for each Mode.
-- **Medals** for each mode. Earn them by getting faster times, or further levels!
+- **Daily Challenges** and **Medals** for each Mode. Medals are earned by getting a new highest level, or by beating timed modes faster!
 - **Custom games**
-- All grids are **randomly generated** (procedual). If you liked a set of levels, you can play them again by replaying the same Seed!
-- This is a web game build fully without any frameworks, which means that it should be very fast and lightweight ~300kb.
+- All levelgrids are **randomly generated** (procedual). Which means that you can replay a level set by replaying the same seed!
+- This is a vanilla js web game. I tried to keep it small so its ~300kb big. It could be smaller by minifying the code and further reducing the 180kb sounds, but its good enough.
 
 
-licensed under the **MIT License**.
+licensed under the **GNU General Public License v3.0**.
